@@ -26,7 +26,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from rsif.artifacts.model import CreateOp, Patch, UpdateOp
+from rsif.artifacts.model import CreateOp, DeleteOp, Patch, RestoreOp, UpdateOp
 from rsif.artifacts.store import ApplyResult, ArtifactError, ArtifactStore
 from rsif.config import RunConfig
 from rsif.evolve.archive import Archive, Individual
@@ -49,6 +49,8 @@ from rsif.observe.events import (
     EVAL,
     GATE,
     LLM_CALL,
+    META_CONFIRM,
+    META_REVERT,
     PATCH,
     PROPOSAL,
     REJECT,
@@ -64,7 +66,7 @@ from rsif.observe.events import (
     PHASE_VERIFY,
 )
 from rsif.runtime.runtime import AgentRuntime
-from rsif.safety.budget import Budget
+from rsif.safety.budget import Budget, BudgetExhausted
 from rsif.safety.drift import STAGNATION, DriftMonitor
 from rsif.safety.rollback import auto_rollback
 from rsif.sandbox.guards import scan_code
@@ -112,6 +114,11 @@ class _EventfulProvider:
         )
         if self.budget is not None:
             self.budget.record(result.usage.in_tokens, result.usage.out_tokens)
+            overshot = self.budget.overshot()
+            if overshot is not None:
+                # a call past the hard limit aborts immediately: overshoot is
+                # bounded by one call, not one proposal
+                raise BudgetExhausted(overshot)
         return result
 
 
@@ -147,6 +154,9 @@ class EvolutionEngine:
         self._active_val: float = 0.0
         self._baseline_canary: float = 0.0
         self._consecutive_rejections = 0
+        self._current_gen = 0  # generation context for mid-flight aborts
+        self._outcomes: list[tuple[int, bool]] = []  # (generation, accepted)
+        self._pending_meta: dict | None = None  # provisional META edit in window
         self.accepted = 0
         self.rejected = 0
 
@@ -158,6 +168,7 @@ class EvolutionEngine:
                            objective=self.cfg.objective, seed=self.cfg.seed)
 
         stop_reason: str | None = None
+        self._current_gen = 0  # for mid-flight budget aborts (event context)
         try:
             root = self._baseline()
             self._active_snapshot = dict(root.spec_snapshot)
@@ -170,6 +181,7 @@ class EvolutionEngine:
             )
 
             for gen in range(1, generations + 1):
+                self._current_gen = gen
                 for slot in range(self.cfg.proposals_per_generation):
                     dimension = self.budget.exhausted()
                     if dimension is not None:
@@ -182,17 +194,28 @@ class EvolutionEngine:
                     break
                 if gen % self.cfg.insights_distill_every == 0:
                     self._retire_insights(gen)
+                self._settle_meta(gen)
                 if self._drift_check(gen):
                     stop_reason = "drift"
                     break
                 self.archive.save(gen)
-        except Exception as e:  # noqa: BLE001 - provider/connection errors abort cleanly
-            origin = getattr(e, "origin", type(e).__name__)
-            stop_reason = f"error:{origin}"
+        except BudgetExhausted as e:
+            # a single call pushed the run past the hard limit mid-proposal
+            self.events.append(BUDGET, generation=self._current_gen,
+                               dimension=e.dimension, budget=self.budget.snapshot())
+            stop_reason = f"budget:{e.dimension}"
+        except ProviderError as e:
+            stop_reason = f"error:{e.origin}"
             # deterministic event payload: error type name only; the full
             # message (which may embed provider request ids / timestamps) is
             # surfaced to the caller, not written to the replay log.
-            self.events.append(ERROR, generation=generations, error=origin)
+            self.events.append(ERROR, generation=generations, error=e.origin)
+        except Exception as e:  # noqa: BLE001 - engine bug: abort, never partial
+            # provider errors are handled above; anything left is a bug in the
+            # trusted engine itself and must not masquerade as a provider error
+            stop_reason = f"engine:{type(e).__name__}"
+            self.events.append(ERROR, generation=generations,
+                               error=type(e).__name__)
 
         best = self.archive.best()
         payload = {"accepted": self.accepted, "rejected": self.rejected,
@@ -286,6 +309,8 @@ class EvolutionEngine:
             proposal = self.improver.propose(
                 self.store, self.archive, self._lessons_text(), parent,
                 open_surfaces=set(sched.open_surfaces))
+        except (ProviderError, BudgetExhausted):
+            raise  # infrastructure failure, not a bad proposal: abort the run
         except Exception as e:  # noqa: BLE001 - improver output is untrusted
             self._reject(pid, gen, "parse", f"{type(e).__name__}: {e}", parent)
             return
@@ -312,6 +337,19 @@ class EvolutionEngine:
             PROPOSAL, phase=PHASE_PROPOSE, generation=gen, proposal_id=pid,
             surface=proposal.surface.value, operator=proposal.operator,
             hypothesis=proposal.hypothesis)
+
+        # META edits run as controlled experiments: one at a time, each inside
+        # its own evaluation window. A second META edit while one is pending
+        # would confound whose proposals the window measured.
+        meta_only = self._patch_is_meta_only(proposal.patch)
+        if meta_only and self._pending_meta is not None:
+            pend = self._pending_meta
+            self._reject(
+                pid, gen, "meta_pending",
+                f"a META edit ({pend['proposal_id']}) is still inside its "
+                f"eval window until generation "
+                f"{pend['generation'] + pend['window']}", parent, proposal)
+            return
 
         # -- phase 2: design (validate + materialize, no activation) ------------
         if len(proposal.patch.ops) > self.cfg.max_patch_ops:
@@ -400,34 +438,75 @@ class EvolutionEngine:
                                         PHASE_VERIFY, "child", gen)
         parent_val_book = self._evaluate(parent.spec_snapshot, suites[Split.VAL],
                                          PHASE_VERIFY, "parent", gen)
-        val_ok = accept_val(child_val_book.mean(), parent_val_book.mean(),
-                            self.cfg.acceptance_threshold)
-        self._gate(pid, gen, "val", val_ok,
-                   child=child_val_book.mean(), parent=parent_val_book.mean(),
-                   threshold=self.cfg.acceptance_threshold,
-                   detail=f"{child_val_book.mean():.4f} > "
-                          f"{parent_val_book.mean():.4f} + "
-                          f"{self.cfg.acceptance_threshold}")
-        if not val_ok:
-            self._reject(pid, gen, "val",
-                         f"val {child_val_book.mean():.4f} <= "
-                         f"{parent_val_book.mean():.4f} + "
-                         f"{self.cfg.acceptance_threshold}", parent, proposal)
-            return
+        child_val = child_val_book.mean()
+        parent_val = parent_val_book.mean()
+
+        if meta_only:
+            # A META-only patch leaves the agent spec byte-identical (META
+            # artifacts are not part of AgentSpec), so the strict agent-val
+            # gate measures only noise and can never fire. The empirical test
+            # of a META edit is DEFERRED: accept on non-regression now, then
+            # judge the improver by its proposals over meta_eval_window
+            # generations (see _settle_meta). [2310.02304, 2309.16797]
+            val_ok = child_val >= parent_val - 1e-9
+            self._gate(pid, gen, "val", val_ok,
+                       child=child_val, parent=parent_val,
+                       detail="meta-only: agent unregressed; the improver "
+                              "itself is judged over the eval window")
+            if not val_ok:
+                self._reject(pid, gen, "val",
+                             f"meta-only edit regressed the agent: val "
+                             f"{child_val:.4f} < {parent_val:.4f}",
+                             parent, proposal)
+                return
+        else:
+            child_scores = self._paired_scores(child_val_book, suites[Split.VAL])
+            parent_scores = self._paired_scores(parent_val_book, suites[Split.VAL])
+            val_ok = accept_val(child_val, parent_val,
+                                self.cfg.acceptance_threshold,
+                                child_scores, parent_scores)
+            self._gate(pid, gen, "val", val_ok,
+                       child=child_val, parent=parent_val,
+                       threshold=self.cfg.acceptance_threshold,
+                       detail=f"{child_val:.4f} > {parent_val:.4f} + "
+                              f"{self.cfg.acceptance_threshold} "
+                              f"(net task gain >= 1)")
+            if not val_ok:
+                self._reject(pid, gen, "val",
+                             f"val {child_val:.4f} <= "
+                             f"{parent_val:.4f} + "
+                             f"{self.cfg.acceptance_threshold}", parent, proposal)
+                return
 
         # -- phase 5: correction (two-level acceptance) ---------------------------
         # Archive-acceptance: the candidate beats ITS parent -> it enters its
         # MAP-Elites niche as a stepping stone [1504.04909, 1901.01753].
         # Promotion: it must also beat the ACTIVE agent -> the deployed agent
         # can never ratchet down through weak sampled parents.
-        child_val = child_val_book.mean()
-        promoted = child_val > self._active_val
+        # A meta_only accept also deploys (the template), provisionally: it
+        # changes the improver, not the agent, so the active agent's val is
+        # untouched by construction.
+        promoted = child_val > self._active_val or meta_only
         if promoted:
             self.store.promote(result, proposal_id=pid, generation=gen)
             self._active_snapshot = dict(candidate)
-            self._active_val = child_val
+            if not meta_only:
+                self._active_val = child_val
         self.accepted += 1
         self._consecutive_rejections = 0
+        prior = [ok for _g, ok in self._outcomes]
+        self._outcomes.append((gen, True))
+        if meta_only:
+            # open the eval window: remember the pre-edit META versions so a
+            # failed window can revert, and the baseline success rate the
+            # window must not fall below
+            self._pending_meta = {
+                "proposal_id": pid, "generation": gen,
+                "window": self.cfg.meta_eval_window,
+                "pre": {aid: parent.spec_snapshot.get(aid, 0)
+                        for aid in result.versions},
+                "baseline": (sum(prior) / len(prior)) if prior else None,
+            }
         descriptor = (proposal.surface.value,) + tuple(
             self.objective.behavior_descriptors(child_val_book))
         ind = Individual(
@@ -437,7 +516,7 @@ class EvolutionEngine:
         stored = self.archive.add(ind)
         self.events.append(
             ACCEPT, phase=PHASE_CORRECT, generation=gen, proposal_id=pid,
-            promoted=promoted,
+            promoted=promoted, meta_provisional=meta_only,
             val_child=child_val, val_parent=parent_val_book.mean(),
             train_child=child_train.mean())
         self.events.append(
@@ -453,12 +532,82 @@ class EvolutionEngine:
             REFLECT, phase=PHASE_CORRECT, generation=gen, action="distill_insight",
             proposal_id=pid)
 
+    # -- META recursion: provisional acceptance + eval window -------------------
+
+    def _patch_is_meta_only(self, patch: Patch) -> bool:
+        """True iff every op touches META artifacts (agent spec unchanged).
+
+        Mixed patches (META + an agent surface) take the normal strict val
+        gate: the agent-visible part must pay for the whole patch.
+        """
+        if not patch.ops:
+            return False
+        for op in patch.ops:
+            if isinstance(op, CreateOp):
+                if op.type.value != "meta":
+                    return False
+            elif isinstance(op, (UpdateOp, DeleteOp, RestoreOp)):
+                if self._safe_type_of(op.artifact_id) != "meta":
+                    return False
+            else:
+                return False
+        return True
+
+    def _settle_meta(self, gen: int) -> None:
+        """Close a pending META eval window: confirm, or revert the edit.
+
+        A META-only edit was accepted provisionally on agent non-regression;
+        the empirical question - did the IMPROVER improve? - is answerable
+        only from the proposals it makes afterwards. If the window's proposal
+        success rate falls below the pre-edit baseline (or produces zero wins
+        where no baseline exists), the pre-edit META versions are restored
+        (append-only lineage); otherwise the edit is confirmed. The improver's
+        own evolution is thus itself empirically gated [2310.02304, 2309.16797].
+        """
+        p = self._pending_meta
+        if p is None or gen < p["generation"] + p["window"]:
+            return
+        window = [ok for g, ok in self._outcomes if p["generation"] < g <= gen]
+        rate = (sum(window) / len(window)) if window else 0.0
+        if p["baseline"] is None:
+            confirm = sum(window) > 0
+        else:
+            confirm = rate >= p["baseline"]
+        pid = p["proposal_id"]
+        span = [p["generation"] + 1, gen]
+        if confirm:
+            self._pending_meta = None
+            self.events.append(
+                META_CONFIRM, phase=PHASE_CORRECT, generation=gen,
+                proposal_id=pid, window=span, success_rate=round(rate, 4),
+                baseline=p["baseline"])
+            return
+        rid = f"meta-revert:{pid}"
+        restored: dict[str, int] = {}
+        for aid, version in sorted(p["pre"].items()):
+            if version == 0:  # did not exist pre-edit: deactivate again
+                self.store.delete(aid, proposal_id=rid, generation=gen)
+                self.store.promote(ApplyResult({aid: 0}), proposal_id=rid,
+                                   generation=gen)
+            else:
+                self.store.restore(aid, version, proposal_id=rid,
+                                   generation=gen)
+            restored[aid] = version
+        if self._active_snapshot is not None:
+            self._active_snapshot.update(p["pre"])
+        self._pending_meta = None
+        self.events.append(
+            META_REVERT, phase=PHASE_CORRECT, generation=gen,
+            proposal_id=pid, window=span, success_rate=round(rate, 4),
+            baseline=p["baseline"], restored=restored)
+
     # -- correction helpers -------------------------------------------------------
 
     def _reject(self, pid: str, gen: int, reason: str, detail: str,
                 parent: Individual, proposal=None) -> None:
         self.rejected += 1
         self._consecutive_rejections += 1
+        self._outcomes.append((gen, False))
         self.events.append(
             REJECT, phase=PHASE_CORRECT, generation=gen, proposal_id=pid,
             reason=reason, detail=detail)
@@ -489,6 +638,12 @@ class EvolutionEngine:
                                action="retire_insights", count=len(retired))
 
     # -- evaluation -------------------------------------------------------------
+
+    @staticmethod
+    def _paired_scores(book: ScoreBook, suite) -> list[float]:
+        """Per-task scores aligned to the suite's task order (paired gates)."""
+        by_id = {s.task_id: s.score for s in book.scores}
+        return [by_id[t.id] for t in suite.tasks]
 
     def _evaluate(self, mapping: dict[str, int], suite, phase: str,
                   label: str, generation: int) -> ScoreBook:

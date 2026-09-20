@@ -1,0 +1,6 @@
+{
+  "id": "val/09",
+  "prompt": "Implement `swap_case(s)` returning s with the case of every letter flipped.",
+  "function_name": "swap_case",
+  "hidden_tests": "assert swap_case('AbC') == 'aBc'\nassert swap_case('') == ''\nassert swap_case('xY') == 'Xy'\n"
+}

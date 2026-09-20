@@ -41,6 +41,7 @@ class RunConfig:
     screen_epsilon: float = 0.30  # screen passes at >= parent - epsilon
     acceptance_threshold: float = 0.02  # val(child) > val(parent) + threshold
     meta_every_k: int = 3  # slow loop cadence for META artifacts
+    meta_eval_window: int = 3  # generations a provisional META edit runs before confirm/revert
     max_patch_ops: int = 3  # bounded edits (ACE / SkillOpt discipline)
     max_playbook_sections: int = 12
 

@@ -1,0 +1,6 @@
+{
+  "id": "val/10",
+  "prompt": "Implement `chunk(xs, n)` returning xs split into consecutive lists of length n (the last may be shorter).",
+  "function_name": "chunk",
+  "hidden_tests": "assert chunk([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]\nassert chunk([], 3) == []\nassert chunk([1], 1) == [[1]]\n"
+}

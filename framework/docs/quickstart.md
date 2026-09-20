@@ -2,9 +2,10 @@
 
 A complete offline walkthrough in under a minute — no API key, no network.
 (The scripted demo provider plays both the agent and the improver; see
-`src/rsif/llm/demo.py`. The story it tells: the agent's val fitness goes
-0.6 → 0.8 → 1.0 through two promoted prompt edits; a third, weaker edit is
-kept as an archive stepping stone but **not** deployed.)
+`src/rsif/llm/demo.py`. The story it tells: on a 10-task held-out val suite
+the agent's fitness goes 0.4 → 0.6 → 1.0 through two promoted prompt edits;
+a third, weaker edit is kept as an archive stepping stone but **not**
+deployed.)
 
 ```bash
 cd framework
@@ -26,14 +27,14 @@ uv run rsif inspect --run ../runs/demo --filter kind=accept
 uv run rsif inspect --run ../runs/demo --artifact prompt/system
 
 # 4. evaluate the active agent
-uv run rsif run --run ../runs/demo --split val          # 1.0000 (5/5)
+uv run rsif run --run ../runs/demo --split val          # 1.0000 (10/10)
 
 # 5. unseal the test split on the archive best (bootstrap CI included)
 uv run rsif report --run ../runs/demo
 
 # 6. time travel (history is append-only; v2+ files are kept)
 uv run rsif rollback --run ../runs/demo --artifact prompt/system --to 1
-uv run rsif run --run ../runs/demo --split val          # back to 0.6000
+uv run rsif run --run ../runs/demo --split val          # back to 0.4000
 uv run rsif rollback --run ../runs/demo --artifact prompt/system --to 3
 ```
 
@@ -50,8 +51,10 @@ uv run --extra anthropic rsif evolve --run ../runs/live \
 
 META edits (the improver improving its own template) pause for an
 interactive y/N approval when stdin is a TTY; non-interactive runs deny
-them fail-closed. Hard budgets (`--budget-usd`, plus call/wall-clock caps
-in `config.json`) stop the run cleanly at any boundary.
+them fail-closed. An approved META edit is accepted provisionally and then
+confirmed or reverted based on the improver's proposal success rate over
+the next `meta_eval_window` generations. Hard budgets (`--budget-usd`, plus
+call/wall-clock caps in `config.json`) stop the run cleanly at any boundary.
 
 ## Where to look next
 

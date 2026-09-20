@@ -1,10 +1,19 @@
-"""Static AST scan for forbidden constructs, before any execution.
+"""Static AST scan for evolved code, before any execution.
 
 Defense in depth [AutoHarness 2603.03329 guard layers; DGM bug-catching
-2505.22954]: reject code that would escape the sandbox before we run it.
-The scan is advisory-but-authoritative for MODULE/SKILL artifacts - the
-runtime still runs everything in the subprocess sandbox, but the scan gives
-a cheap, explainable early rejection.
+2505.22954]: reject code that would escape policy before we run it.
+
+The scan is a WHITELIST, not a blacklist: a blacklist of forbidden modules is
+bypassable via transitive imports (`from rsif.commands import os` imports the
+trusted CLI module and binds its `os` attribute). Evolved code may import a
+curated set of pure-stdlib modules plus exactly one framework module - the
+module ABI - and nothing else.
+
+Threat-model honesty: MODULE code is exec'd in-process (it must implement the
+runtime ABI in the engine process), so this scan is the primary barrier for
+the architecture surface; SKILL code runs in the subprocess sandbox
+(`sandbox/exec.py`), where the scan is an early, explainable rejection ahead
+of the sandbox's own limits.
 """
 
 from __future__ import annotations
@@ -12,15 +21,18 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 
-FORBIDDEN_IMPORTS = {
-    "subprocess", "socket", "os", "shutil", "ctypes", "signal", "multiprocessing",
-    "pickle", "sys",  # sys is fine in the agent's code but blocked for module/skill
+# Pure / deterministic-enough stdlib modules evolved code may use. Anything
+# touching the OS, processes, network, or the interpreter itself is absent.
+ALLOWED_STDLIB = {
+    "abc", "ast", "bisect", "collections", "copy", "dataclasses", "datetime",
+    "decimal", "difflib", "enum", "fractions", "functools", "hashlib",
+    "heapq", "itertools", "json", "math", "numbers", "operator", "pprint",
+    "random", "re", "statistics", "string", "textwrap", "time", "typing",
+    "unicodedata", "uuid",
 }
 
-# Importing the framework's own trusted internals from an evolved artifact is
-# forbidden: modules see only ModuleContext, never the store/engine/sandbox.
-FORBIDDEN_IMPORT_PREFIXES = ("rsif.artifacts", "rsif.evolve", "rsif.safety",
-                             "rsif.observe")
+# The single framework import evolved code needs: the module ABI envelope.
+ALLOWED_RSIF = ("rsif.runtime.module_api",)
 
 
 @dataclass
@@ -45,9 +57,16 @@ def scan_code(source: str) -> ScanReport:
 
 
 def _check_import(name: str, lineno: int, violations: list[str]) -> None:
+    if name.startswith("rsif."):
+        if name not in ALLOWED_RSIF:
+            violations.append(
+                f"line {lineno}: framework import {name!r} not allowed "
+                f"(only {ALLOWED_RSIF[0]})")
+        return
+    if name == "rsif":
+        violations.append(f"line {lineno}: framework import {name!r} not allowed")
+        return
     top = name.split(".")[0]
-    if top in FORBIDDEN_IMPORTS:
-        violations.append(f"line {lineno}: forbidden import {name!r}")
-    for prefix in FORBIDDEN_IMPORT_PREFIXES:
-        if name == prefix or name.startswith(prefix + "."):
-            violations.append(f"line {lineno}: forbidden framework import {name!r}")
+    if top not in ALLOWED_STDLIB:
+        violations.append(
+            f"line {lineno}: import {name!r} not in the evolved-code whitelist")

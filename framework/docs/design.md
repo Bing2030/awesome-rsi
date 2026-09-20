@@ -74,7 +74,7 @@ phase-attributed** (observability with edit attribution [2604.25850]).
 | **1 Proposal** | Improver (a meta-agent running a META template) proposes one bounded change: surface, operator, hypothesis, ops. Prompt is assembled from checkout summary, archive frontier, recent lessons (reflections+insights) | `evolve/proposer.py` | STOP [2310.02304]; Promptbreeder [2309.16797] |
 | **2 Exploration** | Cheap cascade screen: candidate runs `screen_tasks` probe tasks; continues only if `score ≥ parent − ε` | `engine._one_proposal`, `evolve/selection.pass_screen` | AlphaEvolve cascade [2506.13131] |
 | **3 Design** | Proposal → concrete patch: ≤ `max_patch_ops` ops (bounded edits), operator validated against the catalog, `apply_patch` materializes candidate versions **without activation**; then static feasibility gates (AST scan for forbidden constructs; module-ABI load check) **before any execution** | `engine._one_proposal`, `artifacts/store.apply_patch` | ACE bounded ops [2510.04618]; SkillOpt [2605.23904]; guard layers [2603.03329] |
-| **4 Verification** | Execution-grounded gate chain: canary suite (`child ≥ parent`) → full train eval → **val acceptance** (`val(child) > val(parent) + θ`). LLM self-critique is advisory, never the accept signal | `evolve/selection.py`, engine gates | DGM [2505.22954]; SkillOpt [2605.23904]; self-correction negative result [2310.01798] |
+| **4 Verification** | Execution-grounded gate chain: canary suite (`child ≥ parent`) → full train eval → **val acceptance** (`val(child) > val(parent) + θ` with a paired net-gain floor; META-only patches defer to an eval window, §4.5). LLM self-critique is advisory, never the accept signal | `evolve/selection.py`, engine gates | DGM [2505.22954]; SkillOpt [2605.23904]; self-correction negative result [2310.01798] |
 | **5 Correction** | On reject: Reflexion reflection → episodic memory; periodic ExpeL distillation; on regression alarms: auto-rollback. On accept: **two-level acceptance** (§4.3) | `engine._reject`, `memory/`, `safety/rollback.py` | Reflexion [2303.11366]; ExpeL [2308.10144]; DGM backtracking |
 
 The loop *is* the framework's public contract: `EvolutionEngine.run()` drives
@@ -110,12 +110,17 @@ on a byte-identical golden event log.
 `evolve/archive.py`. Niches keyed by objective-supplied behavior descriptors
 (coding objective: `(surface, pass_band, steps_band)`); one **elite per
 cell**, ties broken by lower cost; **harmonic rank-biased** parent sampling
-(weight `1/(rank+1)`, all elites selectable) plus ε-reseeding of underfilled
-niches [1504.04909]. Every archived individual stays selectable — older or
-locally-weaker agents can seed later breakthroughs (stepping stones
+(weight `1/(rank+1)`, all elites selectable) plus **ε-reseeding of superseded
+lineages** — individuals displaced inside their own niche by a fitter
+sibling stay in history and re-enter parent sampling with probability ε
+[1504.04909, 2505.22954]. Every archived individual stays selectable —
+older or locally-weaker agents can seed later breakthroughs (stepping stones
 [2505.22954, 1901.01753]; DGM's greedy best-parent ablation scores far
-worse, §10). Persisted to `archive.json`. Verified: `tests/unit/test_evolve.py`
-(elitism, tie-break, frontier, rank bias, persistence).
+worse, §10). `parent_ref` pointers are recorded on every individual as
+lineage metadata (for `rsif inspect`); the *selection* pressure toward
+backtracking is the ε-reseed, not the pointers. Persisted to `archive.json`.
+Verified: `tests/unit/test_evolve.py` (elitism, tie-break, frontier, rank
+bias, ε-reseed from superseded, persistence).
 
 ### 4.2 Two-cadence scheduler — fast/slow loops
 `evolve/scheduler.py`. Task-surface artifacts (prompt/skill/memory/module)
@@ -127,8 +132,12 @@ rejection with no approval requested (`test_meta_and_module.py`).
 ### 4.3 Two-level acceptance — no ratcheting down
 A candidate may beat its *sampled* parent (a weak elite) while still being
 worse than the *active* agent. rsif separates:
-- **Archive-acceptance**: `val(child) > val(parent) + θ` → enters its niche
-  as a stepping stone [1504.04909, 1901.01753];
+- **Archive-acceptance**: `val(child) > val(parent) + θ` **with a paired
+  net-gain floor** — across the val tasks, the child must beat the parent on
+  at least one more task than it loses to it. On small suites a mean can
+  move by threshold amounts through reshuffled noise; a sub-task improvement
+  is not evidence (`selection.accept_val`). The final `rsif report` adds a
+  bootstrap CI over the sealed test split.
 - **Promotion**: additionally `val(child) > val(active)` → becomes the
   deployed agent.
 
@@ -149,12 +158,31 @@ check *before it is ever executed* (design-phase gates). Verified:
 present in retry requests), and lands in its own niche; `import os` module
 rejected pre-execution.
 
-### 4.5 META recursion — the improver improves itself
+### 4.5 META recursion — the improver improves itself, on a deferred gate
 The improver's prompt template and operator catalog are themselves META
-artifacts [2310.02304, 2309.16797]. An approved template edit in generation
-*k* is provably the template generation *k+1*'s improver runs (asserted on
-captured provider requests). Approval is **fail-closed**: no approver wired
-or denied → rejection (M7 tests).
+artifacts [2310.02304, 2309.16797]. A **META-only** patch leaves the agent
+spec byte-identical, so gating it on the immediate agent-val comparison
+would measure only noise (the M7-era test that "proved" recursion was in
+fact accepting on unrelated scripted answers — corrected in the M13 review).
+rsif instead runs each META edit as a controlled experiment:
+
+1. **Provisional acceptance** on agent *non-regression* (val + canary
+   unchanged), after the normal scan/surface/approval gates. One META edit
+   at a time — a second while a window is open is rejected (`meta_pending`).
+2. **Deferred evaluation** over `meta_eval_window` generations: the evolved
+   template really formats the next generations' improver calls (asserted
+   on captured requests). The window's proposal success rate is compared to
+   the pre-edit baseline.
+3. **Confirm or revert**: worse than baseline (or zero wins with no
+   baseline) → the pre-edit META versions are restored (append-only
+   `restore` lineage, `meta_revert` event); otherwise `meta_confirm`.
+
+Mixed patches (META + an agent surface) take the normal strict val gate —
+the agent-visible part must pay for the whole patch. Approval is
+**fail-closed**: no approver wired or denied → rejection. Verified:
+`test_meta_and_module.py` (provisional accept → revert-on-bad-window with
+the original template provably re-used afterwards; confirm-on-winning-window;
+`meta_pending`).
 
 ### 4.6 Memory — three layers
 `memory/`:
@@ -174,11 +202,11 @@ dissimilar; distill/retire; playbook rejects unbounded rewrites).
 
 | Mechanism | Code | Reference | Test |
 |---|---|---|---|
-| Hard budget (calls / USD / wall) checked before every proposal; clean abort, no partial proposals | `safety/budget.py`, engine | cost blowout risk [2506.13131] | `test_safety_loop.py` |
+| Hard budget (calls / USD / wall) checked before every proposal **and after every recorded call** — overshoot is bounded to one call, not one proposal; clean abort, no partial proposals | `safety/budget.py`, engine | cost blowout risk [2506.13131] | `test_safety_loop.py` |
 | Drift monitor: canary/active regression → **auto-rollback** to archive best (`restore` lineage, extras deactivated); stagnation → approval-or-stop | `safety/drift.py`, `safety/rollback.py` | misevolution [2509.26354, 2603.06333] | `test_safety.py`, `test_safety_loop.py` |
 | Human approval for META edits and drift continuation (`CLIApprover`, fail-closed on EOF/non-tty) | `safety/approvers.py` | AutoHarness guard layers [2603.03329] | `test_meta_and_module.py` |
-| Static scan: forbidden imports/constructs in evolved code, before execution | `sandbox/guards.py`, engine design gates | [2603.03329] | loader/scan tests |
-| Sandbox: subprocess `python -I`, temp cwd, wall/CPU timeouts, rlimits — one code path for agent code, skill execution, and unit-test scoring | `sandbox/exec.py` | — | `tests/unit/test_sandbox*.py` |
+| Static scan: **import whitelist** for evolved code (curated pure stdlib + `rsif.runtime.module_api` only), before execution. Honest boundary: MODULE code is exec'd in-process behind this scan; a blacklist would be bypassable via transitive imports (`from rsif.commands import os`) | `sandbox/guards.py`, engine design gates | [2603.03329] | `test_sandbox.py`, loader tests |
+| Sandbox: subprocess `python -I`, temp cwd, wall/CPU timeouts, rlimits, **minimal environment (PATH only — no secrets)** — one code path for agent code, skill execution, and unit-test scoring. Residual limitation: network egress from the child is not blocked (no seccomp on macOS); the scrubbed env removes the exfiltration prize, not the socket | `sandbox/exec.py` | — | `tests/unit/test_sandbox*.py` |
 
 Misevolution is treated as *expected*, not exceptional [2509.26354].
 
@@ -224,7 +252,7 @@ that runs the whole CLI lifecycle deterministically with no network.
 ## 8. Observability
 
 `events.jsonl` is the backbone: kinds
-`proposal|patch|screen|eval|gate|accept|reject|reflect|archive_update|rollback|budget|llm_call|approval|run_start|run_end`,
+`proposal|patch|screen|eval|gate|accept|reject|reflect|archive_update|rollback|budget|llm_call|approval|run_start|run_end|error|meta_confirm|meta_revert`,
 each phase-attributed. It is (a) what `rsif status/inspect` render,
 (b) what reflections/insights read, (c) the replay source. CLI:
 `init/run/evolve/status/inspect/rollback/report` (`rsif --help`); rendering

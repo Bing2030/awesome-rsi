@@ -28,6 +28,7 @@ from rsif.runtime.module_api import (
     ToolAction,
 )
 from rsif.runtime.types import Attempt, TraceStep
+from rsif.safety.budget import BudgetExhausted
 from rsif.spec import AgentSpec, SkillSpec
 
 
@@ -94,9 +95,10 @@ class AgentRuntime:
                 wall_s=time.monotonic() - start, trace=trace,
                 error="max_steps exhausted",
             )
-        except ProviderError:
-            # a provider/connection failure means no evaluation is trustworthy:
-            # propagate so the engine aborts cleanly rather than scoring 0.
+        except (ProviderError, BudgetExhausted):
+            # a provider/connection failure means no evaluation is trustworthy,
+            # and a blown budget must abort now: propagate both so the engine
+            # aborts cleanly rather than scoring the attempt 0.
             raise
         except Exception as e:  # noqa: BLE001 - capture, don't crash the loop
             return Attempt(

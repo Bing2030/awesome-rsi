@@ -35,11 +35,13 @@ APPROVAL = "approval"
 RUN_START = "run_start"
 RUN_END = "run_end"
 ERROR = "error"
+META_CONFIRM = "meta_confirm"
+META_REVERT = "meta_revert"
 
 KINDS = (
     PROPOSAL, PATCH, SCREEN, EVAL, GATE, ACCEPT, REJECT, REFLECT,
     ARCHIVE_UPDATE, ROLLBACK, BUDGET, LLM_CALL, APPROVAL, RUN_START, RUN_END,
-    ERROR,
+    ERROR, META_CONFIRM, META_REVERT,
 )
 
 # Loop phases, matching the framework's design loop.

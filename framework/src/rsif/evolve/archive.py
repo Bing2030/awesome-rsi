@@ -89,11 +89,17 @@ class Archive:
         return sorted(self._cells.values(),
                       key=lambda i: (i.fitness, -i.cost), reverse=True)
 
-    def underfilled_descriptors(self) -> list[tuple]:
-        """Descriptors present in history but not currently held (exploration
-        pressure toward rare niches)."""
-        seen = set(self._cells)
-        return [d for d in {i.descriptor for i in self._history} if d not in seen]
+    def superseded_individuals(self) -> list[Individual]:
+        """Individuals once stored but since replaced within their niche.
+
+        This is the archive's lost genetic material - still-valid agents that
+        a better same-niche sibling displaced. Re-selecting them is the
+        backtracking pressure (DGM revisits ancestors when a lineage stalls
+        [2505.22954]); `parent_ref` lineage pointers are recorded for the
+        same reason but selection pressure is realized here.
+        """
+        held = {id(i) for i in self._cells.values()}
+        return [i for i in self._history if id(i) not in held]
 
     def cells(self) -> dict[tuple, Individual]:
         return dict(self._cells)
@@ -104,20 +110,20 @@ class Archive:
     # -- sampling -------------------------------------------------------------
 
     def sample_parent(self, rng, epsilon: float = 0.2) -> Individual | None:
-        """Rank-biased over the frontier, with epsilon to underfilled niches.
+        """Rank-biased over the frontier, with epsilon to superseded lineages.
 
         Every elite stays selectable (quality-diversity keeps rare niches in
         play); fitter ones are likelier parents via harmonic weights
-        1/(rank+1) [1504.04909 + DGM-style exploitation 2505.22954].
+        1/(rank+1) [1504.04909 + DGM-style exploitation 2505.22954]. With
+        probability epsilon the parent is drawn from superseded individuals
+        instead - reintroducing displaced genetic material is the archive's
+        backtracking pressure [2505.22954].
         """
         if not self._cells:
             return None
-        underfilled = self.underfilled_descriptors()
-        if underfilled and rng.random() < epsilon:
-            # re-seed from a niche we've seen but lost (backtracking pressure)
-            hist = [i for i in self._history if i.descriptor in underfilled]
-            if hist:
-                return hist[-1]
+        superseded = self.superseded_individuals()
+        if superseded and rng.random() < epsilon:
+            return rng.choice(superseded)
         frontier = self.frontier()
         weights = [1.0 / (i + 1) for i in range(len(frontier))]
         r = rng.random() * sum(weights)

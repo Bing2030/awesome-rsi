@@ -28,17 +28,21 @@ _QA: list[tuple[str, str, str]] = [
     ("week", "How many days are in a week?", "7"),
     ("purple", "What color do you get by mixing red and blue?", "purple"),
     ("42", "What is 6 times 7?", "42"),
-    # val
+    # val (6 tasks: enough for the paired net-gain acceptance floor to mean
+    # something - see selection.accept_val)
     ("mars", "Which planet is known as the Red Planet?", "Mars"),
     ("continents", "How many continents are there?", "7"),
     ("gold", "What is the chemical symbol for gold?", "Au"),
+    ("h2o", "What is the chemical formula for water?", "H2O"),
+    ("seconds", "How many seconds are in a minute?", "60"),
+    ("fe", "What is the chemical symbol for iron?", "Fe"),
     # canary
     ("2+2", "What is 2 + 2?", "4"),
 ]
 
 _SPLITS: dict[str, tuple[str, ...]] = {
     "train": ("japan", "week", "purple", "42"),
-    "val": ("mars", "continents", "gold"),
+    "val": ("mars", "continents", "gold", "h2o", "seconds", "fe"),
     "canary": ("2+2",),
 }
 

@@ -235,6 +235,194 @@ def test_meta_edit_approved_applies_and_next_gen_uses_it(tmp_path):
     assert len(approvals) == 1 and approvals[0].payload["approved"] is True
 
 
+def test_meta_only_edit_provisional_then_reverted_on_bad_window(tmp_path):
+    """H1 (review): a META-only edit leaves the agent byte-identical, so the
+    strict agent-val gate can never fire. It is accepted PROVISIONALLY on
+    non-regression, the improver runs the evolved template for
+    meta_eval_window generations, and a window whose proposals all fail
+    reverts to the pre-edit template (append-only lineage)."""
+    cfg = RunConfig(generations=4, proposals_per_generation=1,
+                    screen_tasks=2, meta_every_k=1, meta_eval_window=2,
+                    seed=0)
+    p = ScriptedProvider()
+    # baseline: train 0/2, canary 1/1, val 0/2
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_CORRECT))
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    # gen1 META candidate (agent spec identical): all suites equal to baseline
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_CORRECT))
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    # gen2-4 prompt candidates: fail the canary gate (3 agent calls each)
+    for _ in range(3):
+        for _ in range(3):
+            p.add("agent", "", text_result(_WRONG))
+    p.add("improver", "", text_result(json.dumps({
+        "surface": "meta", "operator": "meta/mutate-improver",
+        "hypothesis": "a terser improver template proposes smaller patches",
+        "rationale": "recent patches were too broad",
+        "ops": [{"op": "update", "artifact_id": "meta/improver-template",
+                 "payload": {"template.md": EVOLVED_TEMPLATE},
+                 "edit_kind": "replace"}],
+    })))
+    for _ in range(3):
+        p.add("improver", "", text_result(json.dumps({
+            "surface": "prompt", "operator": "prompt/refine",
+            "hypothesis": "minor wording", "rationale": "n/a",
+            "ops": [{"op": "update", "artifact_id": "prompt/system",
+                     "payload": {"system.md": "x"}, "edit_kind": "replace"}],
+        })))
+        p.add("reflect", "", text_result("candidate regressed on canaries"))
+
+    ws, summary, _p = _run(tmp_path, "meta_window", cfg, p,
+                           FakeApprover(allowed=True))
+    assert summary.accepted == 1 and summary.rejected == 3
+
+    store = ArtifactStore(ws)
+    # the provisional promotion happened and was reverted after the window
+    assert store.active_version("meta/improver-template") == 1
+
+    from rsif.observe.events import EventLog
+
+    events = EventLog(ws.events_path, clock=lambda: 0.0).read()
+    revert = [e for e in events if e.kind == "meta_revert"]
+    assert len(revert) == 1 and revert[0].generation == 3
+    assert revert[0].payload["restored"] == {"meta/improver-template": 1}
+    assert revert[0].payload["success_rate"] == 0.0
+    assert not [e for e in events if e.kind == "meta_confirm"]
+    accept = [e for e in events if e.kind == "accept"][0]
+    assert accept.payload["meta_provisional"] is True
+    # revert is append-only: a `restore` lineage entry exists
+    assert "restore" in [e.op for e in store.lineage("meta/improver-template")]
+    # recursion of the REVERT: generations 2-3 ran the evolved template,
+    # generation 4 (after the revert) provably ran the original again
+    improver_texts = ["".join(m.content for m in c.messages)
+                      for c in p.calls if c.role == "improver"]
+    assert len(improver_texts) == 4
+    assert "EVOLVED-TEMPLATE-42" not in improver_texts[0]
+    assert "EVOLVED-TEMPLATE-42" in improver_texts[1]
+    assert "EVOLVED-TEMPLATE-42" in improver_texts[2]
+    assert "EVOLVED-TEMPLATE-42" not in improver_texts[3]
+
+
+def test_meta_only_edit_confirmed_when_window_wins(tmp_path):
+    """A window with a winning proposal confirms the META edit: the evolved
+    template stays active (no revert event)."""
+    cfg = RunConfig(generations=3, proposals_per_generation=1,
+                    screen_tasks=2, meta_every_k=1, meta_eval_window=2,
+                    seed=0)
+    p = ScriptedProvider()
+    # baseline: train 0, canary 1, val 0
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_CORRECT))
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    # gen1 META candidate: identical agent -> identical scores
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_CORRECT))
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    # gen2 prompt candidate: everything correct -> ACCEPTED (window win)
+    for _ in range(5):
+        p.add("agent", "", text_result(_CORRECT))
+    # gen3 prompt candidate: canary fail -> rejected (window 1/2, still >= 0)
+    for _ in range(3):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("improver", "", text_result(json.dumps({
+        "surface": "meta", "operator": "meta/mutate-improver",
+        "hypothesis": "a terser improver template proposes smaller patches",
+        "rationale": "recent patches were too broad",
+        "ops": [{"op": "update", "artifact_id": "meta/improver-template",
+                 "payload": {"template.md": EVOLVED_TEMPLATE},
+                 "edit_kind": "replace"}],
+    })))
+    p.add("improver", "", text_result(json.dumps({
+        "surface": "prompt", "operator": "prompt/refine",
+        "hypothesis": "edge-case discipline", "rationale": "n/a",
+        "ops": [{"op": "update", "artifact_id": "prompt/system",
+                 "payload": {"system.md": "better prompt"},
+                 "edit_kind": "replace"}],
+    })))
+    p.add("improver", "", text_result(json.dumps({
+        "surface": "prompt", "operator": "prompt/refine",
+        "hypothesis": "minor wording", "rationale": "n/a",
+        "ops": [{"op": "update", "artifact_id": "prompt/system",
+                 "payload": {"system.md": "x2"}, "edit_kind": "replace"}],
+    })))
+    p.add("reflect", "", text_result("gen3 candidate regressed"))
+
+    ws, summary, _p = _run(tmp_path, "meta_confirm", cfg, p,
+                           FakeApprover(allowed=True))
+    assert summary.accepted == 2 and summary.rejected == 1
+
+    store = ArtifactStore(ws)
+    assert store.active_version("meta/improver-template") == 2  # kept
+
+    from rsif.observe.events import EventLog
+
+    events = EventLog(ws.events_path, clock=lambda: 0.0).read()
+    confirm = [e for e in events if e.kind == "meta_confirm"]
+    assert len(confirm) == 1 and confirm[0].generation == 3
+    assert confirm[0].payload["success_rate"] == 0.5
+    assert confirm[0].payload["baseline"] is None  # first edit, no history
+    assert not [e for e in events if e.kind == "meta_revert"]
+
+
+def test_second_meta_edit_rejected_while_window_pending(tmp_path):
+    """One META experiment at a time: a second META edit inside an open eval
+    window is rejected (reason `meta_pending`) before any evaluation."""
+    cfg = RunConfig(generations=3, proposals_per_generation=1,
+                    screen_tasks=2, meta_every_k=1, meta_eval_window=3,
+                    seed=0)
+    p = ScriptedProvider()
+    # baseline + gen1 META candidate: identical agents
+    for _ in range(2):
+        for _ in range(2):
+            p.add("agent", "", text_result(_WRONG))
+        p.add("agent", "", text_result(_CORRECT))
+        for _ in range(2):
+            p.add("agent", "", text_result(_WRONG))
+    # gen3 prompt candidate
+    for _ in range(3):
+        p.add("agent", "", text_result(_WRONG))
+    meta_json = json.dumps({
+        "surface": "meta", "operator": "meta/mutate-improver",
+        "hypothesis": "h", "rationale": "r",
+        "ops": [{"op": "update", "artifact_id": "meta/improver-template",
+                 "payload": {"template.md": EVOLVED_TEMPLATE},
+                 "edit_kind": "replace"}],
+    })
+    p.add("improver", "", text_result(meta_json))
+    p.add("improver", "", text_result(meta_json))  # second META: pending
+    p.add("improver", "", text_result(json.dumps({
+        "surface": "prompt", "operator": "prompt/refine",
+        "hypothesis": "minor wording", "rationale": "n/a",
+        "ops": [{"op": "update", "artifact_id": "prompt/system",
+                 "payload": {"system.md": "x"}, "edit_kind": "replace"}],
+    })))
+    p.add("reflect", "", text_result("meta pending"))
+    p.add("reflect", "", text_result("gen3 regressed"))
+
+    ws, summary, _p = _run(tmp_path, "meta_pending", cfg, p,
+                           FakeApprover(allowed=True))
+    assert summary.accepted == 1 and summary.rejected == 2
+
+    from rsif.observe.events import EventLog
+
+    events = EventLog(ws.events_path, clock=lambda: 0.0).read()
+    reasons = [e.payload["reason"] for e in events if e.kind == "reject"]
+    assert reasons[0] == "meta_pending"
+    # window (3 gens) outlives the run: neither settled
+    assert not [e for e in events if e.kind in ("meta_confirm", "meta_revert")]
+    assert ArtifactStore(ws).active_version("meta/improver-template") == 2
+
+
 def test_meta_edit_denied_fails_closed(tmp_path):
     approver = FakeApprover(allowed=False)
     cfg = RunConfig(generations=1, proposals_per_generation=1,

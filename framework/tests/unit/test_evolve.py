@@ -85,15 +85,34 @@ def test_archive_separate_niches_and_tie_break():
     assert a.cells()[("prompt", 3)].cost == 0.5
 
 
-def test_archive_underfilled_and_history():
+def test_archive_superseded_and_history():
     a = Archive()
     a.add(_ind(("a",), 0.5))
     a.add(_ind(("b",), 0.2))
-    a.add(_ind(("b",), 0.9))  # replaces ("b",) incumbent
-    assert a.underfilled_descriptors() == []  # both niches held
-    # now the better individual vacates no niche... drop a niche by hand:
-    a._cells.pop(("a",))
-    assert a.underfilled_descriptors() == [("a",)]
+    assert a.superseded_individuals() == []  # both niches held
+    a.add(_ind(("b",), 0.9))  # replaces the ("b",) incumbent
+    superseded = a.superseded_individuals()
+    assert [i.descriptor for i in superseded] == [("b",)]
+    assert superseded[0].fitness == 0.2  # the displaced, weaker predecessor
+
+
+def test_sample_parent_epsilon_reseeds_from_superseded():
+    """The backtracking pressure is real: with epsilon=1 the parent is drawn
+    from superseded lineages whenever any exist [2505.22954]."""
+    import random
+
+    a = Archive()
+    a.add(_ind(("a",), 0.5))
+    a.add(_ind(("b",), 0.2))   # first ("b",) incumbent
+    a.add(_ind(("b",), 0.9))   # replaces it -> the 0.2 individual is superseded
+    rng = random.Random(0)
+    picks = [a.sample_parent(rng, epsilon=1.0) for _ in range(10)]
+    assert {p.descriptor for p in picks} == {("b",)}
+    assert {p.fitness for p in picks} == {0.2}  # superseded, not the elite
+    # with no superseded material, epsilon falls through to frontier sampling
+    b = Archive()
+    b.add(_ind(("only",), 0.7))
+    assert b.sample_parent(random.Random(0), epsilon=1.0).descriptor == ("only",)
 
 
 def test_archive_frontier_sorted():

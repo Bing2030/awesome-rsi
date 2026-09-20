@@ -1,0 +1,6 @@
+{
+  "id": "val/07",
+  "prompt": "Implement `count_words(s)` returning the number of whitespace-separated words in s.",
+  "function_name": "count_words",
+  "hidden_tests": "assert count_words('the quick brown fox') == 4\nassert count_words('') == 0\nassert count_words('one') == 1\n"
+}

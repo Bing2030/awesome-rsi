@@ -47,7 +47,8 @@ def _baseline_val(events):
 
 
 def test_exact_match_objective_improves(tmp_path):
-    """A plain-text Q&A objective improves 1/3 -> 1.0 through the same loop."""
+    """A plain-text Q&A objective improves 1/6 -> 1.0 through the same loop
+    (6-task val suite: each accept clears the paired net-gain floor)."""
     from rsif.llm.demo import DemoProvider
 
     cfg = RunConfig(generations=2, proposals_per_generation=1,
@@ -64,12 +65,12 @@ def test_exact_match_objective_improves(tmp_path):
     assert summary.best_fitness == 1.0
     assert summary.best_descriptor == ("prompt", 4, 0)
 
-    # the improvement is real: baseline val 1/3, final val 3/3
+    # the improvement is real: baseline val 1/6, final val 6/6
     events = EventLog(ws.events_path, clock=lambda: 0.0).read()
-    assert _baseline_val(events) == 1 / 3
+    assert _baseline_val(events) == 1 / 6
     accepts = [e for e in events if e.kind == "accept"]
     assert [round(a.payload["val_child"], 4) for a in accepts] == \
-        [round(2 / 3, 4), 1.0]
+        [round(2 / 6, 4), 1.0]
     assert [a.payload["promoted"] for a in accepts] == [True, True]
 
     # the same five phases the flagship asserts, on a non-code objective

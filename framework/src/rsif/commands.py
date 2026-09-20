@@ -92,6 +92,7 @@ def cmd_run(args) -> int:
     from rsif.llm.base import ProviderError
     from rsif.objectives.base import Split, TaskSuite
     from rsif.observe import render
+    from rsif.safety.budget import BudgetExhausted
 
     ws = _workspace(args.run)
     cfg = RunConfig.from_dict(ws.config())
@@ -109,6 +110,9 @@ def cmd_run(args) -> int:
         book = engine.evaluate_active(suite, label=f"run-{args.split}")
     except ProviderError as e:
         print(f"provider error: {e}", file=sys.stderr)
+        return 2
+    except BudgetExhausted as e:
+        print(f"budget exhausted ({e.dimension})", file=sys.stderr)
         return 2
     print(render.scorebook(book, suite))
     print(f"fitness: {engine.objective.fitness(book):.4f}")
@@ -175,6 +179,7 @@ def cmd_report(args) -> int:
     from rsif.objectives.base import Split
     from rsif.objectives.base import bootstrap_ci as _ci
     from rsif.observe import render
+    from rsif.safety.budget import BudgetExhausted
 
     ws = _workspace(args.run)
     cfg = RunConfig.from_dict(ws.config())
@@ -192,6 +197,9 @@ def cmd_report(args) -> int:
                                         label="report-test")
     except ProviderError as e:
         print(f"provider error: {e}", file=sys.stderr)
+        return 2
+    except BudgetExhausted as e:
+        print(f"budget exhausted ({e.dimension})", file=sys.stderr)
         return 2
     lo, hi = _ci([s.score for s in book.scores], rng=random.Random(cfg.seed))
     note = (f"archive best: fitness {best.fitness:.4f} "

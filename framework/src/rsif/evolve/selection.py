@@ -26,9 +26,26 @@ def pass_screen(child_score: float, parent_score: float, epsilon: float) -> bool
     return child_score >= parent_score - epsilon
 
 
-def accept_val(child_val: float, parent_val: float, threshold: float) -> bool:
-    """Strict gate: accept only a held-out validation gain above threshold."""
-    return child_val > parent_val + threshold
+def accept_val(child_val: float, parent_val: float, threshold: float,
+               child_scores: list[float] | None = None,
+               parent_scores: list[float] | None = None) -> bool:
+    """Strict gate: accept only a held-out validation gain above threshold.
+
+    With per-task scores, additionally require at least one NET task gain
+    (gains - losses >= 1): on small suites the mean can move by threshold
+    amounts through reshuffled noise, and a sub-task improvement is not
+    evidence of anything. Paired per-task comparison is the cheap, honest
+    noise floor at the gate; the bootstrap CI in `rsif report` is the final
+    check. [2605.23904 held-out acceptance; 2510.16657 noise guard]
+    """
+    if not child_val > parent_val + threshold:
+        return False
+    if child_scores is not None and parent_scores is not None:
+        gains = sum(1 for c, p in zip(child_scores, parent_scores) if c > p)
+        losses = sum(1 for c, p in zip(child_scores, parent_scores) if c < p)
+        if gains - losses < 1:
+            return False
+    return True
 
 
 def pass_canary(child_score: float, parent_score: float) -> bool:

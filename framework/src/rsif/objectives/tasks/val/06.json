@@ -1,0 +1,6 @@
+{
+  "id": "val/06",
+  "prompt": "Implement `sign(n)` returning -1 for negative n, 0 for zero, and 1 for positive n.",
+  "function_name": "sign",
+  "hidden_tests": "assert sign(-5) == -1\nassert sign(0) == 0\nassert sign(7) == 1\n"
+}

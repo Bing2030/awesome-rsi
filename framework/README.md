@@ -38,7 +38,9 @@ For a real model: `uv run --extra anthropic rsif init ../runs/live --provider an
 2. **Exploration** — cheap probe-task screening before full evaluation.
 3. **Design** — the patch materializes as concrete artifact edits (bounded: ≤ k ops).
 4. **Verification** — gate chain: static code scan → canary suite → train-split eval →
-   held-out **val-split acceptance** (`val(child) > val(parent) + threshold`).
+   held-out **val-split acceptance** (`val(child) > val(parent) + threshold`, with a
+   paired net-task-gain floor). META-only edits (the improver improving itself) are
+   accepted provisionally and confirmed or reverted by a deferred evaluation window.
 5. **Correction** — rejected proposals produce Reflexion-style reflections; regressions
    trigger rollback to an archived ancestor; the MAP-Elites archive keeps search
    open-ended instead of collapsing to one lineage.

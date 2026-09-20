@@ -87,6 +87,70 @@ def test_provider_error_aborts_cleanly(tmp_path):
                for e in events)
 
 
+def test_improver_provider_error_is_not_a_parse_reject(tmp_path):
+    """M1 (review): a provider failure during the improver call is an
+    infrastructure error, not a malformed proposal - it must abort the run,
+    never burn proposals as fake 'parse' rejections."""
+    from rsif.llm.base import CompletionRequest, CompletionResult, LLMProvider
+    from rsif.llm.base import Usage
+
+    class _FailsOnImprover(LLMProvider):
+        def __init__(self):
+            self.agent_calls = 0
+
+        def complete(self, req):
+            if req.role == "improver":
+                raise ConnectionError("gateway down")
+            self.agent_calls += 1
+            return CompletionResult(text=_WRONG, usage=Usage(1, 1))
+
+    cfg = RunConfig(generations=2, proposals_per_generation=1,
+                    screen_tasks=2, seed=0)
+    p = _FailsOnImprover()
+    ws, summary = _run("improver_err", cfg, p, root=tmp_path)
+    assert summary.stop_reason == "error:ConnectionError"
+
+    from rsif.observe.events import EventLog
+
+    events = EventLog(ws.events_path, clock=lambda: 0.0).read()
+    assert not [e for e in events if e.kind == "reject"]
+    assert not [e for e in events if e.kind == "reflect"]
+
+
+def test_budget_overshoot_bounded_to_one_call(tmp_path):
+    """M5 (review): the pre-proposal budget check alone allows overshoot of a
+    whole proposal; the per-call check aborts the moment a call pushes past
+    the limit (mid-proposal, generation-attributed budget event)."""
+    cfg = RunConfig(generations=2, proposals_per_generation=1,
+                    screen_tasks=2, budget_llm_calls=6, seed=0)
+    p = ScriptedProvider()
+    # baseline: exactly 5 calls (2 train + 1 canary + 2 val)
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_CORRECT))
+    for _ in range(2):
+        p.add("agent", "", text_result(_WRONG))
+    # gen1 p1: improver call #6 (== limit, allowed), first screen agent call
+    # #7 pushes past -> abort mid-proposal
+    p.add("improver", "", _improver("over budget"))
+    p.add("agent", "", text_result(_WRONG))
+    p.add("agent", "", text_result(_WRONG))  # never consumed
+
+    ws, summary = _run("overshoot", cfg, p, root=tmp_path)
+    assert summary.stop_reason == "budget:llm_calls"
+    assert summary.accepted == 0 and summary.rejected == 0
+
+    from rsif.observe.events import EventLog
+
+    events = EventLog(ws.events_path, clock=lambda: 0.0).read()
+    llm_calls = [e for e in events if e.kind == "llm_call"]
+    assert len(llm_calls) == 7  # 5 baseline + improver + one overshoot call
+    budget_events = [e for e in events if e.kind == "budget"]
+    assert budget_events[0].generation == 1
+    assert budget_events[0].payload["dimension"] == "llm_calls"
+    assert events[-1].payload["stop_reason"] == "budget:llm_calls"
+
+
 def test_two_level_acceptance_prevents_ratchet(tmp_path):
     """A candidate may beat its sampled (weak) parent - entering the archive
     as a stepping stone - without being allowed to replace the better ACTIVE

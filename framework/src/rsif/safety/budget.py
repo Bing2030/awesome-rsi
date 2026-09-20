@@ -15,6 +15,18 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 
+class BudgetExhausted(Exception):
+    """Raised mid-flight when a call pushes the run strictly past a limit.
+
+    Distinct from the pre-work `exhausted()` check (which fires at the limit):
+    this bounds overshoot to a single call instead of a whole proposal.
+    """
+
+    def __init__(self, dimension: str):
+        super().__init__(dimension)
+        self.dimension = dimension
+
+
 @dataclass
 class Budget:
     max_llm_calls: int = 2000
@@ -44,12 +56,29 @@ class Budget:
         return self.clock() - self._start
 
     def exhausted(self) -> str | None:
-        """The violated dimension's name, or None if budget remains."""
+        """The violated dimension's name, or None if budget remains.
+
+        Checked before starting new work: fires AT the limit.
+        """
         if self.max_llm_calls >= 0 and self.llm_calls >= self.max_llm_calls:
             return "llm_calls"
         if self.max_usd >= 0 and self.usd >= self.max_usd:
             return "usd"
         if self.max_wall_s >= 0 and self.wall_s() >= self.max_wall_s:
+            return "wall_clock"
+        return None
+
+    def overshot(self) -> str | None:
+        """The dimension a completed call has pushed strictly PAST the limit.
+
+        Checked after every recorded call: bounds overshoot to one call
+        instead of one proposal (~20-30 calls).
+        """
+        if self.max_llm_calls >= 0 and self.llm_calls > self.max_llm_calls:
+            return "llm_calls"
+        if self.max_usd >= 0 and self.usd > self.max_usd:
+            return "usd"
+        if self.max_wall_s >= 0 and self.wall_s() > self.max_wall_s:
             return "wall_clock"
         return None
 

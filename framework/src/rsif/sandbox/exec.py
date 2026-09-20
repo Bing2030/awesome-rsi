@@ -58,7 +58,13 @@ def run_python(
     cwd: str | None = None,
     extra_env: dict[str, str] | None = None,
 ) -> ExecutionOutcome:
-    """Run `source` as a Python program in a temp dir, return its outcome."""
+    """Run `source` as a Python program in a temp dir, return its outcome.
+
+    The child gets a minimal environment (PATH only): untrusted evolved code
+    must not see secrets such as API keys. Residual limitation, documented:
+    network egress from the child is NOT blocked (no seccomp on macOS) - the
+    scrubbed env removes the exfiltration prize, not the socket.
+    """
     with tempfile.TemporaryDirectory() as td:
         script = os.path.join(td, "main.py")
         with open(script, "w", encoding="utf-8") as fh:
@@ -69,7 +75,8 @@ def run_python(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd or td,
-            env={**os.environ, **(extra_env or {})},
+            env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                 **(extra_env or {})},
         )
         _apply_limits(kwargs, timeout_s, mem_mb)
 

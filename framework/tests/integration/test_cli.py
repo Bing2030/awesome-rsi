@@ -29,7 +29,7 @@ def test_cli_full_demo_lifecycle(tmp_path, capsys):
     assert "objective:   code-tasks" in out
     assert "3 accepted   0 rejected" in out
     assert "[prompt, 4, 0] | 1.0000  | 2   | g2p1" in out
-    assert "[seed, 2, 0]   | 0.6000  | 0   | seed" in out
+    assert "[seed, 1, 0]   | 0.4000  | 0   | seed" in out
     assert "prompt/system          | v3" in out  # active agent = level-3 strategy
     assert "alarms:      none" in out
 
@@ -50,11 +50,11 @@ def test_cli_full_demo_lifecycle(tmp_path, capsys):
     assert main(["run", "--run", str(run), "--split", "val",
                  "--tasks", "val/99"]) == 2
 
-    # -- rollback: v1 (seed strategy) scores 0.6; restore v3 -> 1.0 ------------
+    # -- rollback: v1 (seed strategy) scores 0.4; restore v3 -> 1.0 ------------
     assert main(["rollback", "--run", str(run),
                  "--artifact", "prompt/system", "--to", "1"]) == 0
     assert main(["run", "--run", str(run), "--split", "val"]) == 0
-    assert "fitness: 0.6000" in capsys.readouterr().out
+    assert "fitness: 0.4000" in capsys.readouterr().out
     assert main(["inspect", "--run", str(run), "--artifact", "prompt/system"]) == 0
     assert "restore | v4 -> v1" in capsys.readouterr().out
     assert main(["rollback", "--run", str(run),
@@ -95,13 +95,17 @@ def test_cli_demo_is_deterministic_across_processes(tmp_path):
 
 def test_cli_demo_story_matches_expected_scores(tmp_path):
     """The scripted demo is not just 'it runs': the baseline/level-2/level-3
-    val scores are the designed 0.6 / 0.8 / 1.0 and only real improvements
-    get promoted."""
+    val scores are the designed 0.4 / 0.6 / 1.0 (10-task val suite) and only
+    real improvements get promoted."""
     run = _init_evolve(tmp_path, "story")
     events = EventLog(run / "events.jsonl").read()
     accepts = [e for e in events if e.kind == "accept"]
-    assert [a.payload["val_child"] for a in accepts] == [0.8, 1.0, 0.8]
+    assert [a.payload["val_child"] for a in accepts] == [0.6, 1.0, 0.9]
     assert [a.payload["promoted"] for a in accepts] == [True, True, False]
+    # the paired net-gain floor is on every val gate
+    val_gates = [e for e in events if e.kind == "gate"
+                 and e.payload["gate"] == "val"]
+    assert all("net task gain" in g.payload["detail"] for g in val_gates)
 
     checkout = json.loads((run / "checkout.json").read_text())
     assert checkout["prompt/system"] == 3  # level-3 strategy is the active agent
@@ -109,4 +113,4 @@ def test_cli_demo_story_matches_expected_scores(tmp_path):
     baseline_val = next(e.payload["score"] for e in events
                         if e.kind == "eval" and e.payload.get("label") == "baseline"
                         and e.payload["suite"] == "val")
-    assert baseline_val == 0.6
+    assert baseline_val == 0.4

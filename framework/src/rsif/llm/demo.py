@@ -44,6 +44,25 @@ SOLUTIONS: dict[str, str] = {
     "flatten": "def flatten(xs):\n    out = []\n    for sub in xs:\n        out.extend(sub)\n    return out\n",
     "is_prime": "def is_prime(n):\n    if n < 2:\n        return False\n    i = 2\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 1\n    return True\n",
     "longest": "def longest(words):\n    best = words[0]\n    for w in words:\n        if len(w) > len(best):\n            best = w\n    return best\n",
+    # val (second pack - H3 review: larger val suites shrink the noise floor)
+    "sign": "def sign(n):\n    return -1 if n < 0 else (1 if n > 0 else 0)\n",
+    "count_words": "def count_words(s):\n    return len(s.split())\n",
+    "second_max": (
+        "def second_max(xs):\n"
+        "    m1 = m2 = None\n"
+        "    for x in xs:\n"
+        "        if m1 is None or x > m1:\n"
+        "            m2 = m1\n"
+        "            m1 = x\n"
+        "        elif x != m1 and (m2 is None or x > m2):\n"
+        "            m2 = x\n"
+        "    return m2\n"
+    ),
+    "swap_case": "def swap_case(s):\n    return s.swapcase()\n",
+    "chunk": (
+        "def chunk(xs, n):\n"
+        "    return [xs[i:i + n] for i in range(0, len(xs), n)]\n"
+    ),
     # test
     "unique": "def unique(xs):\n    out = []\n    for x in xs:\n        if x not in out:\n            out.append(x)\n    return out\n",
     "is_anagram": 'def is_anagram(a, b):\n    ca = sorted(a.replace(" ", "").lower())\n    cb = sorted(b.replace(" ", "").lower())\n    return ca == cb\n',
@@ -66,14 +85,14 @@ SOLUTIONS: dict[str, str] = {
 
 # Capability per strategy level: the agent solves a task iff its function
 # name is enabled at the active level. Level 1 = the seed prompt.
-#   level 1: train 3/8, canary 3/3, val 3/5
-#   level 2: train 6/8, canary 3/3, val 4/5   (accepted over level 1)
-#   level 3: everything                       (accepted over level 2)
-#   level 4: everything except `longest`      (plausible regression: val 4/5)
+#   level 1: train 3/8, canary 3/3, val 4/10
+#   level 2: train 6/8, canary 3/3, val 6/10   (accepted over level 1)
+#   level 3: everything                        (accepted over level 2)
+#   level 4: everything except `longest`       (plausible regression: val 9/10)
 _ABILITY: dict[int, set[str]] = {
-    1: {"add", "is_even", "reverse", "sum_list", "gcd", "flatten"},
+    1: {"add", "is_even", "reverse", "sum_list", "gcd", "flatten", "sign"},
     2: {"add", "is_even", "reverse", "max_of", "factorial", "count_vowels",
-        "sum_list", "gcd", "flatten", "is_prime"},
+        "sum_list", "gcd", "flatten", "is_prime", "sign", "count_words"},
     3: set(SOLUTIONS),
     4: set(SOLUTIONS) - {"longest"},
 }
@@ -164,16 +183,22 @@ _QA_QUESTIONS: list[tuple[str, str]] = [
     ("Which planet is known as the Red Planet?", "mars"),
     ("How many continents are there?", "continents"),
     ("What is the chemical symbol for gold?", "gold"),
+    ("What is the chemical formula for water?", "h2o"),
+    ("How many seconds are in a minute?", "seconds"),
+    ("What is the chemical symbol for iron?", "fe"),
     ("What is 2 + 2?", "2+2"),
 ]
 
 _QA_ANSWERS: dict[str, str] = {
     "japan": "Tokyo", "week": "7", "purple": "purple", "42": "42",
-    "mars": "Mars", "continents": "7", "gold": "Au", "2+2": "4",
+    "mars": "Mars", "continents": "7", "gold": "Au", "h2o": "H2O",
+    "seconds": "60", "fe": "Fe", "2+2": "4",
 }
 
 # Capability per level: baseline solves 2 train + canary + 1 val; level 2
 # and 3 add facts; level 4 drops one val fact (a regression to reject).
+# Val = mars, continents, gold, h2o, seconds, fe (6 tasks):
+#   level 1: 1/6   level 2: 2/6   level 3: 6/6   level 4: 5/6
 _QA_ABILITY: dict[int, set[str]] = {
     1: {"japan", "week", "2+2", "mars"},
     2: {"japan", "week", "purple", "2+2", "mars", "continents"},

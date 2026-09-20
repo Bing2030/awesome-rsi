@@ -60,6 +60,13 @@ _SOLUTIONS = {
                  "        if n % i == 0:\n            return False\n"
                  "        i += 1\n    return True\n"),
     "longest": "def longest(words):\n    return max(words, key=len)\n",
+    "sign": "def sign(n):\n    return -1 if n < 0 else (1 if n > 0 else 0)\n",
+    "count_words": "def count_words(s):\n    return len(s.split())\n",
+    "second_max": ("def second_max(xs):\n    return sorted(set(xs))[-2] "
+                   "if len(set(xs)) > 1 else None\n"),
+    "swap_case": "def swap_case(s):\n    return s.swapcase()\n",
+    "chunk": ("def chunk(xs, n):\n"
+              "    return [xs[i:i + n] for i in range(0, len(xs), n)]\n"),
 }
 
 
@@ -90,24 +97,24 @@ def _scripted_provider(obj: CodeTasksObjective) -> ScriptedProvider:
     suites = obj.suites()
     train = suites[Split.TRAIN].tasks      # 8 tasks, sorted-file order
     canary = suites[Split.CANARY].tasks    # 3 tasks
-    val = suites[Split.VAL].tasks          # 5 tasks
+    val = suites[Split.VAL].tasks          # 10 tasks
 
     def block(tasks, n_correct):
         for i, t in enumerate(tasks):
             p.add("agent", "", _answer(t, i < n_correct))
 
-    # baseline: train 3/8, canary 3/3, val 2/5 -> val fitness 0.40
+    # baseline: train 3/8, canary 3/3, val 4/10 -> val fitness 0.40
     block(train, 3)
     block(canary, 3)
-    block(val, 2)
-    # candidate A: train 5/8 (screen pass), canary 3/3, val 4/5 -> 0.80 ACCEPT
+    block(val, 4)
+    # candidate A: train 5/8 (screen pass), canary 3/3, val 8/10 -> 0.80 ACCEPT
     block(train, 5)
     block(canary, 3)
-    block(val, 4)
-    # candidate B: train 4/8 (screen pass), canary 3/3, val 2/5 -> REJECT on val
+    block(val, 8)
+    # candidate B: train 4/8 (screen pass), canary 3/3, val 4/10 -> REJECT on val
     block(train, 4)
     block(canary, 3)
-    block(val, 2)
+    block(val, 4)
 
     # improver: A then B (FIFO)
     p.add("improver", "", text_result(_improver_json(

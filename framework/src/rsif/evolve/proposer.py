@@ -2,7 +2,7 @@
 
 The improver's prompt is assembled from the *active* improver template (a
 META artifact - so the improver's own strategy evolves), the current checkout
-summary, the archive frontier + underfilled niches, and recent lessons
+summary, the archive frontier + superseded lineages, and recent lessons
 (reflections + insights). Its response is parsed into a Proposal.
 
 Grounding: STOP improver [arXiv 2310.02304]; Promptbreeder task + mutation
@@ -79,10 +79,11 @@ class Improver:
             lines.append(f"- {'/'.join(str(d) for d in ind.descriptor)}: "
                          f"fitness={ind.fitness:.4f} gen={ind.generation} "
                          f"proposal={ind.proposal_id or 'seed'}")
-        underfilled = archive.underfilled_descriptors()
-        if underfilled:
-            lines.append(f"underfilled niches worth revisiting: "
-                         f"{['/'.join(str(d) for d in u) for u in underfilled]}")
+        superseded = archive.superseded_individuals()
+        if superseded:
+            revisit = ['/'.join(str(d) for d in i.descriptor)
+                       for i in superseded[-5:]]
+            lines.append(f"superseded lineages worth revisiting: {revisit}")
         lines.append(f"parent to mutate: "
                      f"{'/'.join(str(d) for d in parent.descriptor)} "
                      f"(fitness={parent.fitness:.4f})")
