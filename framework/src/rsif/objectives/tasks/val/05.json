@@ -1,0 +1,6 @@
+{
+  "id": "val/05",
+  "prompt": "Implement `longest(words)` returning the longest string in a list.",
+  "function_name": "longest",
+  "hidden_tests": "assert longest(['a', 'bb', 'ccc']) == 'ccc'\nassert longest(['x']) == 'x'\n"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "train/03",
+  "prompt": "Implement `reverse(s)` returning the string reversed.",
+  "function_name": "reverse",
+  "hidden_tests": "assert reverse('abc') == 'cba'\nassert reverse('') == ''\nassert reverse('a') == 'a'\n"
+}

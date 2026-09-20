@@ -1,0 +1,6 @@
+{
+  "id": "test/02",
+  "prompt": "Implement `binary_search(xs, x)` returning the index of x in a sorted list, or -1.",
+  "function_name": "binary_search",
+  "hidden_tests": "assert binary_search([1, 3, 5, 7], 5) == 2\nassert binary_search([1, 3, 5, 7], 9) == -1\nassert binary_search([], 1) == -1\n"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "train/05",
+  "prompt": "Implement `factorial(n)` returning n! for n >= 0.",
+  "function_name": "factorial",
+  "hidden_tests": "assert factorial(0) == 1\nassert factorial(1) == 1\nassert factorial(5) == 120\n"
+}

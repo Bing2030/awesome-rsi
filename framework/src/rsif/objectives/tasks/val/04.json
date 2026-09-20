@@ -1,0 +1,6 @@
+{
+  "id": "val/04",
+  "prompt": "Implement `is_prime(n)` for n >= 2.",
+  "function_name": "is_prime",
+  "hidden_tests": "assert is_prime(2) is True\nassert is_prime(4) is False\nassert is_prime(17) is True\n"
+}

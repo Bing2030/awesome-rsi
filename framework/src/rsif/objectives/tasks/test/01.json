@@ -1,0 +1,6 @@
+{
+  "id": "test/01",
+  "prompt": "Implement `unique(xs)` returning a list with duplicates removed (preserve order).",
+  "function_name": "unique",
+  "hidden_tests": "assert unique([1, 2, 2, 3, 1]) == [1, 2, 3]\nassert unique([]) == []\n"
+}

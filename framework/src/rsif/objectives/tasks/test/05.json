@@ -1,0 +1,6 @@
+{
+  "id": "test/05",
+  "prompt": "Implement `capitalize_words(s)` capitalizing the first letter of each word.",
+  "function_name": "capitalize_words",
+  "hidden_tests": "assert capitalize_words('hello world') == 'Hello World'\nassert capitalize_words('a b') == 'A B'\n"
+}

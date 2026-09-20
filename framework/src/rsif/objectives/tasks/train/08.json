@@ -1,0 +1,6 @@
+{
+  "id": "train/08",
+  "prompt": "Implement `fib(n)` returning the nth Fibonacci number (fib(0)=0, fib(1)=1).",
+  "function_name": "fib",
+  "hidden_tests": "assert fib(0) == 0\nassert fib(1) == 1\nassert fib(10) == 55\n"
+}

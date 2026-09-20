@@ -1,0 +1,6 @@
+{
+  "id": "test/03",
+  "prompt": "Implement `is_anagram(a, b)` ignoring case and spaces.",
+  "function_name": "anagram",
+  "hidden_tests": "assert is_anagram('listen', 'silent') is True\nassert is_anagram('hello', 'world') is False\n"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "train/06",
+  "prompt": "Implement `count_vowels(s)` counting aeiou (case-insensitive).",
+  "function_name": "count_vowels",
+  "hidden_tests": "assert count_vowels('hello') == 2\nassert count_vowels('AEIOU') == 5\nassert count_vowels('xyz') == 0\n"
+}

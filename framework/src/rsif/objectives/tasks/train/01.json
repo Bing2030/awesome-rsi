@@ -1,0 +1,6 @@
+{
+  "id": "train/01",
+  "prompt": "Implement a function `add(a, b)` that returns a + b.",
+  "function_name": "add",
+  "hidden_tests": "assert add(2, 3) == 5\nassert add(-1, 1) == 0\nassert add(0, 0) == 0\n"
+}

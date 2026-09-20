@@ -1,0 +1,6 @@
+{
+  "id": "val/01",
+  "prompt": "Implement `sum_list(xs)` summing a list of numbers.",
+  "function_name": "sum_list",
+  "hidden_tests": "assert sum_list([1, 2, 3]) == 6\nassert sum_list([]) == 0\nassert sum_list([-1, 1]) == 0\n"
+}

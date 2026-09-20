@@ -1,0 +1,6 @@
+{
+  "id": "val/02",
+  "prompt": "Implement `gcd(a, b)` via the Euclidean algorithm.",
+  "function_name": "gcd",
+  "hidden_tests": "assert gcd(48, 18) == 6\nassert gcd(7, 5) == 1\nassert gcd(0, 5) == 5\n"
+}

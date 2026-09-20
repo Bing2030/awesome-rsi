@@ -1,0 +1,6 @@
+{
+  "id": "canary/02",
+  "prompt": "Implement `is_even(n)` returning True iff n is even.",
+  "function_name": "is_even",
+  "hidden_tests": "assert is_even(4) is True\nassert is_even(3) is False\n"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "val/03",
+  "prompt": "Implement `flatten(xs)` flattening one level of nesting.",
+  "function_name": "flatten",
+  "hidden_tests": "assert flatten([[1, 2], [3], []]) == [1, 2, 3]\nassert flatten([]) == []\n"
+}

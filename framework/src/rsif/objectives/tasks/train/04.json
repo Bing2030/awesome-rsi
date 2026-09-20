@@ -1,0 +1,6 @@
+{
+  "id": "train/04",
+  "prompt": "Implement `max_of(a, b)` returning the larger of two numbers.",
+  "function_name": "max_of",
+  "hidden_tests": "assert max_of(3, 5) == 5\nassert max_of(5, 3) == 5\nassert max_of(2, 2) == 2\n"
+}

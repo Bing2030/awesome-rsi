@@ -1,0 +1,6 @@
+{
+  "id": "test/04",
+  "prompt": "Implement `mean(xs)` returning the arithmetic mean of a non-empty list.",
+  "function_name": "mean",
+  "hidden_tests": "assert abs(mean([1, 2, 3, 4]) - 2.5) < 1e-9\nassert mean([7]) == 7\n"
+}

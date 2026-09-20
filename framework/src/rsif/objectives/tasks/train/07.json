@@ -1,0 +1,6 @@
+{
+  "id": "train/07",
+  "prompt": "Implement `is_palindrome(s)` (ignore case and spaces).",
+  "function_name": "is_palindrome",
+  "hidden_tests": "assert is_palindrome('racecar') is True\nassert is_palindrome('A man a plan a canal panama'.replace(' ', '').lower()) is True\nassert is_palindrome('hello') is False\n"
+}
