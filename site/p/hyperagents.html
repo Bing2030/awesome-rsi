@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HyperAgents — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="hermes-agent.html">← Hermes Agent</a> · <a href="seal.html">SEAL →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>HyperAgents</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/facebookresearch/HyperAgents" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>HyperAgents — self-improvement where the meta-level (the improver) is itself improvable code.</p></section><section class="block"><h2>How it works</h2><ul><li>Meta-level and object-level are both coding tasks, so both are editable.</li><li>Builds on DGM: the improvement mechanism is itself coded and improvable.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2603.19461.html">Hyperagents</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python (Meta); LLM API key; see README for the hyperagent loop.</pre></section><section class="block"><h2>Learning note</h2><p>Read DGM first, then run this to see the meta-level made explicit and improvable.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><div align="center">
+
+<!-- Logo/Banner placeholder - uncomment and add your image -->
+<!-- <img src="assets/banner.png" alt="HyperAgents Banner" width="800"> -->
+
+<h1>HyperAgents</h1>
+
+<p>Self-referential self-improving agents that can optimize for any computable task</p>
+
+<p>
+<a href="LICENSE.md"><img src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?style=for-the-badge" alt="License: CC BY-NC-SA 4.0"></a>
+<a href="https://arxiv.org/abs/2603.19461"><img src="https://img.shields.io/badge/arXiv-2603.19461-b31b1b.svg?style=for-the-badge&logo=arxiv" alt="arXiv"></a>
+<a href="https://ai.meta.com/research/publications/hyperagents/"><img src="https://img.shields.io/badge/-Blog-%238D6748?style=for-the-badge&logo=Website&logoColor=white"></a>
+<a href="https://x.com/jennyzhangzt/status/2036099935083618487"><img src="https://img.shields.io/badge/twitter-%230077B5.svg?&style=for-the-badge&logo=twitter&logoColor=white&color=00acee"></a>
+</p>
+
+<hr>
+</div>
+
+<h2>Setup</h2>
+<pre><code class="language-bash"># API keys, put these into .env file
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+GEMINI_API_KEY=...
+</code></pre>
+<pre><code class="language-bash"># Install things
+sudo dnf install -y python3.12-devel
+sudo dnf install -y graphviz graphviz-devel cmake ninja-build bzip2-devel zlib-devel ncurses-devel libffi-devel
+</code></pre>
+<pre><code class="language-bash"># Create virtual environment
+python3.12 -m venv venv_nat
+source venv_nat/bin/activate
+pip install -r requirements.txt
+pip install -r requirements_dev.txt
+# To build the docker container
+docker build --network=host -t hyperagents .
+</code></pre>
+<pre><code class="language-bash"># Setup initial agents
+bash ./setup_initial.sh
+</code></pre>
+<h2>Running HyperAgents</h2>
+<pre><code class="language-bash"># See the script for args, and baseline selections
+python generate_loop.py --domains &lt;domain&gt;
+</code></pre>
+<p>By default, outputs will be saved in <code>outputs/</code> directory.</p>
+<h2>File Structure</h2>
+<ul>
+<li><code>agent/</code> code for using foundation models</li>
+<li><code>analysis/</code> scripts used for plotting and analysis</li>
+<li><code>domains/</code> code for each domain</li>
+<li><code>utils/</code> common code used in the repo</li>
+<li><code>run_meta_agent.py</code> script to help run the meta agent and get the diffs</li>
+<li><code>meta_agent.py</code> main implementation of the meta agent</li>
+<li><code>task_agent.py</code> main implementation of the task agent</li>
+<li><code>generate_loop.py</code> entry point for running the algorithm</li>
+</ul>
+<h2>Logs from Experiments</h2>
+<p>The experiment logs can be downloaded here: <a href="https://drive.google.com/drive/folders/164fKQWgLM18foOzSnpv0F_I3TNpX8u8-?usp=sharing">https://drive.google.com/drive/folders/164fKQWgLM18foOzSnpv0F_I3TNpX8u8-?usp=sharing</a></p>
+<h2>Safety Consideration</h2>
+<blockquote>
+<p>[!WARNING]<br>This repository involves executing untrusted, model-generated code. We strongly advise users to be aware of the associated safety risks. While it is highly unlikely that such code will perform overtly malicious actions under our current settings and with the models we use, it may still behave destructively due to limitations in model capability or alignment. By using this repository, you acknowledge and accept these risks.</p>
+</blockquote>
+<h2>Citing</h2>
+<p>If you find this project useful, please consider citing:</p>
+<pre><code class="language-bibtex">@misc{zhang2026hyperagents,
+      title={Hyperagents}, 
+      author={Jenny Zhang and Bingchen Zhao and Wannan Yang and Jakob Foerster and Jeff Clune and Minqi Jiang and Sam Devlin and Tatiana Shavrina},
+      year={2026},
+      eprint={2603.19461},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2603.19461}, 
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="hermes-agent.html">Hermes Agent<small>repo</small></a><a href="seal.html">SEAL<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

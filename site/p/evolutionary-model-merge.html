@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Evolutionary Model Merge — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="autoresearch.html">← autoresearch</a> · <a href="funsearch.html">FunSearch →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Evolutionary Model Merge</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/SakanaAI/evolutionary-model-merge" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Sakana's Evolutionary Model Merge — evolve recipes for merging multiple foundation models in weight space (no training).</p></section><section class="block"><h2>How it works</h2><ul><li>Evolution (CMA-ES) searches layer-wise merge ratios and permutations.</li><li>Combines several open models into one merged model with each's strengths (e.g., Japanese + math + code).</li><li>Hub for released merged models (e.g., EvoLLM-JP-v1-7B) + evaluation code.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; evaluation scripts + released models on Hugging Face (SakanaAI org).</pre></section><section class="block"><h2>Learning note</h2><p>Model-level self-improvement by *recombination* — improving an AI by evolving how existing weights are mixed, cheaper than gradient descent.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>🐟 Evolutionary Optimization of Model Merging Recipes</h1>
+<p>🤗 <a href="https://huggingface.co/SakanaAI">Models</a> | 👀 <a href="https://huggingface.co/spaces/SakanaAI/EvoVLM-JP">Demo</a> | 📚 <a href="https://arxiv.org/abs/2403.13187">Paper</a> | 📝 <a href="https://sakana.ai/evolutionary-model-merge/">Blog</a> | 🐦 <a href="https://twitter.com/SakanaAILabs">Twitter</a></p>
+<div align="center">
+<img src="./assets/method.gif" alt="Method" title="method">
+</div>
+
+
+
+<p>This repository serves as a central hub for SakanaAI&#39;s <a href="https://arxiv.org/abs/2403.13187">Evolutionary Model Merge</a> series, showcasing its releases and resources. It includes models and code for reproducing the evaluation presented in our paper. Look forward to more updates and additions coming soon.</p>
+<h2>Models</h2>
+<h3>Our Models</h3>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="right">Size</th>
+<th align="left">License</th>
+<th align="left">Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-v1-7B">EvoLLM-JP-v1-7B</a></td>
+<td align="right">7B</td>
+<td align="left">Microsoft Research License</td>
+<td align="left"><a href="https://huggingface.co/augmxnt/shisa-gamma-7b-v1">shisa-gamma-7b-v1</a>, <a href="https://huggingface.co/WizardLM/WizardMath-7B-V1.1">WizardMath-7B-V1.1</a>, <a href="https://huggingface.co/GAIR/Abel-7B-002">GAIR/Abel-7B-002</a></td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-v1-10B">EvoLLM-JP-v1-10B</a></td>
+<td align="right">10B</td>
+<td align="left">Microsoft Research License</td>
+<td align="left">EvoLLM-JP-v1-7B, <a href="https://huggingface.co/augmxnt/shisa-gamma-7b-v1">shisa-gamma-7b-v1</a></td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-A-v1-7B">EvoLLM-JP-A-v1-7B</a></td>
+<td align="right">7B</td>
+<td align="left">Apache 2.0</td>
+<td align="left"><a href="https://huggingface.co/augmxnt/shisa-gamma-7b-v1">shisa-gamma-7b-v1</a>, <a href="https://huggingface.co/upaya07/Arithmo2-Mistral-7B">Arithmo2-Mistral-7B</a>, <a href="https://huggingface.co/GAIR/Abel-7B-002">GAIR/Abel-7B-002</a></td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoVLM-JP-v1-7B">EvoVLM-JP-v1-7B</a></td>
+<td align="right">7B</td>
+<td align="left">Apache 2.0</td>
+<td align="left"><a href="https://huggingface.co/liuhaotian/llava-v1.6-mistral-7b">LLaVA-1.6-Mistral-7B</a>, <a href="https://huggingface.co/augmxnt/shisa-gamma-7b-v1">shisa-gamma-7b-v1</a></td>
+</tr>
+</tbody></table>
+<h3>Comparing EvoLLM-JP w/ Source LLMs</h3>
+<p>For details on the evaluation, please refer to Section 4.1 of the paper.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="right">MGSM-JA (acc &uarr;)</th>
+<th align="right"><a href="https://github.com/Stability-AI/lm-evaluation-harness/tree/jp-stable">lm-eval-harness</a> (avg &uarr;)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a href="https://huggingface.co/augmxnt/shisa-gamma-7b-v1">Shisa Gamma 7B v1</a></td>
+<td align="right">9.6</td>
+<td align="right">66.1</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/WizardLM/WizardMath-7B-V1.1">WizardMath 7B V1.1</a></td>
+<td align="right">18.4</td>
+<td align="right">60.1</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/GAIR/Abel-7B-002">Abel 7B 002</a></td>
+<td align="right">30.0</td>
+<td align="right">56.5</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/upaya07/Arithmo2-Mistral-7B">Arithmo2 Mistral 7B</a></td>
+<td align="right">24.0</td>
+<td align="right">56.4</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-A-v1-7B">EvoLLM-JP-A-v1-7B</a></td>
+<td align="right"><strong>52.4</strong></td>
+<td align="right"><strong>69.0</strong></td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-v1-7B">EvoLLM-JP-v1-7B</a></td>
+<td align="right"><strong>52.0</strong></td>
+<td align="right"><strong>70.5</strong></td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoLLM-JP-v1-10B">EvoLLM-JP-v1-10B</a></td>
+<td align="right"><strong>55.6</strong></td>
+<td align="right"><strong>66.2</strong></td>
+</tr>
+</tbody></table>
+<h3>Comparing EvoVLM-JP w/ Existing VLMs</h3>
+<p>For details on the evaluation, please see Section 4.2 of the paper.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="right">JA-VG-VQA-500 (ROUGE-L &uarr;)</th>
+<th align="right">JA-VLM-Bench-In-the-Wild (ROUGE-L &uarr;)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><a href="https://llava-vl.github.io/blog/2024-01-30-llava-next/">LLaVA-1.6-Mistral-7B</a></td>
+<td align="right">14.32</td>
+<td align="right">41.10</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/stabilityai/japanese-stable-vlm">Japanese Stable VLM</a></td>
+<td align="right">-<sup>*1</sup></td>
+<td align="right">40.50</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/turing-motors/heron-chat-blip-ja-stablelm-base-7b-v1-llava-620k">Heron BLIP Japanese StableLM Base 7B llava-620k</a></td>
+<td align="right">14.51</td>
+<td align="right">33.26</td>
+</tr>
+<tr>
+<td align="left"><a href="https://huggingface.co/SakanaAI/EvoVLM-JP-v1-7B">EvoVLM-JP-v1-7B</a></td>
+<td align="right"><strong>19.70</strong></td>
+<td align="right"><strong>51.25</strong></td>
+</tr>
+</tbody></table>
+<ul>
+<li>*1: Japanese Stable VLM cannot be evaluated using the JA-VG-VQA-500 dataset because this model has used this dataset for training.</li>
+</ul>
+<h2>Reproducing the Evaluation</h2>
+<h3>1. Clone the Repo</h3>
+<pre><code class="language-bash">git clone https://github.com/SakanaAI/evolutionary-model-merge.git
+cd evolutionary-model-merge
+</code></pre>
+<h3>2. Download fastext Model</h3>
+<p>We use fastext to detect language for evaluation. Please download <code>lid.176.ftz</code> from <a href="https://fasttext.cc/docs/en/language-identification.html">this link</a> and place it in your current directory. If you place the file in a directory other than the current directory, specify the path to the file using the <code>LID176FTZ_PATH</code> environment variable.</p>
+<h3>3. Install Libraries</h3>
+<pre><code class="language-bash">pip install -e .
+</code></pre>
+<p>We conducted our tests in the following environment: Python Version 3.10.12 and CUDA Version 12.3.
+We cannot guarantee that it will work in other environments.</p>
+<h3>4. Run</h3>
+<p>To launch evaluation, run the following script with a certain config. All configs used for the paper are in <code>configs</code>.</p>
+<pre><code class="language-bash">python evaluate.py --config_path {path-to-config}
+</code></pre>
+<h2>Acknowledgement</h2>
+<p>We would like to thank the developers of the source models for their contributions and for making their work available. Our math evaluation code builds on the WizardMath repository, and we are grateful for their work.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="autoresearch.html">autoresearch<small>repo</small></a><a href="funsearch.html">FunSearch<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

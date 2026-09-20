@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>autoresearch — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="ai-scientist.html">← AI Scientist</a> · <a href="evolutionary-model-merge.html">Evolutionary Model Merge →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>autoresearch</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/karpathy/autoresearch" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Karpathy's experiment: hand an agent a small but real LLM-training setup and let it improve it autonomously overnight.</p></section><section class="block"><h2>How it works</h2><ul><li>Agent modifies training code, trains ~5 minutes, checks whether the result improved, keeps or discards, repeats.</li><li>Built on a simplified single-GPU nanochat implementation.</li><li>Logs experiments so you wake up to a history — and hopefully a better model.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; single-GPU; see README for the nanochat-based setup.</pre></section><section class="block"><h2>Learning note</h2><p>A deliberately *small, real* self-improvement loop — the minimal reproducible 'AI improving its own training code'. Note: distinct from the AutoResearch *paper* (2608.17906).</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>autoresearch</h1>
+<p><img src="progress.png" alt="teaser"></p>
+<p><em>One day, frontier AI research used to be done by meat computers in between eating, sleeping, having other fun, and synchronizing once in a while using sound wave interconnect in the ritual of &quot;group meeting&quot;. That era is long gone. Research is now entirely the domain of autonomous swarms of AI agents running across compute cluster megastructures in the skies. The agents claim that we are now in the 10,205th generation of the code base, in any case no one could tell if that&#39;s right or wrong as the &quot;code&quot; is now a self-modifying binary that has grown beyond human comprehension. This repo is the story of how it all began. -@karpathy, March 2026</em>.</p>
+<p>The idea: give an AI agent a small but real LLM training setup and let it experiment autonomously overnight. It modifies the code, trains for 5 minutes, checks if the result improved, keeps or discards, and repeats. You wake up in the morning to a log of experiments and (hopefully) a better model. The training code here is a simplified single-GPU implementation of <a href="https://github.com/karpathy/nanochat">nanochat</a>. The core idea is that you&#39;re not touching any of the Python files like you normally would as a researcher. Instead, you are programming the <code>program.md</code> Markdown files that provide context to the AI agents and set up your autonomous research org. The default <code>program.md</code> in this repo is intentionally kept as a bare bones baseline, though it&#39;s obvious how one would iterate on it over time to find the &quot;research org code&quot; that achieves the fastest research progress, how you&#39;d add more agents to the mix, etc. A bit more context on this project is here in this <a href="https://x.com/karpathy/status/2029701092347630069">tweet</a> and <a href="https://x.com/karpathy/status/2031135152349524125">this tweet</a>.</p>
+<h2>How it works</h2>
+<p>The repo is deliberately kept small and only really has three files that matter:</p>
+<ul>
+<li><strong><code>prepare.py</code></strong> — fixed constants, one-time data prep (downloads training data, trains a BPE tokenizer), and runtime utilities (dataloader, evaluation). Not modified.</li>
+<li><strong><code>train.py</code></strong> — the single file the agent edits. Contains the full GPT model, optimizer (Muon + AdamW), and training loop. Everything is fair game: architecture, hyperparameters, optimizer, batch size, etc. <strong>This file is edited and iterated on by the agent</strong>.</li>
+<li><strong><code>program.md</code></strong> — baseline instructions for one agent. Point your agent here and let it go. <strong>This file is edited and iterated on by the human</strong>.</li>
+</ul>
+<p>By design, training runs for a <strong>fixed 5-minute time budget</strong> (wall clock, excluding startup/compilation), regardless of the details of your compute. The metric is <strong>val_bpb</strong> (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared.</p>
+<p>If you are new to neural networks, this <a href="https://x.com/hooeem/status/2030720614752039185">&quot;Dummy&#39;s Guide&quot;</a> looks pretty good for a lot more context.</p>
+<h2>Quick start</h2>
+<p><strong>Requirements:</strong> A single NVIDIA GPU (tested on H100), Python 3.10+, <a href="https://docs.astral.sh/uv/">uv</a>.</p>
+<pre><code class="language-bash">
+# 1. Install uv project manager (if you don&#39;t already have it)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install dependencies
+uv sync
+
+# 3. Download data and train tokenizer (one-time, ~2 min)
+uv run prepare.py
+
+# 4. Manually run a single training experiment (~5 min)
+uv run train.py
+</code></pre>
+<p>If the above commands all work ok, your setup is working and you can go into autonomous research mode.</p>
+<h2>Running the agent</h2>
+<p>Simply spin up your Claude/Codex or whatever you want in this repo (and disable all permissions), then you can prompt something like:</p>
+<pre><code>Hi have a look at program.md and let&#39;s kick off a new experiment! let&#39;s do the setup first.
+</code></pre>
+<p>The <code>program.md</code> file is essentially a super lightweight &quot;skill&quot;.</p>
+<h2>Project structure</h2>
+<pre><code>prepare.py      — constants, data prep + runtime utilities (do not modify)
+train.py        — model, optimizer, training loop (agent modifies this)
+program.md      — agent instructions
+pyproject.toml  — dependencies
+</code></pre>
+<h2>Design choices</h2>
+<ul>
+<li><strong>Single file to modify.</strong> The agent only touches <code>train.py</code>. This keeps the scope manageable and diffs reviewable.</li>
+<li><strong>Fixed time budget.</strong> Training always runs for exactly 5 minutes, regardless of your specific platform. This means you can expect approx 12 experiments/hour and approx 100 experiments while you sleep. There are two upsides of this design decision. First, this makes experiments directly comparable regardless of what the agent changes (model size, batch size, architecture, etc). Second, this means that autoresearch will find the most optimal model for your platform in that time budget. The downside is that your runs (and results) become not comparable to other people running on other compute platforms.</li>
+<li><strong>Self-contained.</strong> No external dependencies beyond PyTorch and a few small packages. No distributed training, no complex configs. One GPU, one file, one metric.</li>
+</ul>
+<h2>Platform support</h2>
+<p>This code currently requires that you have a single NVIDIA GPU. In principle it is quite possible to support CPU, MPS and other platforms but this would also bloat the code. I&#39;m not 100% sure that I want to take this on personally right now. People can reference (or have their agents reference) the full/parent nanochat repository that has wider platform support and shows the various solutions (e.g. a Flash Attention 3 kernels fallback implementation, generic device support, autodetection, etc.), feel free to create forks or discussions for other platforms and I&#39;m happy to link to them here in the README in some new notable forks section or etc.</p>
+<p>Seeing as there seems to be a lot of interest in tinkering with autoresearch on much smaller compute platforms than an H100, a few extra words. If you&#39;re going to try running autoresearch on smaller computers (Macbooks etc.), I&#39;d recommend one of the forks below. On top of this, here are some recommendations for how to tune the defaults for much smaller models for aspiring forks:</p>
+<ol>
+<li>To get half-decent results I&#39;d use a dataset with a lot less entropy, e.g. this <a href="https://huggingface.co/datasets/karpathy/tinystories-gpt4-clean">TinyStories dataset</a>. These are GPT-4 generated short stories. Because the data is a lot narrower in scope, you will see reasonable results with a lot smaller models (if you try to sample from them after training).</li>
+<li>You might experiment with decreasing <code>vocab_size</code>, e.g. from 8192 down to 4096, 2048, 1024, or even - simply byte-level tokenizer with 256 possibly bytes after utf-8 encoding.</li>
+<li>In <code>prepare.py</code>, you&#39;ll want to lower <code>MAX_SEQ_LEN</code> a lot, depending on the computer even down to 256 etc. As you lower <code>MAX_SEQ_LEN</code>, you may want to experiment with increasing <code>DEVICE_BATCH_SIZE</code> in <code>train.py</code> slightly to compensate. The number of tokens per fwd/bwd pass is the product of these two.</li>
+<li>Also in <code>prepare.py</code>, you&#39;ll want to decrease <code>EVAL_TOKENS</code> so that your validation loss is evaluated on a lot less data.</li>
+<li>In <code>train.py</code>, the primary single knob that controls model complexity is the <code>DEPTH</code> (default 8, here). A lot of variables are just functions of this, so e.g. lower it down to e.g. 4.</li>
+<li>You&#39;ll want to most likely use <code>WINDOW_PATTERN</code> of just &quot;L&quot;, because &quot;SSSL&quot; uses alternating banded attention pattern that may be very inefficient for you. Try it.</li>
+<li>You&#39;ll want to lower <code>TOTAL_BATCH_SIZE</code> a lot, but keep it powers of 2, e.g. down to <code>2**14</code> (~16K) or so even, hard to tell.</li>
+</ol>
+<p>I think these would be the reasonable hyperparameters to play with. Ask your favorite coding agent for help and copy paste them this guide, as well as the full source code.</p>
+<h2>Notable forks</h2>
+<ul>
+<li><a href="https://github.com/miolini/autoresearch-macos">miolini/autoresearch-macos</a> (MacOS)</li>
+<li><a href="https://github.com/trevin-creator/autoresearch-mlx">trevin-creator/autoresearch-mlx</a> (MacOS)</li>
+<li><a href="https://github.com/jsegov/autoresearch-win-rtx">jsegov/autoresearch-win-rtx</a> (Windows)</li>
+<li><a href="https://github.com/andyluo7/autoresearch">andyluo7/autoresearch</a> (AMD)</li>
+</ul>
+<h2>License</h2>
+<p>MIT</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="ai-scientist.html">AI Scientist<small>repo</small></a><a href="evolutionary-model-merge.html">Evolutionary Model Merge<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

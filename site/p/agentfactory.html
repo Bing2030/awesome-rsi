@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AgentFactory — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="pi.html">← Pi</a> · <a href="dgm.html">Darwin Gödel Machine →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>AgentFactory</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/zzatpku/AgentFactory" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Code for AgentFactory — self-evolution by accumulating executable subagents.</p></section><section class="block"><h2>How it works</h2><ul><li>Successful solutions are saved as executable subagent code, refined by execution feedback.</li><li>The subagent library is reused as composable building blocks for new tasks.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2603.18000.html">AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; set an LLM API key and run the agent-factory loop (see README).</pre></section><section class="block"><h2>Learning note</h2><p>Run it after reading the paper to see 'code-as-skill' concretely — watch how subagents accumulate and get refined.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse</h1>
+<p align="center">
+  <strong>Accepted at <a href="https://2026.aclweb.org/program/demo/">ACL 2026 System Demonstrations</a></strong>
+</p>
+
+<p>AgentFactory is a self-evolving agent framework that preserves successful task solutions as <strong>executable subagent code</strong> rather than textual experience. These subagents are continuously refined based on execution feedback, becoming increasingly robust and efficient as more tasks are encountered. Since all saved subagents are pure Python code with standardized documentation, they are portable across any Python-capable system.</p>
+<p align="center">
+  <a href="https://2026.aclweb.org/program/demo/"><img src="https://img.shields.io/badge/Accepted-ACL%202026%20System%20Demonstrations-brightgreen" alt="Accepted at ACL 2026 System Demonstrations"></a>
+  <a href="https://aclanthology.org/2026.acl-demo.81/"><img src="https://img.shields.io/badge/Paper-ACL%20Anthology-blue" alt="Paper on ACL Anthology"></a>
+  <a href="https://arxiv.org/abs/2603.18000"><img src="https://img.shields.io/badge/Preprint-arXiv-red" alt="Preprint on arXiv"></a>
+  <a href="https://youtu.be/iKSsuAXJHW0"><img src="https://img.shields.io/badge/Demo-YouTube-blue" alt="Demo Video"></a>
+</p>
+
+<blockquote>
+<p>Official implementation of <a href="https://aclanthology.org/2026.acl-demo.81/">AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse</a>, published in the <strong>ACL 2026 System Demonstrations</strong> proceedings.</p>
+</blockquote>
+<p align="center">
+  <img src="figures/pipeline.png" alt="AgentFactory Pipeline" width="100%">
+</p>
+
+<h2>How It Works</h2>
+<p>AgentFactory follows a three-phase lifecycle:</p>
+<ul>
+<li><strong>Install</strong> — Decompose new tasks into sub-problems and construct specialized subagents from scratch. Successfully executed subagents are saved as reusable Python scripts with accompanying <code>SKILL.md</code> documentation.</li>
+<li><strong>Self-Evolve</strong> — When encountering similar tasks, retrieve saved subagents, detect their limitations, and autonomously modify them to be more robust and general-purpose based on execution feedback.</li>
+<li><strong>Deploy</strong> — Export mature subagents as standalone Python modules for use in other AI frameworks (e.g., LangChain, AutoGen, Claude Code) by providing the external agent with the subagent code and <code>SKILL.md</code> descriptions.</li>
+</ul>
+<h3>Architecture</h3>
+<p>AgentFactory has three main components:</p>
+<p><strong>Meta-Agent</strong> — The central orchestrator. It decomposes complex problems, dynamically allocates relevant tools to each subagent (rather than exposing the full toolset), and iteratively refines subagents based on execution results.</p>
+<p><strong>Skill System</strong> — Three levels of skills:</p>
+<ul>
+<li><em>Meta Skills</em>: Built-in orchestration primitives — <code>create_subagent</code>, <code>run_subagent</code>, <code>modify_subagent</code>, <code>list_saved_subagents</code>, <code>view_subagent_code</code>, <code>get_skill_description</code>, <code>finish</code>.</li>
+<li><em>Tool Skills</em>: Built-in tools — <code>web_search</code> (Serper), <code>web_reading</code> (Jina), <code>browser_automation</code> (Playwright), <code>shell_command</code>.</li>
+<li><em>Subagent Skills</em>: Dynamically created and refined Python modules that encapsulate successful task-solving patterns. These grow and improve over time.</li>
+</ul>
+<p><strong>Workspace Manager</strong> — Provides isolated execution environments per task, ensuring subagent creation and modification does not corrupt the shared skill library.</p>
+<h2>Evaluation</h2>
+<p>We compare AgentFactory against ReAct and a Self-Evolving Agent with textual experience baseline on 30 real-world tasks (Batch 1: initial construction; Batch 2: transfer evaluation with saved subagents). Metric: average output tokens per task for the orchestrating model (lower = more efficient reuse).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Task Setting</th>
+<th>Opus 4.6</th>
+<th>Sonnet 4.6</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ReAct</td>
+<td>Batch 1</td>
+<td>8298</td>
+<td>6893</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td>Batch 2</td>
+<td>7022</td>
+<td>7029</td>
+</tr>
+<tr>
+<td>Self-Evolving Agents</td>
+<td>Batch 1 (from scratch)</td>
+<td>8608</td>
+<td>8163</td>
+</tr>
+<tr>
+<td>Self-Evolving Agents</td>
+<td>Batch 2 (w/ saved)</td>
+<td>6210</td>
+<td>8223</td>
+</tr>
+<tr>
+<td><strong>AgentFactory</strong></td>
+<td><strong>Batch 1 (from scratch)</strong></td>
+<td><strong>4324</strong></td>
+<td><strong>9199</strong></td>
+</tr>
+<tr>
+<td><strong>AgentFactory</strong></td>
+<td><strong>Batch 2 (w/ saved)</strong></td>
+<td><strong>2971</strong></td>
+<td><strong>3862</strong></td>
+</tr>
+</tbody></table>
+<p>Reusing executable subagents on Batch 2 reduces orchestration cost by up to <strong>57%</strong> compared to ReAct. Notably, with Opus 4.6, AgentFactory already shows significant savings within Batch 1 itself, as the model recognizes opportunities to reuse subagents created from earlier tasks in the same batch.</p>
+<h2>Setup</h2>
+<h3>1. Install Dependencies</h3>
+<pre><code class="language-bash">conda create -n agentfactory python=3.12
+conda activate agentfactory
+pip install openai requests playwright flask flask_cors
+</code></pre>
+<h3>2. Configure API Keys</h3>
+<p>Edit <code>.env</code> file and fill in your API keys:</p>
+<pre><code class="language-bash"># Model Selection (OPENAI_STYLE or ANTHROPIC_STYLE)
+MODEL_PROTOCOL=OPENAI_STYLE
+
+# Claude API
+LLM_URL_CLAUDE=https://your-api-endpoint/v1
+LLM_API_KEY_CLAUDE=your-claude-api-key
+LLM_MODEL_CLAUDE=claude-opus-4-6
+
+# MiniMax API
+LLM_URL_MINIMAX=https://api.minimaxi.com/v1
+LLM_API_KEY_MINIMAX=your-minimax-api-key
+LLM_MODEL_MINIMAX=MiniMax-M2.7
+
+# Tool APIs
+SERPER_API_KEY=your-serper-api-key   # Get from https://serper.dev
+JINA_API_KEY=your-jina-api-key       # Get from https://jina.ai
+</code></pre>
+<p>Switch between models by changing <code>MODEL_PROTOCOL</code> in <code>.env</code> (options: <code>OPENAI_STYLE</code> or <code>ANTHROPIC_STYLE</code>).</p>
+<h3>3. Install Chrome</h3>
+<p>Browser-based tasks (e.g., web automation via Playwright) require Google Chrome. Make sure Chrome is installed on your machine before running these tasks.</p>
+<h3>4. Replace Placeholder Paths</h3>
+<p>In <code>data/questions/questions_round1.jsonl</code> and <code>data/questions/questions_round2.jsonl</code>, replace all occurrences of <code>&lt;Absolute_Path_to_AgentFactory&gt;</code> with the actual absolute path to this directory. For example:</p>
+<pre><code class="language-txt">&lt;Absolute_Path_to_AgentFactory&gt;/data/audio/qq_music_taylor.mp3
+</code></pre>
+<p>should become:</p>
+<pre><code class="language-txt">/home/user/AgentFactory/data/audio/qq_music_taylor.mp3
+</code></pre>
+<h2>Running Tests</h2>
+<pre><code class="language-bash">python run.py --question-file data/questions/questions_round1.jsonl
+</code></pre>
+<p>Optional flags:</p>
+<ul>
+<li><code>--human-confirm</code> — pause for human confirmation when finishing</li>
+<li><code>--no-save</code> — do not save subagent skills after completion</li>
+</ul>
+<h2>Deploy to Claude Code</h2>
+<p><code>prompt4cc.txt</code> is a ready-to-use prompt for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>. To deploy the saved subagents to Claude Code, simply paste the content of <code>prompt4cc.txt</code> into Claude Code and replace <code>&lt;Absolute_Path_to_AgentFactory&gt;</code> with the actual absolute path to this directory. For example, if your project is at <code>/home/user/AgentFactory</code>, replace all occurrences accordingly. Claude Code will then be able to read the subagent code and use them to solve tasks.</p>
+<h2>Web Demo</h2>
+<p>Start the web server:</p>
+<pre><code class="language-bash">python3 web_interface/app.py --port 5050
+</code></pre>
+<p>Then open <code>http://localhost:5050</code> in your browser. To have the agent solve a task described in an audio file, enter:</p>
+<pre><code class="language-txt">Help me complete a task. The detailed description of the task is in the audio file &lt;your_absolute_path_to_audio&gt;
+</code></pre>
+<p>For example, using the included sample audio:</p>
+<pre><code class="language-txt">Help me complete a task. The detailed description of the task is in the audio file /home/user/AgentFactory/data/audio/tencent_doc_en.mp3
+</code></pre>
+<p>Replace the path with the actual absolute path to the audio file on your machine.</p>
+<h2>Visualizing Trajectories</h2>
+<p>Open <code>visualize_trajectory.html</code> in a browser, then select a trajectory JSON file to visualize the agent&#39;s execution process.</p>
+<h2>Recorded Demonstrations</h2>
+<p>The <code>trajectory/</code> directory contains saved execution trajectories that correspond to the demonstrations referenced in the paper:</p>
+<ul>
+<li><p><strong><code>trajectory/qq_music/</code></strong> — Two runs of the QQ Music task.</p>
+<ul>
+<li><code>first_time.json</code> — First attempt; the agent creates subagents from scratch.</li>
+<li><code>second_time.json</code> — Second attempt; the agent reuses subagents created in the first run.</li>
+</ul>
+</li>
+<li><p><strong><code>trajectory/tencent_doc/</code></strong> — Three runs of the Tencent Docs task.</p>
+<ul>
+<li><code>first_time.json</code> — First attempt with a text-based instruction; the agent creates subagents from scratch.</li>
+<li><code>second_time.json</code> — Second attempt with text; the agent reuses previously created subagents.</li>
+<li><code>third_time.json</code> — Third attempt with an audio-based instruction. After the QQ Music runs had already produced an <code>audio_transcriber</code> subagent, the agent directly reuses it here to transcribe the audio and solve the task.</li>
+</ul>
+</li>
+</ul>
+<p align="center">
+  <img src="figures/audio-evolve.png" alt="QQ Music & Tencent Docs Demonstration" width="100%">
+</p>
+
+<ul>
+<li><strong><code>trajectory/readme/</code></strong> — Three sequential runs demonstrating the self-evolution process, where the agent progressively builds and refines its subagent repertoire across tasks.</li>
+</ul>
+<p align="center">
+  <img src="figures/readme-evolve.png" alt="Self-Evolution Demonstration" width="85%">
+</p>
+
+<h2>Citation</h2>
+<pre><code class="language-bibtex">@inproceedings{zhang-etal-2026-agentfactory,
+    title = &quot;{A}gent{F}actory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse&quot;,
+    author = &quot;Zhang, Zhang  and
+      Lu, Shuqi  and
+      Qian, Hongjin  and
+      He, Di  and
+      Liu, Zheng&quot;,
+    editor = &quot;Durrett, Greg  and
+      Jian, Ping&quot;,
+    booktitle = &quot;Proceedings of the 64th Annual Meeting of the {A}ssociation for {C}omputational {L}inguistics (Volume 3: System Demonstrations)&quot;,
+    month = jul,
+    year = &quot;2026&quot;,
+    address = &quot;San Diego, California, United States&quot;,
+    publisher = &quot;Association for Computational Linguistics&quot;,
+    url = &quot;https://aclanthology.org/2026.acl-demo.81/&quot;,
+    doi = &quot;10.18653/v1/2026.acl-demo.81&quot;,
+    pages = &quot;819--828&quot;,
+    ISBN = &quot;979-8-89176-392-0&quot;,
+    abstract = &quot;Building LLM-based agents has become increasingly important. Recent works on LLM-based agent self-evolution primarily record successful experiences as textual prompts or reflections, which cannot reliably guarantee efficient task re-execution in complex scenarios. We propose AgentFactory, a new self-evolution paradigm that preserves successful task solutions as executable subagent code rather than textual experience. Crucially, these subagents are continuously refined based on execution feedback, becoming increasingly robust and efficient as more tasks are encountered. Saved subagents are pure Python code with standardized documentation, enabling portability across any Python-capable system. We demonstrate that AgentFactory enables continuous capability accumulation: its library of executable subagents grows and improves over time, progressively reducing the effort required for similar tasks without manual intervention. Our implementation is open-sourced at \url{https://github.com/zzatpku/AgentFactory}, and our demonstration video is available at \url{https://youtu.be/iKSsuAXJHW0}.&quot;
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="pi.html">Pi<small>repo · substrate</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a><a href="hyperagents.html">HyperAgents<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

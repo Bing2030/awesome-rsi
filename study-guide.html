@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSI Study Guide — Harness, Multi-Agent, Coding, AI R&D, Evolutionary, Frameworks</title>
+<style>
+  :root {
+    --bg: #f7f7f8; --panel: #ffffff; --text: #1a1a1e; --muted: #6b6b76;
+    --line: #e5e5ea; --accent: #4f46e5; --accent-soft: #eef0ff;
+    --full: #16a34a; --skim: #d97706; --blog: #2563eb; --code: #9333ea; --pdf: #0d9488;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101014; --panel: #18181c; --text: #ececf1; --muted: #9a9aa3;
+      --line: #2a2a31; --accent: #818cf8; --accent-soft: #23233a;
+      --full: #4ade80; --skim: #fbbf24; --blog: #60a5fa; --code: #c084fc; --pdf: #2dd4bf;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 20px;
+  }
+  .hrow { max-width: 1080px; margin: 0 auto; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 13px; }
+
+  .controls { max-width: 1080px; margin: 0 auto; padding: 12px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--text); padding: 7px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button.active { background: var(--accent); color: #fff; }
+  .seg button:not(.active):hover { background: var(--accent-soft); }
+  select, input[type=search] {
+    font: inherit; font-size: 13px; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; outline: none;
+  }
+  input[type=search] { flex: 1 1 200px; min-width: 160px; }
+  select:focus, input[type=search]:focus { border-color: var(--accent); }
+
+  .progresswrap { max-width: 1080px; margin: 12px auto 0; padding: 0 20px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar > div { height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
+  .pct { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 18px 20px 80px; }
+
+  .phase { margin: 26px 0 8px; }
+  .phase h2 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 10px; }
+  .phase .n { background: var(--accent); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex: none; }
+  .phase .cnt { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .phase .lead { color: var(--muted); font-size: 13px; margin: 4px 0 0 34px; }
+
+  .group { margin: 22px 0 6px; }
+  .group h3 { font-size: 14px; margin: 0; color: var(--text); font-weight: 650; }
+  .group .sub { display: block; margin: 2px 0 0; font-size: 12.5px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin: 10px 0; display: flex; gap: 12px; align-items: flex-start;
+    transition: border-color .15s ease, opacity .15s ease;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card.done { opacity: .55; }
+  .card.done .title { text-decoration: line-through; }
+
+  input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; cursor: pointer; }
+
+  .body { flex: 1; min-width: 0; }
+  .title { font-weight: 650; font-size: 15px; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .b-venue { background: var(--accent-soft); color: var(--accent); }
+  .b-full { background: color-mix(in srgb, var(--full) 16%, transparent); color: var(--full); }
+  .b-skim { background: color-mix(in srgb, var(--skim) 16%, transparent); color: var(--skim); }
+  .b-blog { background: color-mix(in srgb, var(--blog) 16%, transparent); color: var(--blog); }
+  .b-code { background: color-mix(in srgb, var(--code) 16%, transparent); color: var(--code); }
+  .b-pdf { background: color-mix(in srgb, var(--pdf) 16%, transparent); color: var(--pdf); }
+  .b-web { background: color-mix(in srgb, var(--skim) 16%, transparent); color: var(--skim); }
+  .online { font-size: 11px; margin-left: 6px; color: var(--muted); }
+  .online:hover { color: var(--accent); }
+  .method { font-size: 13px; margin-top: 7px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--pdf) 45%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--pdf) 8%, transparent); }
+  .method b { color: var(--pdf); }
+  .nextup { max-width: 1080px; margin: 10px auto 0; padding: 0 20px; font-size: 13px; }
+  .nextup .pill { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 3px 12px; margin-right: 8px; }
+  .desc { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .note { font-size: 13.5px; margin-top: 7px; padding: 8px 10px; background: var(--accent-soft); border-radius: 8px; }
+  .note b { color: var(--accent); }
+
+  .empty { color: var(--muted); text-align: center; padding: 60px 0; }
+  .legend { max-width: 1080px; margin: 6px auto 0; padding: 0 20px; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend .badge { font-size: 10.5px; }
+  footer { max-width: 1080px; margin: 0 auto; padding: 0 20px 60px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <h1>RSI Study Guide</h1>
+    <span class="sub">Harness-level · Multi-Agent · Coding · Automated AI R&D · Evolutionary · Frameworks — 98 entries, reordered into a learning path</span>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="seg" id="viewseg">
+    <button data-view="path" class="active">Study Path</button>
+    <button data-view="taxonomy">By Section</button>
+  </div>
+  <input type="search" id="q" placeholder="Search titles, notes, venues…">
+  <select id="depth"><option value="">All depths</option><option value="full">Read fully</option><option value="skim">Skim</option><option value="blog">Blog</option><option value="code">Hands-on code</option></select>
+  <select id="phase"><option value="">All stages</option></select>
+  <select id="section"><option value="">All sections</option></select>
+</div>
+
+<div class="progresswrap">
+  <div class="bar"><div id="fill"></div></div>
+  <div class="pct" id="pct">0 / 98 complete</div>
+</div>
+<div class="nextup" id="nextup"></div>
+
+<div class="legend">
+  <span>Depth: </span>
+  <span class="badge b-full">read fully</span>
+  <span class="badge b-skim">skim</span>
+  <span class="badge b-blog">blog/video</span>
+  <span class="badge b-code">hands-on</span>
+  <span class="badge b-pdf">local PDF</span>
+  <span>· titles open the local PDF in resources/ (fall back online) · check a card to mark it done</span>
+</div>
+
+<main id="main"></main>
+<footer>
+  Source: <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> README. Taxonomy is organizational, not mutually exclusive — the Study Path reorders entries across sections for learning. Notes summarize the papers' contributions and where each fits the RSI arc; for very recent arXiv papers the note tracks the list's own description.
+</footer>
+
+<script>
+const PHASES = [
+  { id: 1, name: "Foundations & Theory", lead: "The old-but-essential scaffolding: learned optimizers, self-referential systems, and evolution from scratch. Skim most of these; read the first three carefully." },
+  { id: 2, name: "Optimization-as-Language", lead: "How a frozen model can improve a program through text — gradients, prompts, and search over natural-language programs. The conceptual core of harness-level RSI." },
+  { id: 3, name: "Self-Correction & Verification", lead: "Bounded self-refinement building blocks. Note the negative result (Cannot Self-Correct) — it tells you when self-improvement needs external signal." },
+  { id: 4, name: "Memory, Reflection & Skills", lead: "Making improvements persist: reflections, skill libraries, and evolving memory. The bridge from one-shot self-correction to persistent self-improvement." },
+  { id: 5, name: "Harness & Scaffold Evolution", lead: "The frontier: agents that rewrite their own prompts, tools, memory, and scaffolding — the recursive mechanism itself becomes the object of improvement." },
+  { id: 6, name: "Multi-Agent Self-Improvement", lead: "Interaction among agents as the improvement signal — debate, co-evolution, and socially-learned policies." },
+  { id: 7, name: "Self-Modifying Coding", lead: "The strongest empirical demonstrations: coding agents that edit their own implementation and keep what works." },
+  { id: 8, name: "Automated AI R&D", lead: "Closing the full research loop — propose, run, analyze, write. The near-term embodiment of 'AI improving AI'." },
+  { id: 9, name: "Evolutionary & Open-Ended", lead: "Search processes that keep finding better solutions or learning systems with no fixed ceiling." },
+  { id: 10, name: "Hands-On Repos & Tools", lead: "Read fewer papers, run more code. Pick 3–4 of these aligned with stages 4–9 and actually run them." },
+];
+
+// Entries are ordered by study path (phase order). Each keeps its original section/subsection for the taxonomy view.
+const E = [
+  // ---------- PHASE 1 — Foundations & Theory ----------
+  { t:"Learning to Learn by Gradient Descent by Gradient Descent", u:"https://arxiv.org/abs/1606.04474", v:"NeurIPS 2016", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"full",
+    desc:"Meta-learns an optimizer whose recurrent update rule can replace a hand-designed optimization algorithm.",
+    note:"The ancestor of a lot of this list. Shows that the <b>optimization procedure itself can be learned</b> by another optimizer. Read it to understand why 'the improver can itself be improved' is not just a slogan — it is a trainable object." },
+  { t:"Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement", u:"https://arxiv.org/abs/2410.04444", v:"ACL 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:1, d:"full",
+    desc:"Lets an agent inspect and rewrite its own logic without relying on a fixed hand-designed optimization routine.",
+    note:"The self-referential ideal: instead of a human-designed optimizer, the agent <b>reads and rewrites its own code/logic</b>. Read for the concept; the practical, empirical version of this idea is the Darwin Gödel Machine (stage 7)." },
+  { t:"AutoML-Zero: Evolving Machine Learning Algorithms From Scratch", u:"https://arxiv.org/abs/2003.03384", v:"ICML 2020", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"full",
+    desc:"Evolves complete learning algorithms from elementary mathematical operations with minimal human design bias.",
+    note:"Asks how little you can start from: evolves full ML algorithms (including something backprop-like) from raw math ops. The clearest 'AI designing AI' result that predates LLMs." },
+  { t:"AI-GAs: AI-Generating Algorithms, an Alternate Paradigm for Producing General Artificial Intelligence", u:"https://arxiv.org/abs/1905.10985", v:"arXiv 2019", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"skim",
+    desc:"Proposes open-ended systems that automatically generate environments, architectures, and learning algorithms.",
+    note:"A position paper (Schmidhuber's school) arguing the endgame is <b>algorithms that generate algorithms</b>, and that the three pillars (env/arch/learning) should be open-ended, not fixed. Read for the framing, not the method." },
+  { t:"Quality Diversity: A New Frontier for Evolutionary Computation", u:"https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2016.00040/full", v:"Frontiers in Robotics and AI 2016", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"skim",
+    desc:"Formalizes search for collections that are simultaneously diverse and high-performing within their niches.",
+    note:"Introduces the Quality-Diversity framing: optimize for <b>diversity, not a single optimum</b>. This is the conceptual key to 'open-ended' — you want an archive of different strong solutions, not one winner." },
+  { t:"Illuminating Search Spaces by Mapping Elites", u:"https://arxiv.org/abs/1504.04909", v:"arXiv 2015", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"skim",
+    desc:"Introduces MAP-Elites for discovering a diverse archive of locally high-quality solutions.",
+    note:"MAP-Elites is the canonical QD algorithm: a grid of 'cells' each keeping the best solution for that niche. Shows up later in open-ended agent archives (e.g., DGM's archive). Skim the figures." },
+  { t:"POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem", u:"https://arxiv.org/abs/1112.5309", v:"Frontiers in Psychology 2013", s:"Evolutionary & Open-Ended RSI", ss:"", ph:1, d:"skim",
+    desc:"Alternates between inventing new tasks and modifying a solver so its verified skill set continually expands.",
+    note:"The 'invent-your-own-problems' loop: the system <b>searches for the simplest task it can't yet solve</b>, then modifies itself to solve it, forever. A crisp early formalization of self-improving-by-task-generation." },
+
+  // ---------- PHASE 2 — Optimization-as-Language ----------
+  { t:"DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines", u:"https://arxiv.org/abs/2310.03714", v:"NeurIPS 2023 (R0-FoMo)", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:2, d:"full",
+    desc:"Compiles declarative LM programs by optimizing prompts and demonstrations against a user-defined metric.",
+    note:"The most practically useful idea in this stage: separate the <b>program structure</b> from the prompts/demos it runs, then optimize the latter against a metric. Read it, then use the library — it reframes 'prompt engineering' as optimization." },
+  { t:"TextGrad: Automatic \"Differentiation\" via Text", u:"https://arxiv.org/abs/2406.07496", v:"Nature 2025", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:2, d:"full",
+    desc:"Backpropagates textual feedback through compound AI systems to optimize prompts, code, and other textual variables.",
+    note:"Generalizes backprop to text: feedback flows <b>backward through a compound system</b> to update any textual variable (prompts, code, answers). The cleanest mental model of 'differentiating' an AI pipeline." },
+  { t:"Large Language Models as Optimizers", u:"https://arxiv.org/abs/2309.03409", v:"ICLR 2024", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:2, d:"skim",
+    desc:"Introduces OPRO, which iteratively proposes and evaluates natural-language solutions and prompts from a history of scored attempts.",
+    note:"OPRO: treat the LLM as a <b>generic black-box optimizer</b> that reads scored past attempts and proposes the next one. Simple idea, broad reach — skim for the loop diagram." },
+  { t:"Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution", u:"https://arxiv.org/abs/2309.16797", v:"ICML 2024", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:2, d:"skim",
+    desc:"Evolves both task prompts and the mutation prompts that generate future prompt improvements.",
+    note:"The <b>self-referential</b> twist: it evolves the task prompts AND the 'mutation prompts' that generate the next generation. The improver improves the improver — a microcosm of RSI." },
+  { t:"Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models", u:"https://arxiv.org/abs/2310.04406", v:"ICML 2024", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:2, d:"skim",
+    desc:"Combines Monte Carlo tree search, model-based value estimates, environment feedback, and self-reflection without updating base weights.",
+    note:"LATS: wrap the model in <b>tree search</b> over actions with self-reflection as the evaluation signal. No weight update — improvement happens at inference time. Useful contrast to the persistent methods that follow." },
+
+  // ---------- PHASE 3 — Self-Correction & Verification ----------
+  { t:"Self-Refine: Iterative Refinement with Self-Feedback", u:"https://arxiv.org/abs/2303.17651", v:"NeurIPS 2023", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Reuses one language model as generator, critic, and refiner to improve outputs over multiple iterations.",
+    note:"The minimal self-improvement loop: same model <b>generates → critiques → refines</b>. No memory, no persistence — but it's the atom every persistent method in stage 4 builds on." },
+  { t:"Chain-of-Verification Reduces Hallucination in Large Language Models", u:"https://arxiv.org/abs/2309.11495", v:"Findings of ACL 2024", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Plans and answers independent verification questions before producing a revised response.",
+    note:"Key trick for reliable self-checking: <b>draft the answer, then generate independent verification questions, answer those, and revise</b> — rather than asking the model to spot-check its own text." },
+  { t:"CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing", u:"https://arxiv.org/abs/2305.11738", v:"ICLR 2024", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Uses external tools to validate an output and converts the resulting evidence into iterative corrections.",
+    note:"Grounds self-correction in <b>external tools</b> (search, code exec, calculators) instead of the model's own opinion — foreshadowing the 'verification-gated' theme throughout this list." },
+  { t:"Self-Consistency Improves Chain of Thought Reasoning in Language Models", u:"https://arxiv.org/abs/2203.11171", v:"ICLR 2023", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Samples diverse reasoning paths and selects their most consistent answer to improve inference-time reliability.",
+    note:"Majority vote over <b>multiple sampled reasoning chains</b>. No self-modification, but the idea of aggregating over an ensemble of 'self' is reused throughout multi-agent and search methods." },
+  { t:"Let's Verify Step by Step", u:"https://arxiv.org/abs/2305.20050", v:"ICLR 2024", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Trains process reward models to score intermediate reasoning steps and guide more reliable solution selection.",
+    note:"Process supervision: reward each <b>step</b>, not just the final answer. This is the 'verifier' that many later self-improvement loops (incl. SWE-Gym verifiers) plug in." },
+  { t:"Large Language Models Cannot Self-Correct Reasoning Yet", u:"https://arxiv.org/abs/2310.01798", v:"ICLR 2024", s:"Harness-level RSI", ss:"Self-Verification & Self-Correction", ph:3, d:"skim",
+    desc:"Shows that intrinsic self-correction can degrade reasoning without reliable external feedback and defines an important negative baseline.",
+    note:"<b>The essential negative result.</b> Without an external signal (tool, verifier, ground truth), a model 'correcting' itself can make things worse. Read this to calibrate every self-improvement claim that follows." },
+
+  // ---------- PHASE 4 — Memory, Reflection & Skills ----------
+  { t:"Reflexion: Language Agents with Verbal Reinforcement Learning", u:"https://arxiv.org/abs/2303.11366", v:"NeurIPS 2023", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"full",
+    desc:"Improves agents across trials by storing natural-language reflections derived from task feedback.",
+    note:"The ancestor of most 'memory' agents: store <b>natural-language reflections</b> from failures and inject them next trial. No weight change — the self-improvement lives entirely in memory. Read it, then notice how much of stage 4–5 is its descendant." },
+  { t:"Voyager: An Open-Ended Embodied Agent with Large Language Models", u:"https://arxiv.org/abs/2305.16291", v:"TMLR 2024", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:4, d:"full",
+    desc:"Builds an expanding skill library and uses environmental feedback for lifelong autonomous learning in Minecraft.",
+    note:"The <b>skill-library</b> paradigm done at scale: automatic curriculum + environment feedback → a growing library of reusable, verified skills. The code is in stage 10 — worth running." },
+  { t:"ExpeL: LLM Agents Are Experiential Learners", u:"https://arxiv.org/abs/2308.10144", v:"AAAI 2024", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"skim",
+    desc:"Extracts reusable insights from successful and failed trajectories and transfers them to future tasks without weight updates.",
+    note:"Adds <b>success</b> to Reflexion's failure-only signal, and distills insights into transferable rules. Skim to see the 'extract → transfer' loop formalized." },
+  { t:"A-MEM: Agentic Memory for LLM Agents", u:"https://arxiv.org/abs/2502.12110", v:"NeurIPS 2025", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"skim",
+    desc:"Builds a dynamically linked note network whose organization evolves as an agent accumulates new experiences.",
+    note:"Memory as a <b>self-organizing graph of notes</b> (Zettelkasten for agents) rather than a flat buffer. The structure itself evolves — a memory substrate that improves its own organization." },
+  { t:"MemoryBank: Enhancing Large Language Models with Long-Term Memory", u:"https://arxiv.org/abs/2305.10250", v:"AAAI 2024", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"skim",
+    desc:"Maintains and selectively forgets long-term interaction memories so an agent can adapt its responses over time.",
+    note:"Early long-term memory design with <b>selective forgetting</b> (à la Ebbinghaus). Useful as a contrast: memory that must decide what to keep, not just what to add." },
+  { t:"Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models", u:"https://arxiv.org/abs/2510.04618", v:"ICLR 2026", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"full",
+    desc:"Evolves context as a structured playbook through generation, reflection, and curation while avoiding destructive context collapse.",
+    note:"Reframes the whole prompt/context as a <b>living 'playbook' that is itself evolved</b>. Key contribution: managing the failure mode where context grows but degrades ('context collapse')." },
+  { t:"EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle", u:"https://arxiv.org/abs/2510.16079", v:"ICML 2026", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"full",
+    desc:"Distills interaction trajectories into reusable strategic principles, retrieves them during future tasks, and reinforces the agent policy in a closed experience loop.",
+    note:"A <b>closed loop</b>: trajectory → distilled 'strategic principles' → retrieved at task time → policy reinforced from outcomes. One of the cleaner end-to-end experience-driven agents to study." },
+  { t:"From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution", u:"https://arxiv.org/abs/2604.15097", v:"arXiv 2026", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"skim",
+    desc:"Compares experience representations across 4,590 controlled trials and finds that compact, editable Genes provide stronger test-time control and carry accumulated failure history better than documentation-oriented Skill packages.",
+    note:"A controlled comparison of what to store: compact editable <b>'Genes'</b> vs. prose 'Skill packages'. Read for the empirical lesson about representation choice, not for a single method." },
+  { t:"Learning to Continually Learn via Meta-learning Agentic Memory Designs", u:"https://arxiv.org/abs/2602.07755", v:"arXiv 2026", s:"Harness-level RSI", ss:"Context & Memory Evolution", ph:4, d:"skim",
+    desc:"Uses a meta-agent to discover executable memory schemas and retrieval and update mechanisms that continually improve from experience.",
+    note:"Takes the recursive step for memory: a <b>meta-agent designs the memory system itself</b> (schemas + retrieval + update), not just the stored facts. Self-improvement applied to the memory architecture." },
+  { t:"MemoHarness: Agent Harnesses That Learn from Experience", u:"https://arxiv.org/abs/2607.14159", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:4, d:"skim",
+    desc:"Learns case-adaptive configurations across six harness control dimensions from execution diagnoses and a reusable experience bank.",
+    note:"Moves memory up a level: what's learned is <b>the harness configuration</b> (across six control dimensions), conditioned on execution diagnoses — tuning the wrapper per case, not per task." },
+  { t:"SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution", u:"https://arxiv.org/abs/2607.26784", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:4, d:"skim",
+    desc:"Alternates a single policy between solving tasks and curating a persistent, evolving skill document that later tasks inherit.",
+    note:"One policy doing two jobs — <b>solve</b> tasks and <b>curate a skill document</b> that persists across tasks. A clean RL framing of skill evolution as part of the policy loop." },
+  { t:"SkillOpt: Executive Strategy for Self-Evolving Agent Skills", u:"https://arxiv.org/abs/2605.23904", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:4, d:"full",
+    desc:"Trains a single skill document as the external state of a frozen agent, with a separate optimizer model proposing bounded edits accepted only on strict held-out validation gains.",
+    note:"Keeps the <b>model frozen</b> and makes the <b>skill document the trainable state</b>, edited by a separate optimizer only on held-out validation gain. The 'bounded, acceptance-gated edit' pattern is worth internalizing — it recurs across the safe self-improvement literature." },
+  { t:"MemEvolve: Meta-Evolution of Agent Memory Systems", u:"https://arxiv.org/abs/2512.18746", v:"arXiv 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:4, d:"skim",
+    desc:"Jointly evolves experiential knowledge and the architecture that encodes, stores, retrieves, and manages agent memory.",
+    note:"Evolves the <b>knowledge and the memory architecture together</b> — the encoding/storage/retrieval mechanism is itself subject to evolution, not fixed by hand." },
+  { t:"MetaSkill-Evolve: Recursive Self-Improvement of LLM Agents via Two-Timescale Meta-Skill Evolution", u:"https://arxiv.org/abs/2607.05297", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:4, d:"skim",
+    desc:"Evolves task skills in a fast loop and the meta-skills governing its Analyzer, Retriever, Allocator, Proposer, and Evolver in a slower recursive loop.",
+    note:"Explicit <b>two-timescale recursion</b>: a fast loop for task skills, a slow loop for the 'meta-skills' that run the components themselves. The clearest diagram of a recursive (not just iterative) architecture in the list." },
+
+  // ---------- PHASE 5 — Harness & Scaffold Evolution ----------
+  { t:"Automated Design of Agentic Systems", u:"https://arxiv.org/abs/2408.08435", v:"ICLR 2025", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:5, d:"full",
+    desc:"Uses a meta-agent to invent and iteratively improve agent architectures represented as executable code.",
+    note:"ADAS: a <b>meta-agent writes and iterates the code of other agents</b>. This is the harness-level flagship — the 'improver' is itself an agent generating executable improvements. Read carefully; it anchors everything in stage 5." },
+  { t:"Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation", u:"https://arxiv.org/abs/2310.02304", v:"COLM 2024", s:"Harness-level RSI", ss:"Prompt & Program Optimization", ph:5, d:"full",
+    desc:"Demonstrates an LLM-written scaffolding program that improves the program responsible for making further improvements.",
+    note:"The seed-improver + improver split: an LLM writes a <b>scaffolding program that improves the scaffolding program itself</b>. A concrete, runnable instance of 'the improver improves the improver'." },
+  { t:"Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses", u:"https://arxiv.org/abs/2604.25850", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"skim",
+    desc:"Autonomously evolves tools, middleware, memory, and prompts through observable edits whose predictions are verified on later tasks.",
+    note:"Evolves the whole harness (tools/middleware/memory/prompts) but with a discipline: edits must be <b>observable and their predicted effect verified later</b>. The 'measure before/after' rigor that separates real harness engineering from vibes." },
+  { t:"AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses", u:"https://arxiv.org/abs/2608.12307", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"skim",
+    desc:"Uses stronger builder models to iteratively construct inference-time harnesses that transfer capability to weaker target models without parameter updates.",
+    note:"Strong→weak transfer at <b>test time</b>: a stronger builder model wraps a weaker model in a harness that lifts its capability, no weights touched. Interesting because it separates 'harness' from 'model' cleanly." },
+  { t:"AutoHarness: Improving LLM Agents by Automatically Synthesizing a Code Harness", u:"https://arxiv.org/abs/2603.03329", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"skim",
+    desc:"Synthesizes and iteratively refines executable harnesses from environment feedback, eliminating illegal actions across 145 TextArena games.",
+    note:"The harness as <b>generated code</b> refined from environment feedback — turns 'illegal action' failures into harness edits. A concrete example of feedback → structural change." },
+  { t:"Continual Harness: Online Adaptation for Self-Improving Foundation Agents", u:"https://arxiv.org/abs/2605.09998", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"full",
+    desc:"Refines prompts, sub-agents, skills, and memory online within a single continuous trajectory and extends the loop to model-weight co-learning.",
+    note:"Everything updates <b>online, within one trajectory</b> — prompts, sub-agents, skills, memory — and the loop is extended to weight co-learning. A strong articulation of 'harness + weights together' self-improvement." },
+  { t:"EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents", u:"https://arxiv.org/abs/2608.05446", v:"COLM 2026 (LLA Workshop)", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"skim",
+    desc:"Trains agents to construct and coordinate evolving Belief, Progress, and Experience state during long-horizon execution.",
+    note:"RL-trained agents that <b>build their own runtime state</b> (Belief/Progress/Experience) and evolve it over long horizons. The harness is learned, not just prompted." },
+  { t:"Hyperagents", u:"https://arxiv.org/abs/2603.19461", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Combines a task agent with an editable meta-agent whose self-modification procedure can itself evolve and transfer improvements across domains.",
+    note:"A task agent + an <b>editable meta-agent whose self-modification routine is itself evolvable</b> and transferable. Emphasizes that the <i>procedure</i> of self-improvement is a learnable, portable asset." },
+  { t:"SIA: Self Improving AI with Harness & Weight Updates", u:"https://arxiv.org/abs/2605.27276", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"full",
+    desc:"Uses task feedback to update both an agent's harness and its model weights within one self-improving loop.",
+    note:"Explicitly <b>joint</b>: one loop updates harness <i>and</i> weights from task feedback. Good to contrast against the many 'harness-only, weights frozen' methods — this closes the gap between harness-level and model-level RSI." },
+  { t:"AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse", u:"https://arxiv.org/abs/2603.18000", v:"ACL 2026 (System Demonstrations)", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Preserves successful solutions as executable subagents and continually refines them from execution feedback for reuse on future tasks.",
+    note:"The unit of improvement is the <b>executable subagent</b>: keep successful solutions as reusable subagents and refine them. 'Improvement by accumulation' rather than rewrites. Code in stage 10." },
+  { t:"EvoAgent: An Evolvable Agent Framework with Skill Learning and Multi-Agent Delegation", u:"https://arxiv.org/abs/2604.20133", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Accumulates structured skills through a feedback loop and delegates complex tasks through a hierarchy of sub-agents.",
+    note:"Skill accumulation + a <b>hierarchy of sub-agents</b> for delegation. Note it shares the name 'EvoAgent' with a different multi-agent paper in stage 6 — easy to confuse." },
+  { t:"EvoAgentX: An Automated Framework for Evolving Agentic Workflows", u:"https://arxiv.org/abs/2507.03616", v:"arXiv 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Unifies workflow generation, execution, evaluation, and evolutionary optimization across agent prompts, tools, and topologies.",
+    note:"Evolves the <b>workflow/topology</b> — which agents, tools, and connections exist — via an evolutionary loop over generated candidates. Complements ADAS by treating the graph structure as the genome." },
+  { t:"Alita-G: Self-Evolving Generative Agent for Agent Generation", u:"https://arxiv.org/abs/2510.23601", v:"arXiv 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Generates, abstracts, and curates reusable MCP tools from successful trajectories to turn a generalist agent into a domain specialist.",
+    note:"Specialization via <b>tool generation</b>: abstract successful trajectories into reusable MCP tools, turning a generalist into a specialist. MCP is the substrate here." },
+  { t:"Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization", u:"https://arxiv.org/abs/2402.17574", v:"ACL 2024", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Refines an agent's beliefs and behavioral policy from interactive experience using reflection and search.",
+    note:"Evolves the <b>beliefs and behavioral policy</b> (not just skills) via reflection + search. Earlier (2024) ancestor of the policy-level evolution trend." },
+  { t:"Self-evolving Agents with Reflective and Memory-Augmented Abilities", u:"https://arxiv.org/abs/2409.00872", v:"Neurocomputing 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
+    desc:"Combines iterative feedback, reflection, and forgetting-aware memory optimization for continual agent adaptation.",
+    note:"A survey-style integration of feedback + reflection + <b>forgetting-aware memory</b>. Good as a consolidation read once you've seen the individual mechanisms." },
+
+  // ---------- PHASE 6 — Multi-Agent ----------
+  { t:"Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate", u:"https://arxiv.org/abs/2305.19118", v:"EMNLP 2024", s:"Multi-Agent Self-Improvement", ss:"Inference-time Debate", ph:6, d:"skim",
+    desc:"Uses adversarial debate and a judge to counter degeneration of thought during iterative reflection.",
+    note:"Debate as a fix for <b>degeneration of thought</b>: adversarial roles + a judge stop self-reflection from collapsing into repetitive answers. Improvement at inference time, no persistence." },
+  { t:"Improving Factuality and Reasoning in Language Models through Multiagent Debate", u:"https://arxiv.org/abs/2305.14325", v:"ICML 2024", s:"Multi-Agent Self-Improvement", ss:"Inference-time Debate", ph:6, d:"skim",
+    desc:"Iterates proposals and peer critiques among model instances to converge on more factual and accurate answers.",
+    note:"The canonical multiagent-debate paper: multiple model instances <b>propose and critique</b> until convergence. Read as the baseline that the 'persistent' co-evolution methods build on." },
+  { t:"DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning", u:"https://arxiv.org/abs/2505.15734", v:"EMNLP 2025", s:"Multi-Agent Self-Improvement", ss:"Co-Evolution", ph:6, d:"full",
+    desc:"Fine-tunes a model on its own multi-agent debate traces and repeats the debate-training loop without ground-truth labels.",
+    note:"The step debate papers don't take: <b>persist</b> the gains by fine-tuning on debate traces, then repeat. Closes the loop from inference-time debate to model-level self-improvement — no labels needed." },
+  { t:"Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning", u:"https://arxiv.org/abs/2511.16043", v:"arXiv 2025", s:"Multi-Agent Self-Improvement", ss:"Co-Evolution", ph:6, d:"skim",
+    desc:"Co-evolves curriculum and executor agents initialized from the same base model to improve tool-using reasoning without human-curated data.",
+    note:"<b>Co-evolution of a curriculum-maker and an executor</b> from the same base model, bootstrapping from zero human data. Curriculum as the co-evolving partner is the key idea." },
+  { t:"EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms", u:"https://arxiv.org/abs/2406.14228", v:"NAACL 2025", s:"Multi-Agent Self-Improvement", ss:"Co-Evolution", ph:6, d:"skim",
+    desc:"Applies mutation, crossover, and selection to expand a specialized agent into a diverse multi-agent system.",
+    note:"Evolutionary operators (<b>mutation/crossover/selection</b>) applied to a population of agents, expanding one specialist into many. The population itself is the evolving unit. (Not the same as the skill-learning EvoAgent in stage 5.)" },
+  { t:"SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents", u:"https://arxiv.org/abs/2403.08715", v:"ACL 2024", s:"Multi-Agent Self-Improvement", ss:"Co-Evolution", ph:6, d:"skim",
+    desc:"Improves an agent policy through behavior cloning and self-reinforcement on filtered multi-agent social interactions.",
+    note:"Self-improvement from <b>social interaction</b>: behavior-clone + self-reinforce on filtered agent-agent interactions. Broadens 'improvement signal' beyond task reward to social reward." },
+
+  // ---------- PHASE 7 — Self-Modifying Coding ----------
+  { t:"Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents", u:"https://arxiv.org/abs/2505.22954", v:"ICLR 2026", s:"Coding / Software-Engineering Self-Improvement", ss:"Self-Modifying Coding Agents", ph:7, d:"full",
+    desc:"Evolves a coding agent by modifying its own code and retaining empirically validated improvements in an open-ended archive.",
+    note:"<b>The flagship empirical self-modifier.</b> A coding agent edits its own source, keeps edits that pass validation, and archives them (MAP-Elites-style). The Sakana blog is an excellent companion read. Code in stage 10 — run it if you can." },
+  { t:"A Self-Improving Coding Agent", u:"https://arxiv.org/abs/2504.15228", v:"ICLR 2025 (SSI-FM Workshop)", s:"Coding / Software-Engineering Self-Improvement", ss:"Self-Modifying Coding Agents", ph:7, d:"full",
+    desc:"Demonstrates a coding agent that edits its own implementation and empirically improves on SWE-bench Verified.",
+    note:"Minimal, transparent self-modification: the agent <b>edits its own code and measurably improves</b> on SWE-bench Verified. Short and concrete — a great first read before DGM." },
+  { t:"Training Software Engineering Agents and Verifiers with SWE-Gym", u:"https://arxiv.org/abs/2412.21139", v:"ICML 2025", s:"Coding / Software-Engineering Self-Improvement", ss:"Iterative Repair & Training", ph:7, d:"skim",
+    desc:"Supplies executable repository tasks and trajectories for training both SWE agents and inference-time verifiers.",
+    note:"The <b>environment + data</b> for coding self-improvement: executable repo tasks with trajectories, for training agents <i>and</i> the verifiers that gate their output. The verifier is as important as the agent." },
+  { t:"Teaching Large Language Models to Self-Debug", u:"https://arxiv.org/abs/2304.05128", v:"ICLR 2024", s:"Coding / Software-Engineering Self-Improvement", ss:"Iterative Repair & Training", ph:7, d:"skim",
+    desc:"Teaches models to inspect execution results, explain their code, and repair failures through iterative prompting.",
+    note:"The self-repair primitive for code: <b>run → read the error → explain → fix</b>. Foundation for every self-debugging loop in the coding-agent world." },
+  { t:"AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation", u:"https://arxiv.org/abs/2312.13010", v:"arXiv 2023", s:"Coding / Software-Engineering Self-Improvement", ss:"Iterative Repair & Training", ph:7, d:"skim",
+    desc:"Coordinates programmer, test-designer, and test-executor agents in a feedback loop that iteratively repairs generated code.",
+    note:"Splits coding into <b>programmer / test-designer / test-executor</b> roles in a repair loop — a tidy early illustration of multi-agent structure applied to code, before the self-modifying agents above." },
+
+  // ---------- PHASE 8 — Automated AI R&D ----------
+  { t:"The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery", u:"https://arxiv.org/abs/2408.06292", v:"arXiv 2024", s:"Automated AI R&D", ss:"", ph:8, d:"full",
+    desc:"Automates idea generation, experimentation, paper writing, and review to create a reusable loop for machine-learning research.",
+    note:"The first end-to-end <b>idea → experiment → paper → review</b> loop for ML research. Read for the loop architecture and its honest limitations; the Sakana blog pairs well. Code in stage 10." },
+  { t:"Towards End-to-End Automation of AI Research (The AI Scientist-v2)", u:"https://doi.org/10.1038/s41586-026-10265-5", v:"Nature 2026", s:"Automated AI R&D", ss:"", ph:8, d:"full",
+    desc:"Uses template-free agentic tree search to propose hypotheses, run experiments, analyze results, and write complete research papers.",
+    note:"v2 removes the hand-written paper template via <b>agentic tree search</b> over the research process. The Nature publication marks automated research as a mainstream, peer-reviewed capability. Compare its gains over v1 carefully." },
+  { t:"Towards Execution-Grounded Automated AI Research", u:"https://arxiv.org/abs/2601.14525", v:"arXiv 2026", s:"Automated AI R&D", ss:"", ph:8, d:"skim",
+    desc:"Converts LLM pre-training and post-training into executable research environments where evolutionary search learns from experimental outcomes.",
+    note:"Turns <b>training itself into a searchable environment</b>: pre/post-training become executable spaces where evolutionary search learns from actual outcomes. Bridges stages 8 and 9 (automated R&D meets evolution)." },
+  { t:"AutoResearch: Insight In, Hallucination Out", u:"https://arxiv.org/abs/2608.17906", v:"arXiv 2026", s:"Automated AI R&D", ss:"", ph:8, d:"skim",
+    desc:"Connects grounded idea generation with coordinated execution agents that implement, diagnose, and independently review experiments before accepting research conclusions.",
+    note:"Attacks the hallucination problem in AI research: <b>independent review before accepting conclusions</b>, with grounded idea generation. The 'verification-gated' discipline from earlier stages applied to the whole research loop." },
+  { t:"Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering", u:"https://arxiv.org/abs/2607.28568", v:"arXiv 2026", s:"Automated AI R&D", ss:"", ph:8, d:"skim",
+    desc:"Connects execution-grounded operator training with long-horizon evolution in the open OpenMLE stack, using machine-learning engineering as an AI4AI testbed for RSI.",
+    note:"Explicitly frames <b>ML engineering as the RSI testbed</b> ('AI4AI'), trained execution-grounded and evolved long-horizon in an open stack. Useful for the positioning of RSI as trainable, not just engineered." },
+  { t:"FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents", u:"https://arxiv.org/abs/2603.01712", v:"arXiv 2026", s:"Automated AI R&D", ss:"", ph:8, d:"skim",
+    desc:"Turns data collection, training, evaluation, diagnosis, and strategy revision into an executable environment for autonomous fine-tuning agents.",
+    note:"Narrows automated R&D to the <b>fine-tuning loop</b>: data → train → eval → diagnose → revise strategy, as an executable environment. Good concrete target — fine-tuning is the most directly self-improving operation." },
+  { t:"MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery", u:"https://arxiv.org/abs/2606.06473", v:"arXiv 2026", s:"Automated AI R&D", ss:"", ph:8, d:"skim",
+    desc:"Combines progressive graph search, retrospective memory, and hierarchical code generation for long-horizon end-to-end machine-learning algorithm discovery.",
+    note:"Algorithm <b>discovery</b> (not just tuning): graph search + memory + hierarchical codegen for long-horizon ML algorithm search. Skim; it links stage 8 back to stage 1's AutoML-Zero with LLMs." },
+
+  // ---------- PHASE 9 — Evolutionary & Open-Ended ----------
+  { t:"Mathematical Discoveries from Program Search with Large Language Models", u:"https://www.nature.com/articles/s41586-023-06924-6", v:"Nature 2024", s:"Evolutionary & Open-Ended RSI", ss:"", ph:9, d:"full",
+    desc:"Introduces FunSearch, an evolutionary loop that pairs a frozen code model with evaluators to discover new programs and mathematical results.",
+    note:"FunSearch: a <b>frozen</b> model proposes programs; a <b>separate evaluator</b> scores them; evolution selects. Discovered new math (cap set) — proof that LLM + evaluator + evolution can find things humans hadn't. The evaluator/model split is the key lesson. Code in stage 10." },
+  { t:"AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery", u:"https://arxiv.org/abs/2506.13131", v:"arXiv 2025", s:"Evolutionary & Open-Ended RSI", ss:"", ph:9, d:"full",
+    desc:"Combines language-model code generation, automated evaluation, and evolutionary search to improve algorithms, including components used in AI training.",
+    note:"Scales FunSearch-style program search to <b>improve real algorithms, including ones used in AI training</b> (matrix multiplication, etc.). The DeepMind blog is a great companion. Key: it improves the very stack that improves it." },
+  { t:"PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution", u:"https://arxiv.org/abs/2601.10657", v:"arXiv 2026", s:"Evolutionary & Open-Ended RSI", ss:"", ph:9, d:"skim",
+    desc:"Combines hierarchical context management, backtracking, and adaptive sampling to sustain collaborative long-horizon evolutionary search.",
+    note:"Solves the <b>long-horizon</b> problem in evolution: context management + backtracking + adaptive sampling so search doesn't stall. Read after AlphaEvolve to see what's needed to keep evolution running." },
+  { t:"Higher Order and Self-Referential Evolution for Population-based Methods", u:"https://openreview.net/forum?id=3tk6AES1Aj", v:"ICML 2024 (AutoRL Workshop)", s:"Evolutionary & Open-Ended RSI", ss:"", ph:9, d:"skim",
+    desc:"Evolves mutation rates and higher-order meta-mutation rates, including a self-referential top-level parameter that modifies itself.",
+    note:"The <b>meta-mutation</b> idea: evolve the mutation rate, then the mutation-rate-of-mutation-rate, up to a self-referential parameter that modifies itself. A compact, mathematically clean picture of 'recursive' improvement." },
+  { t:"Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions", u:"https://arxiv.org/abs/1901.01753", v:"GECCO 2019", s:"Evolutionary & Open-Ended RSI", ss:"", ph:9, d:"skim",
+    desc:"Co-evolves environments and agents while transferring solutions between emerging challenges.",
+    note:"<b>Environments and agents co-evolve</b> — the open-endedness comes from the environment never being fixed. The 'trailblazer' idea (pairing environment creation with solution transfer) is foundational to open-endedness." },
+
+  // ---------- PHASE 10 — Hands-On Repos & Tools ----------
+  // Extensible substrates: not self-improving by default, but expose prompts/tools/skills/memory/control-flow as modifiable surfaces for RSI experiments.
+  { t:"Agent Zero", u:"https://github.com/agent0ai/agent-zero", v:"repo · substrate", s:"Harness-level RSI", ss:"Extensible Harness Substrates", ph:10, d:"code",
+    desc:"Open agentic framework whose prompts, tools, skills, plugins, and multi-agent profiles can be inspected, replaced, and extended.",
+    note:"A <b>substrate, not a self-improver</b>: everything (prompts, tools, skills, plugins, profiles) is inspectable and replaceable. Use it as the starting point to build your own RSI loop, or to understand what a modifiable harness exposes." },
+  { t:"DeepSeek Harness", u:"https://github.com/deepseek-ai/deepseek-harness", v:"repo · substrate", s:"Harness-level RSI", ss:"Extensible Harness Substrates", ph:10, d:"code",
+    desc:"Open-source agent harness from DeepSeek AI built around an everything-is-a-plugin architecture.",
+    note:"The <b>everything-is-a-plugin</b> architecture: any component is swappable. Read the design to see a clean separation between core loop and pluggable parts — the property you need for safe self-modification." },
+  { t:"OpenClaw", u:"https://github.com/openclaw/openclaw", v:"repo · substrate", s:"Harness-level RSI", ss:"Extensible Harness Substrates", ph:10, d:"code",
+    desc:"Persistent agent runtime with workspace-scoped skills and a Skill Workshop where agents can draft reusable skill changes for review and application.",
+    note:"Notable for its <b>Skill Workshop</b>: agents draft skill changes that are <b>reviewed before application</b> — a human-in-the-loop pattern worth seeing implemented. Persistent runtime + workspace-scoped skills." },
+  { t:"Pi", u:"https://github.com/earendil-works/pi", v:"repo · substrate", s:"Harness-level RSI", ss:"Extensible Harness Substrates", ph:10, d:"code",
+    desc:"Self-extensible coding-agent harness with a reusable agent runtime, terminal UI, and unified multi-provider LLM API.",
+    note:"A <b>self-extensible</b> coding harness: reusable runtime + TUI + unified multi-provider API. Closer to self-modification than the others here — a good bridge from substrates to full self-evolving frameworks." },
+  { t:"AgentFactory (code)", u:"https://github.com/zzatpku/AgentFactory", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Self-evolving framework that accumulates and reuses executable subagents to improve future task solving.",
+    note:"Run alongside the AgentFactory paper (stage 5). Watch how 'subagent accumulation' is realized in code." },
+  { t:"Darwin Gödel Machine (code)", u:"https://github.com/jennyzzt/dgm", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Official self-modifying coding-agent implementation with open-ended archive-based evolution.",
+    note:"<b>Highest-value repo on this list.</b> Run it to see self-modification + archive-based evolution concretely. Pair with the DGM paper (stage 7) and Sakana blog." },
+  { t:"Gödel Agent (code)", u:"https://github.com/Arvid-pku/Godel_Agent", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Official implementation of Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement.",
+    note:"Companion to the Gödel Agent paper (stage 1). Good to read the code to see what 'self-referential' means in practice." },
+  { t:"Hermes Agent", u:"https://github.com/NousResearch/hermes-agent", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Self-improving personal agent with a built-in learning loop that creates and refines skills from experience.",
+    note:"A usable personal agent with an explicit <b>skill learning loop</b>. Lower barrier to try than the research repos — good first hands-on." },
+  { t:"HyperAgents (code)", u:"https://github.com/facebookresearch/HyperAgents", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Self-referential agent framework in which an editable meta-agent improves itself and the task agent for computable objectives.",
+    note:"Meta's implementation of the Hyperagents paper (stage 5). Shows a production-grade editable meta-agent." },
+  { t:"SEAL", u:"https://github.com/Continual-Intelligence/SEAL", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Official code for language models that generate their own adaptation data and update instructions.",
+    note:"Self-generated adaptation data + instruction updates — the data-centric side of self-improvement, in runnable form." },
+  { t:"SIA (code)", u:"https://github.com/hexo-ai/sia", v:"repo", s:"Frameworks & Tools", ss:"Self-Modifying / Self-Evolving Systems", ph:10, d:"code",
+    desc:"Self-improving AI framework that iteratively updates an agent harness and, when configured, the target model's weights.",
+    note:"Companion to the SIA paper (stage 5). The one to run if you want to see <b>harness + weights updated together</b>." },
+  { t:"ACE (code)", u:"https://github.com/ace-agent/ace", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Official implementation of Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models.",
+    note:"Companion to ACE (stage 4). Run to see a 'context playbook' being evolved." },
+  { t:"ALMA (code)", u:"https://github.com/zksha/alma", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Official implementation of Learning to Continually Learn via Meta-learning Agentic Memory Designs.",
+    note:"Companion to ALMA (stage 4). See a meta-agent designing memory schemas in code." },
+  { t:"Continual Harness (code)", u:"https://github.com/sethkarten/continual-harness", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Self-improving agent harness that adapts online from experience while maintaining a continuous environment trajectory.",
+    note:"Companion to Continual Harness (stage 5). Online adaptation within a continuous trajectory." },
+  { t:"EvoAgentX (code)", u:"https://github.com/EvoAgentX/EvoAgentX", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Self-evolving agent framework for automatically building, evaluating, and optimizing agentic workflows.",
+    note:"Companion to EvoAgentX (stage 5). Watch workflow graphs being evolved." },
+  { t:"EvolveR (code)", u:"https://github.com/KnowledgeXLab/EvolveR", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Self-evolving LLM-agent framework that improves through a closed-loop, experience-driven lifecycle.",
+    note:"Companion to EvolveR (stage 4). A clean closed-loop experience lifecycle to study." },
+  { t:"Letta Code", u:"https://github.com/letta-ai/letta-code", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Memory-first coding-agent harness whose long-lived agents rewrite context and learn skills from experience.",
+    note:"A <b>memory-first</b> coding harness from Letta — long-lived agents that rewrite their own context and learn skills. Good contrast to stateless coding agents." },
+  { t:"Memento-Skills", u:"https://github.com/Memento-Teams/Memento-Skills", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Self-evolving agent framework that retrieves, evaluates, repairs, and rewrites persistent skills through reflective learning.",
+    note:"Skills as <b>living artifacts</b>: retrieved, evaluated, repaired, rewritten. Close in spirit to Voyager's library but with a repair loop." },
+  { t:"Reef", u:"https://github.com/Human-Agent-Society/reef", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Continual-learning serving infrastructure that records agent interactions, turns matched feedback into model-weight or harness updates, and publishes accepted updates as versioned artifacts.",
+    note:"<b>Production-scale continual learning</b>: records interactions, converts feedback into weight/harness updates, publishes versioned artifacts. The closest thing to 'deployed RSI' here — read its architecture even if you don't run it." },
+  { t:"Voyager (code)", u:"https://github.com/MineDojo/Voyager", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Embodied lifelong-learning agent with automatic curriculum, iterative prompting, and a reusable skill library.",
+    note:"Companion to Voyager (stage 4). Requires a Minecraft server but is the classic skill-library demonstration." },
+  { t:"ADAS (code)", u:"https://github.com/ShengranHu/ADAS", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Official implementation of a meta-agent that searches over executable agent designs.",
+    note:"Companion to ADAS (stage 5) — the meta-agent that searches over agent designs, runnable." },
+  { t:"AI Scientist (code)", u:"https://github.com/SakanaAI/AI-Scientist", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"End-to-end system for generating machine-learning ideas, running experiments, and writing research papers.",
+    note:"Companion to The AI Scientist (stage 8). Run a small experiment cycle to internalize the loop." },
+  { t:"autoresearch", u:"https://github.com/karpathy/autoresearch", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Runs an autonomous loop that edits an LLM training program, trains for five minutes, and keeps only changes that improve validation bits per byte.",
+    note:"Karpathy's delightfully minimal self-improvement loop: <b>edit training program → train 5 min → keep only if val loss improves</b>. Read the code even if you never run it — it's the smallest honest RSI loop." },
+  { t:"Evolutionary Model Merge", u:"https://github.com/SakanaAI/evolutionary-model-merge", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Evolves combinations of open models in parameter and data-flow space.",
+    note:"A different self-improvement axis: <b>evolve the model itself</b> by merging open weights in parameter/data-flow space. No training needed." },
+  { t:"FunSearch (code)", u:"https://github.com/google-deepmind/funsearch", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Reference implementation of LLM-guided evolutionary program search with executable evaluators.",
+    note:"Companion to FunSearch (stage 9). The reference LLM + evaluator + evolution loop." },
+  { t:"MLEvolve (code)", u:"https://github.com/InternScience/MLEvolve", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Self-evolving multi-agent framework for end-to-end machine-learning algorithm discovery using progressive search and experience-driven memory.",
+    note:"Companion to MLEvolve (stage 8). Multi-agent + search + memory for algorithm discovery." },
+  { t:"OpenEvolve", u:"https://github.com/algorithmicsuperintelligence/openevolve", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Open-source evolutionary coding agent inspired by AlphaEvolve-style program optimization.",
+    note:"An open AlphaEvolve-style evolutionary coding agent — good if you can't access AlphaEvolve directly." },
+  { t:"POET (code)", u:"https://github.com/uber-research/poet", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
+    desc:"Reference implementation for co-evolving environments and their paired agents.",
+    note:"Companion to POET (stage 9). The classic environment-agent co-evolution reference." },
+];
+
+const SECTIONS = [
+  { id:"Harness-level RSI", label:"Harness-level RSI", subs:["Prompt & Program Optimization","Context & Memory Evolution","Harness & Scaffold Evolution","Extensible Harness Substrates","Self-Verification & Self-Correction","Self-Evolving Agent Frameworks"] },
+  { id:"Multi-Agent Self-Improvement", label:"Multi-Agent Self-Improvement", subs:["Co-Evolution","Inference-time Debate"] },
+  { id:"Coding / Software-Engineering Self-Improvement", label:"Coding / Software-Engineering Self-Improvement", subs:["Self-Modifying Coding Agents","Iterative Repair & Training"] },
+  { id:"Automated AI R&D", label:"Automated AI R&D", subs:[] },
+  { id:"Evolutionary & Open-Ended RSI", label:"Evolutionary & Open-Ended RSI", subs:[] },
+  { id:"Frameworks & Tools", label:"Frameworks & Tools", subs:["Self-Modifying / Self-Evolving Systems","Harness / Memory / Skill Evolution","Automated Search / AI R&D"] },
+];
+
+const DEPTH_LABEL = { full:"read fully", skim:"skim", blog:"blog/video", code:"hands-on" };
+const DEPTH_CLASS = { full:"b-full", skim:"b-skim", blog:"b-blog", code:"b-code" };
+
+let view = "path";
+let state = { q:"", depth:"", phase:"", section:"" };
+const done = new Set(JSON.parse(localStorage.getItem("rsi-done") || "[]"));
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function populateSelects(){
+  const ph = document.getElementById("phase"), sec = document.getElementById("section");
+  ph.innerHTML = '<option value="">All stages</option>' + PHASES.map(p=>`<option value="${p.id}">${p.id}. ${esc(p.name)}</option>`).join("");
+  sec.innerHTML = '<option value="">All sections</option>' + SECTIONS.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("");
+}
+
+function matches(e){
+  if(state.depth && e.d !== state.depth) return false;
+  if(state.phase && String(e.ph) !== state.phase) return false;
+  if(state.section && e.s !== state.section) return false;
+  if(state.q){
+    const hay = (e.t + " " + e.desc + " " + e.note + " " + e.v + " " + e.ss).toLowerCase();
+    if(!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+const LOCAL = {
+  "https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2016.00040/full": "frontiers-quality-diversity-2016.pdf",
+  "https://www.nature.com/articles/s41586-023-06924-6": "nature-funsearch-2024.pdf",
+  "https://doi.org/10.1038/s41586-026-10265-5": "nature-ai-scientist-v2-2026.pdf",
+};
+
+function pdfFor(e){
+  const u = e.u;
+  if (u.startsWith("https://arxiv.org/abs/")) return "resources/" + u.split("/abs/")[1] + ".pdf";
+  if (LOCAL[u]) return "resources/" + LOCAL[u];
+  return null;
+}
+
+// Matches site/generate.mjs slugFor so cards link to the generated detail pages.
+const NON_ARXIV_SLUG = {
+  "https://www.nature.com/articles/s41586-023-06924-6": "nature-funsearch-2024",
+  "https://doi.org/10.1038/s41586-026-10265-5": "nature-ai-scientist-v2-2026",
+  "https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2016.00040/full": "frontiers-quality-diversity-2016",
+  "https://openreview.net/forum?id=3tk6AES1Aj": "openreview-higher-order-evolution-2024",
+};
+function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+function slugFor(e){
+  if (e.u.startsWith("https://arxiv.org/abs/")) return e.u.split("/abs/")[1];
+  if (e.u.startsWith("https://github.com/")) return slugify(e.u.replace(/\/$/, "").split("/").pop());
+  return NON_ARXIV_SLUG[e.u] || slugify(e.t);
+}
+function detailHref(e){ return "site/p/" + slugFor(e) + ".html"; }
+
+// Method detail for the read-fully anchors (keyed by entry URL). Written from the papers themselves.
+const METHODS = {
+  "https://arxiv.org/abs/1606.04474": "Meta-learns an LSTM-based optimizer: it ingests the optimizee's gradients and outputs the weight update, trained by unrolling the optimizee's training and backpropagating through it. The learned update rule generalizes to unseen optimizees and tasks.",
+  "https://arxiv.org/abs/2410.04444": "The agent's behavior is defined entirely by code (prompts + tools) that it can inspect and rewrite. It runs a self-referential loop: generate candidate modifications to its own code, execute and evaluate them, and keep improvements — no fixed hand-designed optimizer in the loop.",
+  "https://arxiv.org/abs/2003.03384": "Evolves complete ML algorithms from a tiny search space of scalar/vector math operations (add, multiply, etc.). Evolutionary search on small tasks discovers update rules that independently rediscover backpropagation and Adam-style momentum.",
+  "https://arxiv.org/abs/2310.03714": "Separates program structure (declarative signatures of input/output) from the prompt/demo internals. A compiler/teleprompter optimizes those internals against a user metric — via bootstrapped few-shot demos or a prompted optimizer — so LM calls become an optimizable program.",
+  "https://arxiv.org/abs/2406.07496": "Treats every textual variable in a compound system as a parameter. A natural-language gradient (criticism from a loss) is propagated backward through the computation graph, and an LLM updates each variable using that textual gradient — end-to-end optimization of prompts, code, and answers.",
+  "https://arxiv.org/abs/2303.11366": "Verbal reinforcement learning: on failure, the agent reads the episode trace and writes a reflection (what went wrong, what to try). Reflections accumulate in an episodic memory buffer and are prepended to the next attempt — improvement lives entirely in context, with no weight updates.",
+  "https://arxiv.org/abs/2305.16291": "Three coupled parts: an automatic curriculum (proposes the next task from an exploration frontier), a skill library (execution-verified code, indexed by embeddings and retrieved for reuse), and iterative prompting (execution feedback refines each skill). Lifelong learning in Minecraft with a frozen model.",
+  "https://arxiv.org/abs/2510.04618": "Treats context as an evolving playbook. A modular generation → reflection → curation loop applies structured, incremental edits (not full rewrites) so detail is preserved instead of collapsing. Optimizes context both offline (system prompts) and online (agent memory); +10.6% on agents, +8.6% on finance.",
+  "https://arxiv.org/abs/2510.16079": "A closed-loop lifecycle: (1) Offline Self-Distillation condenses interaction trajectories into a structured repository of abstract, reusable strategic principles; (2) Online Interaction retrieves and applies those principles; outcomes then reinforce the policy. Improves by refining strategy, not just facts.",
+  "https://arxiv.org/abs/2605.23904": "Trains the skill document as the external state of a frozen agent. A separate optimizer model turns scored rollouts into bounded add/delete/replace edits, accepted only on strict held-out validation gain. A textual learning-rate budget, rejected-edit buffer, and slow/meta epoch updates keep it stable — zero extra model calls at deployment.",
+  "https://arxiv.org/abs/2408.08435": "A meta-agent programs new agents: it proposes candidate agent designs as executable code, evaluates them, and iterates — with a re-architect step where it also learns to modify the designing meta-agent's own prompt. Search over agent architectures, not just prompts.",
+  "https://arxiv.org/abs/2310.02304": "Bootstraps a recursive code improver from a seed: an LLM uses a self-improvement meta-prompt to write/improve a scaffolding program, and that generated program is itself an improver that can improve the very code that improves it. The improver-improves-the-improver loop made concrete.",
+  "https://arxiv.org/abs/2605.09998": "Reset-free online adaptation: the agent alternates between acting and refining its own prompt, sub-agents, skills, and memory within a single continuous trajectory (no episode resets). Originated from Gemini Plays Pokémon — the first system to complete Pokémon Blue/Yellow Legacy (hard mode) and Crystal. Extends to model-weight co-learning.",
+  "https://arxiv.org/abs/2605.27276": "A single Feedback-Agent updates both the harness and the weights of a task agent, unifying two previously siloed lines: the harness-update school (meta-agent rewrites tools/prompts/retry/search, weights frozen) and the test-time-training school (hand-written RL updates weights, harness frozen).",
+  "https://arxiv.org/abs/2505.15734": "Ground-truth-free self-training: generate multi-agent debate traces with a new Reflect-Critique-Refine prompting strategy, fine-tune the model on its own improved traces, then repeat the debate→train loop. +8.92% on GSM-PLUS, ~+5.8% on other benchmarks, with cross-domain generalization.",
+  "https://arxiv.org/abs/2505.22954": "A coding agent that edits its own source code; each proposed change is empirically validated on tasks and only improvements are kept. Validated variants accumulate in an open-ended, MAP-Elites-style archive, and the agent can improve the very code that runs its improvement loop — compounding recursive self-improvement.",
+  "https://arxiv.org/abs/2504.15228": "Minimal and transparent: an agent system with basic coding tools edits its own implementation, re-evaluates on benchmarks, and keeps only the edits that help. Gains from 17% to 53% on a random SWE-bench Verified subset plus LiveCodeBench — a data-efficient, non-gradient loop driven by reflection + code edits.",
+  "https://arxiv.org/abs/2408.06292": "An end-to-end ML research loop: generate ideas (novelty-checked against a literature database), implement and run experiments, plot and analyze, write a LaTeX paper, and score it with an automated reviewer — then iterate. Template-based and cheap (~$15/paper), with known limitations (no vision, occasional idea mismatch).",
+  "https://doi.org/10.1038/s41586-026-10265-5": "Automates the whole research cycle — ideas, code, experiments, plots, manuscript, and peer review — end to end. Two modes: a focused mode scaffolded by human code templates, and a template-free open-ended mode using agentic tree search. Its manuscript passed first-round peer review at a top-tier ML workshop (70% acceptance).",
+  "https://www.nature.com/articles/s41586-023-06924-6": "A frozen (never fine-tuned) LLM proposes candidate functions in a problem skeleton; a separate evaluator scores them; the best are injected back as few-shot examples in the prompt, forming an evolutionary loop. Discovered new cap-set constructions and a better bin-packing heuristic — genuine mathematical novelty.",
+  "https://arxiv.org/abs/2506.13131": "A Gemini-powered coding agent writes candidate algorithms, evaluates them (often via fast approximate evaluators over a distributed pool), and uses island-based evolutionary search to improve them. Applied to matrix multiplication, sorting, and other kernels, discovering faster algorithms — including code used to train AI.",
+};
+
+function card(e){
+  const isDone = done.has(e.u);
+  const venue = e.v ? `<span class="badge b-venue">${esc(e.v)}</span>` : "";
+  const depth = `<span class="badge ${DEPTH_CLASS[e.d]}">${DEPTH_LABEL[e.d]}</span>`;
+  const phase = `<span class="badge b-venue">stage ${e.ph} · ${esc(PHASES[e.ph-1].name)}</span>`;
+  const pdf = pdfFor(e);
+  const src = pdf
+    ? `<a class="badge b-pdf" href="${esc(pdf)}" target="_blank" rel="noopener">local PDF</a><a class="online" href="${esc(e.u)}" target="_blank" rel="noopener">view online ↗</a>`
+    : (e.u.startsWith("https://github.com/") ? "" : `<span class="badge b-web">online only</span>`);
+  return `<div class="card ${isDone?"done":""}" data-url="${esc(e.u)}">
+    <input type="checkbox" ${isDone?"checked":""} title="Mark done">
+    <div class="body">
+      <div class="title"><a href="${esc(detailHref(e))}">${esc(e.t)}</a><span class="detail-link"> · <a href="${esc(detailHref(e))}">detail page</a></span></div>
+      <div class="badges">${venue}${depth}${phase}${src}</div>
+      <div class="desc">${esc(e.desc)}</div>
+      <div class="note"><b>Learning note:</b> ${e.note}</div>
+      ${METHODS[e.u] ? `<div class="method"><b>Method:</b> ${METHODS[e.u]}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function updateNext(){
+  const next = E.find(e => !done.has(e.u));
+  const el = document.getElementById("nextup");
+  if (!next) { el.innerHTML = '<span class="pill">🎉 All 98 entries complete</span>'; return; }
+  el.innerHTML = `<span class="pill">Next up · stage ${next.ph}</span> <a href="${esc(detailHref(next))}">${esc(next.t)}</a>`;
+}
+
+function render(){
+  const main = document.getElementById("main");
+  const items = E.filter(matches);
+  let html = "";
+  if(view === "path"){
+    for(const p of PHASES){
+      const list = items.filter(e=>e.ph===p.id);
+      if(!list.length) continue;
+      html += `<section class="phase"><h2><span class="n">${p.id}</span>${esc(p.name)} <span class="cnt">(${list.length})</span></h2><p class="lead">${p.lead}</p></section>`;
+      html += list.map(card).join("");
+    }
+  } else {
+    for(const s of SECTIONS){
+      const secItems = items.filter(e=>e.s===s.id);
+      if(!secItems.length) continue;
+      html += `<section class="group"><h3>${esc(s.label)}</h3></section>`;
+      const subs = s.subs.length ? s.subs : [""];
+      for(const sub of subs){
+        const subItems = secItems.filter(e=>e.ss===sub);
+        if(!subItems.length) continue;
+        if(sub) html += `<section class="group"><h3 style="font-size:13px;color:var(--muted)">${esc(sub)}</h3></section>`;
+        html += subItems.map(card).join("");
+      }
+    }
+  }
+  if(!html) html = '<div class="empty">No entries match the current filters.</div>';
+  main.innerHTML = html;
+
+  // progress
+  const total = E.length;
+  const complete = E.filter(e=>done.has(e.u)).length;
+  document.getElementById("fill").style.width = (100*complete/total)+"%";
+  document.getElementById("pct").textContent = `${complete} / ${total} complete`;
+  updateNext();
+
+  // checkbox handlers
+  main.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      const card = cb.closest(".card");
+      const url = card.dataset.url;
+      if(cb.checked){ done.add(url); card.classList.add("done"); }
+      else { done.delete(url); card.classList.remove("done"); }
+      localStorage.setItem("rsi-done", JSON.stringify([...done]));
+      render();
+    });
+  });
+}
+
+document.getElementById("viewseg").addEventListener("click", ev=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  view = b.dataset.view;
+  document.querySelectorAll("#viewseg button").forEach(x=>x.classList.toggle("active", x===b));
+  render();
+});
+document.getElementById("q").addEventListener("input", ev=>{ state.q=ev.target.value.trim(); render(); });
+document.getElementById("depth").addEventListener("change", ev=>{ state.depth=ev.target.value; render(); });
+document.getElementById("phase").addEventListener("change", ev=>{ state.phase=ev.target.value; render(); });
+document.getElementById("section").addEventListener("change", ev=>{ state.section=ev.target.value; render(); });
+
+populateSelects();
+render();
+</script>
+</body>
+</html>

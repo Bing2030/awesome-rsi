@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DeepSeek Harness — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="agent-zero.html">← Agent Zero</a> · <a href="openclaw.html">OpenClaw →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Harness-level RSI</div>
+    <h1>DeepSeek Harness</h1>
+    
+    <p class="meta">repo · substrate</p>
+    <div class="links"><a class="" href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>DeepSeek's open-source agent harness, built on an everything-is-a-plugin architecture (powered by Cordis), with web and CLI runtimes.</p></section><section class="block"><h2>How it works</h2><ul><li>Everything-is-a-plugin: tools, memory, and orchestration are all plugins composed via Cordis (spatiotemporal composability).</li><li>Web UI + CLI launch modes; developer preview with a documented safety notice.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">`npx @deepseek-ai/dsh web` starts the Web UI at http://127.0.0.1:3080 (Node.js required).</pre></section><section class="block"><h2>Learning note</h2><p>A production-grade harness from a frontier lab — the plugin architecture is the reusable idea (contrast with monolithic harnesses).</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>DeepSeek Harness</h1>
+<p>English | <a href="README.zh.md">中文</a></p>
+<p>DeepSeek Harness (<code>dsh</code>) is an open-source agent harness developed by <a href="https://deepseek.com">DeepSeek AI</a>.</p>
+<p>It is built on an <strong>everything-is-a-plugin</strong> architecture and powered by <a href="https://github.com/cordiverse/cordis">Cordis</a>, whose design is described in <a href="https://arxiv.org/abs/2608.25512"><em>A Programming Paradigm for Spatiotemporal Composability</em></a>.</p>
+<p>Documentation: <a href="https://deepseek-harness.github.io/deepseek-harness/">https://deepseek-harness.github.io/deepseek-harness/</a></p>
+<h2>Developer preview</h2>
+<p>DeepSeek Harness is in <em>developer preview</em> and iterating rapidly. <strong>THERE WILL BE COMPATIBILITY-BREAKING CHANGES.</strong></p>
+<p>Review the <a href="SAFETY.md">safety notice</a> before running the project.</p>
+<h2>Run</h2>
+<h3>Run from <code>npm</code></h3>
+<p>Install <code>Node.js</code>, then run:</p>
+<pre><code class="language-sh">npx @deepseek-ai/dsh web
+</code></pre>
+<p>The command starts the Web UI at <code>http://127.0.0.1:3080</code> by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass <code>--no-open</code> to run the server without opening a browser. See <a href="docs/user/guide/index.md">Web UI guide</a>.</p>
+<h3>Run from source</h3>
+<p>To run from a repository checkout:</p>
+<pre><code class="language-sh">git clone https://github.com/deepseek-ai/deepseek-harness.git
+cd deepseek-harness
+pnpm install
+pnpm run build
+pnpm dsh web
+</code></pre>
+<p><code>pnpm run build</code> prepares the repository artifacts. <code>pnpm dsh web</code> uses those built artifacts without rebuilding.</p>
+<h2>Community and support</h2>
+<ul>
+<li>Submit feedback or bug reports through <a href="https://github.com/deepseek-ai/deepseek-harness/discussions">GitHub Discussions</a>.</li>
+<li>Add the <a href="https://github.com/topics/dsh-plugin"><code>dsh-plugin</code></a> topic to your plugin repository for discoverability.</li>
+<li>Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.</li>
+</ul>
+<h2>Contributing</h2>
+<p>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<h2>Development</h2>
+<p>Start with the <a href="docs/development.md">development guide</a> and <a href="docs/architecture.md">architecture documentation</a>.</p>
+<p>For agents, follow <a href="AGENTS.md">AGENTS.md</a>.</p>
+<h2>Citation</h2>
+<pre><code class="language-bibtex">@misc{deepseek-harness2026,
+  title={DeepSeek Harness: Everything is a Plugin},
+  author={DeepSeek-AI},
+  year={2026},
+  publisher={GitHub},
+  howpublished={\url{https://github.com/deepseek-ai/deepseek-harness}},
+}
+</code></pre>
+<h2>License</h2>
+<p><a href="LICENSE">MIT</a></p>
+<p>Third-party dependencies and their licenses are disclosed in <a href="THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="agent-zero.html">Agent Zero<small>repo · substrate</small></a><a href="openclaw.html">OpenClaw<small>repo · substrate</small></a><a href="2410.04444.html">Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement<small>ACL 2025</small></a><a href="2310.03714.html">DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines<small>NeurIPS 2023 (R0-FoMo)</small></a><a href="2406.07496.html">TextGrad: Automatic &quot;Differentiation&quot; via Text<small>Nature 2025</small></a><a href="2309.03409.html">Large Language Models as Optimizers<small>ICLR 2024</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>OpenClaw — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="deepseek-harness.html">← DeepSeek Harness</a> · <a href="pi.html">Pi →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Harness-level RSI</div>
+    <h1>OpenClaw</h1>
+    
+    <p class="meta">repo · substrate</p>
+    <div class="links"><a class="" href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>A self-hosted personal assistant that runs on your own devices and lives in your chats (Node.js, MIT).</p></section><section class="block"><h2>How it works</h2><ul><li>Runs locally across your devices rather than in a hosted cloud.</li><li>Chat-native: plugs into existing messaging surfaces as an assistant.</li><li>Distributed as `openclaw` on npm; Node.js runtime.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">`npm install -g openclaw` (or `npx openclaw`) then follow onboarding; Node.js required.</pre></section><section class="block"><h2>Learning note</h2><p>The 'assistant on your own hardware' substrate — useful for studying how self-improvement is shaped by local, persistent execution.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>OpenClaw 🦞 — Your assistant, on your devices, in your chats</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-banner-light.png">
+    <img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-banner-dark.png" alt="OpenClaw — EXFOLIATE! EXFOLIATE! Your AI assistant, running on your own devices.">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/openclaw/openclaw/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openclaw/openclaw/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
+  <a href="https://www.npmjs.com/package/openclaw"><img src="https://img.shields.io/npm/v/openclaw?style=flat-square&label=npm" alt="npm version"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/openclaw?style=flat-square" alt="Node.js version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License: MIT"></a>
+  <a href="https://discord.gg/clawd"><img src="https://img.shields.io/discord/1456350064065904867?label=discord&logo=discord&logoColor=white&color=5865F2&style=flat-square" alt="Discord"></a>
+</p>
+
+<p>OpenClaw is an open-source AI assistant that runs on your own computer and meets you in the channels you already use: Discord, iMessage, Slack, Teams, Telegram, WhatsApp, and 20+ more, plus native apps for macOS, iOS, Android, Windows, and Linux. One Gateway runs it as a personal assistant on a laptop or as a shared <a href="https://docs.openclaw.ai/start/teams">team deployment</a>; configuration is the only difference.</p>
+<p><strong>Yours, with no catch.</strong> State, memory, and credentials live on your hardware. Models and agent harnesses (Claude, Codex, local models) are plugins you can swap without changing anything else. Your prompts go to the model provider and chat platforms you configure, plus any diagnostics export you enable yourself; by default OpenClaw itself phones home for nothing but a daily version check, anonymous feature statistics are opt-in, and <code>update.checkOnStart: false</code> disables both (<a href="https://docs.openclaw.ai/gateway/telemetry">what OpenClaw sends</a>). OpenClaw is stewarded by the <a href="https://openclaw.org">OpenClaw Foundation</a>, an independent 501(c)(3), and has no paid tier, hosted service, or token. The architecture case — trusted gateway, untrusted execution, deterministic policy — is in <a href="https://docs.openclaw.ai/start/why-openclaw">Why OpenClaw</a>.</p>
+<p><a href="https://openclaw.ai">Website</a> · <a href="https://docs.openclaw.ai">Docs</a> · <a href="https://docs.openclaw.ai/start/getting-started">Getting started</a> · <a href="https://docs.openclaw.ai/start/why-openclaw">Why OpenClaw</a> · <a href="https://docs.openclaw.ai/start/showcase">Showcase</a> · <a href="https://docs.openclaw.ai/help/faq">FAQ</a> · <a href="VISION.md">Vision</a> · <a href="https://deepwiki.com/openclaw/openclaw">DeepWiki</a></p>
+<h2>Install</h2>
+<p>The installer supports macOS, Linux, and Windows. It provisions a supported Node.js runtime when needed.</p>
+<pre><code class="language-bash"># macOS / Linux / WSL2
+curl -fsSL https://openclaw.ai/install.sh | bash
+</code></pre>
+<pre><code class="language-powershell"># Windows PowerShell
+iwr -useb https://openclaw.ai/install.ps1 | iex
+</code></pre>
+<p>Already manage Node.js? Install the published package instead (Node 24.16+ or 26.1+; Node 26 recommended):</p>
+<pre><code class="language-bash">npm install -g openclaw@latest --allow-scripts=openclaw
+</code></pre>
+<p>That command is for npm 12 or npm 11.16+. On npm 11.15 and earlier, omit
+<code>--allow-scripts=openclaw</code>. See the
+<a href="https://docs.openclaw.ai/install">installation guide</a> for the lifecycle script
+contract, Docker, Nix, and other deployment paths.</p>
+<h2>Quick start</h2>
+<p>On a fresh install, the installer scripts start onboarding automatically.
+Complete the wizard they open. If you installed the package directly with npm,
+pnpm, or Bun, run:</p>
+<pre><code class="language-bash">openclaw onboard --install-daemon
+</code></pre>
+<p>After onboarding:</p>
+<pre><code class="language-bash">openclaw gateway status
+openclaw dashboard
+</code></pre>
+<p>Onboarding verifies model access, creates the workspace, and configures the Gateway. The last command opens the Control UI; send a message there to confirm the assistant is working. See the <a href="https://docs.openclaw.ai/start/getting-started">getting started guide</a> for channel setup and troubleshooting.</p>
+<h2>How it fits together</h2>
+<ul>
+<li>The <a href="https://docs.openclaw.ai/gateway">Gateway</a> is the local control plane for sessions, tools, events, and channel connections.</li>
+<li>The <a href="https://docs.openclaw.ai/web/control-ui">Control UI</a>, CLI, and <a href="https://docs.openclaw.ai/web/tui">TUI</a> connect to the Gateway.</li>
+<li><a href="https://docs.openclaw.ai/channels">Channels</a> bring the assistant to WhatsApp, Telegram, Slack, Discord, Google Chat, Signal, iMessage, and other messaging services.</li>
+<li><a href="https://docs.openclaw.ai/platforms">Companion apps and nodes</a> add voice, Canvas, camera, screen, and device-local actions on supported platforms.</li>
+</ul>
+<p>OpenClaw works with hosted and local <a href="https://docs.openclaw.ai/concepts/model-providers">model providers</a>. Its <a href="https://docs.openclaw.ai/tools">tools</a>, <a href="https://docs.openclaw.ai/tools/skills">skills</a>, and <a href="https://docs.openclaw.ai/plugins">plugins</a> extend what an assistant can do.</p>
+<h2>Security</h2>
+<p>Treat inbound messages as untrusted input. DM-capable channels pair unknown senders by default; approve a pairing request with <code>openclaw pairing approve &lt;channel&gt; &lt;code&gt;</code>.</p>
+<p>Tools run on the host for the main session unless you configure sandboxing. Read the <a href="https://docs.openclaw.ai/gateway/security">security guide</a>, <a href="https://docs.openclaw.ai/gateway/security/exposure-runbook">exposure runbook</a>, and <a href="https://docs.openclaw.ai/gateway/sandboxing">sandboxing guide</a> before connecting other users or exposing the Gateway remotely.</p>
+<h2>Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Start here</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Configure models and auth</td>
+<td><a href="https://docs.openclaw.ai/concepts/models">Models</a> · <a href="https://docs.openclaw.ai/concepts/model-providers">Model providers</a></td>
+</tr>
+<tr>
+<td>Connect a messaging service</td>
+<td><a href="https://docs.openclaw.ai/channels">Channels</a></td>
+</tr>
+<tr>
+<td>Add tools, skills, and plugins</td>
+<td><a href="https://docs.openclaw.ai/tools">Tools</a> · <a href="https://docs.openclaw.ai/tools/skills">Skills</a> · <a href="https://docs.openclaw.ai/plugins">Plugins</a> · <a href="https://clawhub.ai">ClawHub</a></td>
+</tr>
+<tr>
+<td>Run apps and device nodes</td>
+<td><a href="https://docs.openclaw.ai/platforms">Platforms</a> · <a href="https://docs.openclaw.ai/nodes">Nodes</a></td>
+</tr>
+<tr>
+<td>Use the CLI and chat commands</td>
+<td><a href="https://docs.openclaw.ai/cli">CLI reference</a> · <a href="https://docs.openclaw.ai/tools/slash-commands">Slash commands</a></td>
+</tr>
+<tr>
+<td>Configure or operate the Gateway</td>
+<td><a href="https://docs.openclaw.ai/gateway/configuration">Configuration</a> · <a href="https://docs.openclaw.ai/concepts/architecture">Architecture</a> · <a href="https://docs.openclaw.ai/install/updating">Updating</a> · <a href="https://docs.openclaw.ai/install/development-channels">Release channels</a></td>
+</tr>
+</tbody></table>
+<h2>Development</h2>
+<p>The repository is a pnpm workspace. Plain <code>npm install</code> at the repository root is not supported.</p>
+<pre><code class="language-bash">git clone https://github.com/openclaw/openclaw.git
+cd openclaw
+pnpm install
+pnpm build
+pnpm ui:build
+</code></pre>
+<p>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for the contribution workflow and the <a href="https://docs.openclaw.ai/start/setup">source setup guide</a> for the development loop.</p>
+<h2>Governance</h2>
+<p>OpenClaw is developed in the open by the <a href="https://openclaw.org">OpenClaw Foundation</a>, an independent 501(c)(3). The Foundation employs the core team and signs releases. Donors and infrastructure sponsors support the Foundation; none of them own or direct the project. OpenAI is a donor, not an owner.</p>
+<h2>Community</h2>
+<p>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for maintainers and contribution guidelines; AI-assisted PRs are welcome.</p>
+<p>Use the <a href="https://github.com/openclaw/openclaw/issues/new/choose">issue chooser</a> for bugs and feature requests, ask setup questions in <a href="https://discord.gg/clawd">Discord</a>, and report vulnerabilities through <a href="SECURITY.md">SECURITY.md</a>. New capabilities usually belong in plugins built on the <a href="https://docs.openclaw.ai/plugins/building-plugins">plugin SDK</a> and shared through <a href="https://clawhub.ai">ClawHub</a>.</p>
+<p>OpenClaw was built for <strong>Molty</strong>, a space lobster AI assistant, by Peter Steinberger and the community. Explore the <a href="https://docs.openclaw.ai/start/lore">project lore</a>, <a href="https://soul.md">soul.md</a>, <a href="https://steipete.me">Peter&#39;s site</a>, <a href="https://www.star-history.com/#openclaw/openclaw&type=date&legend=top-left">Star History</a>, and <a href="https://x.com/openclaw">@openclaw</a>.</p>
+<p>Special thanks to <a href="https://mariozechner.at/">Mario Zechner</a> for his support and for <a href="https://github.com/earendil-works/pi">pi</a>, and to Adam Doppelt for the lobster.bot domain.</p>
+<h2>Donors and sponsors</h2>
+<p>The Foundation is funded by donors including Amazon, Lobster Computer Company, Offline Holdings, OpenAI, Red Hat, and the University of Michigan, with infrastructure support from Blacksmith, Convex, GitHub, NVIDIA, and Vercel.</p>
+<table>
+  <tr>
+    <td align="center"><a href="https://blacksmith.sh/"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/blacksmith-light.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/blacksmith.svg" alt="Blacksmith" height="28"></picture></a></td>
+    <td align="center"><a href="https://www.convex.dev/"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/convex-light.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/convex.svg" alt="Convex" height="24"></picture></a></td>
+    <td align="center"><a href="https://github.com/"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/github-light.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/github.svg" alt="GitHub" height="28"></picture></a></td>
+    <td align="center"><a href="https://www.nvidia.com/"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/nvidia.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/nvidia-dark.svg" alt="NVIDIA" height="28"></picture></a></td>
+    <td align="center"><a href="https://github.com/openai"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/openai-light.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/openai.svg" alt="OpenAI" height="28"></picture></a></td>
+    <td align="center"><a href="https://www.redhat.com/"><picture><source media="(prefers-color-scheme: light)" srcset="docs/assets/sponsors/redhat-light.svg"><img src="docs/assets/sponsors/redhat.svg" alt="Red Hat" height="28"></picture></a></td>
+    <td align="center"><a href="https://vercel.com/"><picture><source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/vercel-light.svg"><img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/sponsors/vercel.svg" alt="Vercel" height="24"></picture></a></td>
+  </tr>
+</table>
+
+<h2>Contributors</h2>
+<p>Thanks to all clawtributors:</p>
+<!-- clawtributors:start -->
+
+<p><a href="https://github.com/steipete"><img src="https://avatars.githubusercontent.com/u/58493?v=4&s=48" width="48" height="48" alt="steipete"></a> <a href="https://github.com/vincentkoc"><img src="https://avatars.githubusercontent.com/u/25068?v=4&s=48" width="48" height="48" alt="vincentkoc"></a> <a href="https://github.com/Takhoffman"><img src="https://avatars.githubusercontent.com/u/781889?v=4&s=48" width="48" height="48" alt="Takhoffman"></a> <a href="https://github.com/obviyus"><img src="https://avatars.githubusercontent.com/u/22031114?v=4&s=48" width="48" height="48" alt="obviyus"></a> <a href="https://github.com/gumadeiras"><img src="https://avatars.githubusercontent.com/u/5599352?v=4&s=48" width="48" height="48" alt="gumadeiras"></a> <a href="https://github.com/mbelinky"><img src="https://avatars.githubusercontent.com/u/132747814?v=4&s=48" width="48" height="48" alt="Mariano Belinky"></a> <a href="https://github.com/vignesh07"><img src="https://avatars.githubusercontent.com/u/1436853?v=4&s=48" width="48" height="48" alt="vignesh07"></a> <a href="https://github.com/joshavant"><img src="https://avatars.githubusercontent.com/u/830519?v=4&s=48" width="48" height="48" alt="joshavant"></a> <a href="https://github.com/scoootscooob"><img src="https://avatars.githubusercontent.com/u/167050519?v=4&s=48" width="48" height="48" alt="scoootscooob"></a> <a href="https://github.com/jacobtomlinson"><img src="https://avatars.githubusercontent.com/u/1610850?v=4&s=48" width="48" height="48" alt="jacobtomlinson"></a>
+<a href="https://github.com/shakkernerd"><img src="https://avatars.githubusercontent.com/u/165377636?v=4&s=48" width="48" height="48" alt="shakkernerd"></a> <a href="https://github.com/sebslight"><img src="https://avatars.githubusercontent.com/u/19554889?v=4&s=48" width="48" height="48" alt="sebslight"></a> <a href="https://github.com/tyler6204"><img src="https://avatars.githubusercontent.com/u/64381258?v=4&s=48" width="48" height="48" alt="tyler6204"></a> <a href="https://github.com/ngutman"><img src="https://avatars.githubusercontent.com/u/1540134?v=4&s=48" width="48" height="48" alt="ngutman"></a> <a href="https://github.com/thewilloftheshadow"><img src="https://avatars.githubusercontent.com/u/35580099?v=4&s=48" width="48" height="48" alt="thewilloftheshadow"></a> <a href="https://github.com/Sid-Qin"><img src="https://avatars.githubusercontent.com/u/201593046?v=4&s=48" width="48" height="48" alt="Sid-Qin"></a> <a href="https://github.com/mcaxtr"><img src="https://avatars.githubusercontent.com/u/7562095?v=4&s=48" width="48" height="48" alt="mcaxtr"></a> <a href="https://github.com/eleqtrizit"><img src="https://avatars.githubusercontent.com/u/31522568?v=4&s=48" width="48" height="48" alt="eleqtrizit"></a> <a href="https://github.com/BunsDev"><img src="https://avatars.githubusercontent.com/u/68980965?v=4&s=48" width="48" height="48" alt="BunsDev"></a> <a href="https://github.com/cpojer"><img src="https://avatars.githubusercontent.com/u/13352?v=4&s=48" width="48" height="48" alt="cpojer"></a></p>
+</div><p class="abstract">… (truncated for length) — <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="deepseek-harness.html">DeepSeek Harness<small>repo · substrate</small></a><a href="pi.html">Pi<small>repo · substrate</small></a><a href="2410.04444.html">Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement<small>ACL 2025</small></a><a href="2310.03714.html">DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines<small>NeurIPS 2023 (R0-FoMo)</small></a><a href="2406.07496.html">TextGrad: Automatic &quot;Differentiation&quot; via Text<small>Nature 2025</small></a><a href="2309.03409.html">Large Language Models as Optimizers<small>ICLR 2024</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

@@ -1,0 +1,1109 @@
+{
+  "1606.04474": {
+    "tldr": "The original proof that an optimization procedure can itself be learned. An LSTM is trained to act as an optimizer — ingesting gradients and emitting weight updates — by unrolling the optimizee's training.",
+    "results": [
+      "The learned optimizer generalizes to optimizees, networks, and task distributions it was not trained on.",
+      "Recovered hand-designed behavior (momentum-style updates) without being told to."
+    ],
+    "limitations": [
+      "Meta-trained on small, specific task distributions; scaling to large-scale training remained open (and largely still is)."
+    ],
+    "fits": "The conceptual root of the whole list: if the *improver* is learnable, then the improver can be improved. Everything from TextGrad to DGM is a descendant of this idea.",
+    "reading": "Read §2–3 (the coordinatewise LSTM and how unrolling works); skim the transfer experiments."
+  },
+  "2410.04444": {
+    "tldr": "The self-referential ideal made concrete with an LLM: the agent's behavior is code (prompts + tools) that it can inspect and rewrite, so no fixed, hand-designed optimizer sits in the loop.",
+    "results": [
+      "The agent can modify its own logic and improve without a human-authored optimization routine.",
+      "Demonstrates self-reference and code-as-identity as an RSI substrate."
+    ],
+    "limitations": [
+      "Self-modification is bounded and validated heuristically — no formal guarantees of goal preservation."
+    ],
+    "fits": "The theory-side counterpart to the empirical Darwin Gödel Machine (stage 7). Read them as a pair: this is the 'what', DGM is the 'does it work'.",
+    "reading": "Focus on how it frames self-reference (§3) and the self-modification loop; the paper is more a framework than a benchmark result."
+  },
+  "2003.03384": {
+    "tldr": "Evolves complete ML algorithms — not just hyperparameters — from a tiny space of scalar/vector math operations, discovering update rules that work from scratch.",
+    "results": [
+      "Rediscovered backpropagation and Adam-style momentum purely through evolution.",
+      "Evolved algorithms that generalize to held-out tasks, with minimal human bias in the search space."
+    ],
+    "limitations": [
+      "Only tiny problems (small MLPs, toy datasets); doesn't scale to modern models."
+    ],
+    "fits": "Pre-LLM 'AI designing AI'. The evolutionary-search machinery here is the direct ancestor of AlphaEvolve and MLEvolve (stage 9 / stage 8).",
+    "reading": "Skim the search-space design (§3) and the discovered algorithms (§4); don't dwell on the experimental scale."
+  },
+  "2310.03714": {
+    "tldr": "Reframes prompt engineering as program optimization: declare what each LM call does (a signature), then let a compiler optimize the prompts and few-shot demos inside against a metric.",
+    "results": [
+      "GPT-3.5 + DSPy pipelines matched or beat hand-written GPT-4 prompts on several tasks.",
+      "The optimizer (bootstrapped demos or a prompted optimizer) is reusable across tasks."
+    ],
+    "limitations": [
+      "Needs a well-defined automatic metric — the optimization is only as good as that signal.",
+      "Prompt/compile quality still depends on the underlying search or bootstrap strategy."
+    ],
+    "fits": "The most *useful* artifact in the list: it's the mental model (separate structure from parameters) that harness-level RSI generalizes. Read before TextGrad.",
+    "reading": "Read the signature/module abstractions (§2–3) and one optimizer (§4). Then actually try the library."
+  },
+  "2406.07496": {
+    "tldr": "Generalizes backprop to text: treat every textual variable in a compound system as a parameter, and backpropagate natural-language criticism through the graph to update each one.",
+    "results": [
+      "Optimizes prompts, code, and answers in one end-to-end loop.",
+      "Outperformed hand-crafted prompts and prior prompt optimizers across reasoning and coding benchmarks."
+    ],
+    "limitations": [
+      "Textual 'gradients' can be noisy or uninformative; performance is still bounded by the base model's capability."
+    ],
+    "fits": "The cleanest mental model of 'differentiating' an AI pipeline. Pair with DSPy: DSPy is structured program optimization, TextGrad is free-form textual backprop.",
+    "reading": "Read the computation-graph formalism (§3) and the text-gradient update rule (§4)."
+  },
+  "2303.11366": {
+    "tldr": "Verbal reinforcement learning: when the agent fails, it writes a natural-language reflection on what went wrong, stores it in memory, and injects it into the next attempt — no weight updates.",
+    "results": [
+      "91% pass@1 on HumanEval with GPT-4, a large jump over the base model.",
+      "Improved on decision-making (AlfWorld) and sequential reasoning without any fine-tuning."
+    ],
+    "limitations": [
+      "Improvement lives only in the context window — bounded and non-persistent across sessions.",
+      "Works best on episodic tasks with clear success/failure signals."
+    ],
+    "fits": "The ancestor of nearly every 'memory agent' in stage 4 (ExpeL, A-MEM, EvolveR, …). Read it first and watch how each successor adds persistence or structure.",
+    "reading": "Read §3 (the reflect→store→retry loop) and the HumanEval result. Short paper."
+  },
+  "2305.16291": {
+    "tldr": "Lifelong skill acquisition in Minecraft: an automatic curriculum proposes tasks, execution-verified code skills accumulate in a library, and feedback refines them — all with a frozen GPT-4.",
+    "results": [
+      "~3.3× more unique items collected and key tech-tree milestones unlocked far faster than prior agents.",
+      "The skill library compounds: later tasks reuse and build on earlier verified skills."
+    ],
+    "limitations": [
+      "Minecraft-specific and depends on a strong base model; skill code can still hallucinate and needs environment feedback to correct."
+    ],
+    "fits": "The canonical *skill-library* paradigm. Its 'code-as-skill, verify-in-environment' loop is reused by DGM, AgentFactory, and the embodied self-improvement line.",
+    "reading": "Read the three components (§3–4) and the automatic-curriculum mechanism; then run the repo (stage 10)."
+  },
+  "2510.04618": {
+    "tldr": "Treats context as an evolving 'playbook' that accumulates and organizes strategies via generation, reflection, and curation — using structured incremental edits to avoid context collapse.",
+    "results": [
+      "+10.6% over strong baselines on agent benchmarks and +8.6% on finance/domain tasks.",
+      "Works both offline (system prompts) and online (agent memory), scaling with long-context models."
+    ],
+    "limitations": [
+      "Still bounded by context capacity; the brevity-bias vs. detail tradeoff is managed, not eliminated."
+    ],
+    "fits": "The 'evolve the whole context, not just a skill' generalization of stage 4. Contrasts with Voyager (which evolves *code skills*) by evolving the *prompt/context itself*.",
+    "reading": "Read the generation/reflection/curation loop (§3) and how incremental updates prevent collapse."
+  },
+  "2510.16079": {
+    "tldr": "A closed-loop experience lifecycle: trajectories are distilled into a repository of abstract 'strategic principles', retrieved at task time, and the policy is reinforced from outcomes.",
+    "results": [
+      "Outperforms baselines by refining *strategy* (not just factual memory) across agent tasks.",
+      "The offline-distillation + online-retrieval split makes learning persistent and reusable."
+    ],
+    "limitations": [
+      "Distillation quality depends on trajectory coverage; retrieval can surface irrelevant principles."
+    ],
+    "fits": "The cleanest end-to-end 'experience → principle → policy' loop in stage 4. A direct, structured successor to Reflexion.",
+    "reading": "Read the two-stage lifecycle (§3) and how principles are distilled and retrieved."
+  },
+  "2605.23904": {
+    "tldr": "Trains the skill document as the external state of a frozen agent, with a separate optimizer model making bounded add/delete/replace edits accepted only on held-out validation gain.",
+    "results": [
+      "Improves across six benchmarks, seven target models, and three execution harnesses.",
+      "Zero extra inference-time model calls at deployment — all optimization happens offline."
+    ],
+    "limitations": [
+      "Bounded, acceptance-gated edits are deliberately conservative — the tradeoff is a slower skill-evolution rate."
+    ],
+    "fits": "The 'treat the skill like a trained parameter' position — skill evolution with the discipline of weight-space optimization. Contrasts with free-form self-revision approaches.",
+    "reading": "Read the textual-learning-rate / acceptance-gate design (§3–4) — that discipline is the reusable idea."
+  },
+  "2408.08435": {
+    "tldr": "A meta-agent programs new agents: it proposes agent designs as executable code, evaluates them, and iterates — including a re-architect step that learns to improve the meta-agent's own prompt.",
+    "results": [
+      "Discovered agents that outperform state-of-the-art hand-designed agents on coding, math, and QA benchmarks.",
+      "Agents transfer across models (e.g., discovered agents boost GPT-4 performance)."
+    ],
+    "limitations": [
+      "Search is compute-hungry (many LLM calls); the meta-agent itself is initially hand-designed."
+    ],
+    "fits": "The harness-level flagship: the 'improver' is an agent generating executable improvements. Stage 5's anchor — most later harness-evolution work extends this loop.",
+    "reading": "Read the meta-agent search + re-architect mechanism (§3) and the transfer results."
+  },
+  "2310.02304": {
+    "tldr": "Bootstraps a recursive code improver from a seed: an LLM writes and improves a scaffolding program, and that generated program is itself an improver that can improve the code that improves it.",
+    "results": [
+      "Improved over GPT-4 on GSM8K and WebShop, including the generated improver improving itself.",
+      "Demonstrates the improver-improves-the-improver loop on real code."
+    ],
+    "limitations": [
+      "Recursive gains can plateau; depends on a strong seed model and self-improvement meta-prompt."
+    ],
+    "fits": "The most literal 'recursive' demo — the scaffolding that does the improving is itself improved. A bridge between ADAS (search) and DGM (self-modification).",
+    "reading": "Read the seed-improver construction and the meta-prompt (§3–4). Short paper."
+  },
+  "2605.09998": {
+    "tldr": "Reset-free online self-improvement for embodied agents: the agent alternates between acting and refining its own prompt, sub-agents, skills, and memory within one continuous trajectory.",
+    "results": [
+      "Originated from Gemini Plays Pokémon — the first system to complete Pokémon Blue/Yellow Legacy (hard mode) and Crystal without a lost battle.",
+      "Removes the human from the refinement loop, automating what was previously human-in-the-loop harness tuning."
+    ],
+    "limitations": [
+      "Embodied/eval cost is high; single-trajectory online adaptation is complex to stabilize."
+    ],
+    "fits": "The embodied, reset-free counterpart to prompt-optimization harnesses. Extends the loop toward model-weight co-learning — a bridge to SIA's joint updates.",
+    "reading": "Read the act/refine alternation (§3) and the Pokémon results; note the contrast with reset-based prompt optimizers."
+  },
+  "2605.27276": {
+    "tldr": "A single Feedback-Agent updates both the harness and the weights of a task agent, unifying the two previously siloed self-improvement schools (harness-update vs. test-time training).",
+    "results": [
+      "Improves across three contrasting domains (e.g., Chinese legal charge classification and low-level coding).",
+      "Shows joint harness+weight updates beat updating either one in isolation."
+    ],
+    "limitations": [
+      "Two-module complexity; evaluations are domain-specific rather than a single unified benchmark."
+    ],
+    "fits": "The 'close the loop' paper — harness-level and model-level RSI are not separate; this merges them. Read after Continual Harness.",
+    "reading": "Read the Feedback-Agent architecture (§3) and how harness and weight updates are coordinated."
+  },
+  "2505.15734": {
+    "tldr": "Ground-truth-free self-training: generate multi-agent debate traces (with a Reflect-Critique-Refine prompt), fine-tune on the model's own improved traces, and repeat.",
+    "results": [
+      "+8.92% on GSM-PLUS and ~+5.8% average across six other reasoning benchmarks.",
+      "Cross-domain generalization suggests it captures general reasoning, not task overfitting."
+    ],
+    "limitations": [
+      "Debate quality ceilings the improvement; requires multiple forward passes per sample during trace generation."
+    ],
+    "fits": "Closes the loop that inference-time debate (stage 6) leaves open — it *persists* debate gains into weights, with no labels.",
+    "reading": "Read the Reflect-Critique-Refine strategy (§3) and the debate→train loop (§4)."
+  },
+  "2505.22954": {
+    "tldr": "The flagship empirical self-modifier: a coding agent edits its own source code, keeps only empirically-validated improvements, and archives them open-endedly.",
+    "results": [
+      "Self-modification with archive-based evolution lets the agent improve the very code that runs its improvement loop.",
+      "Demonstrates compounding improvement over hand-crafted coding agents on coding tasks."
+    ],
+    "limitations": [
+      "Validation is bounded by eval budget; self-edits can introduce bugs that must be caught by the evaluator."
+    ],
+    "fits": "The 'does it actually work' answer to the Gödel Agent's 'what'. The Sakana blog is the best companion read. Run the repo (stage 10).",
+    "reading": "Read the self-modification + validation loop (§3) and the archive (MAP-Elites-style) design (§4)."
+  },
+  "2504.15228": {
+    "tldr": "Minimal and transparent self-improvement: an agent with basic coding tools edits its own implementation, re-evaluates on benchmarks, and keeps only edits that help.",
+    "results": [
+      "Gains from 17% to 53% on a random SWE-bench Verified subset, plus LiveCodeBench.",
+      "A data-efficient, non-gradient learning mechanism driven by reflection + code edits."
+    ],
+    "limitations": [
+      "Evaluated on a random subset; gains can plateau as the agent exhausts easy self-edits."
+    ],
+    "fits": "The simplest, most reproducible self-modifying agent — a great first read before DGM, which adds open-ended archives on top.",
+    "reading": "Read the edit→evaluate→keep loop (§3) and the benchmark setup. Very short and concrete."
+  },
+  "2408.06292": {
+    "tldr": "The first end-to-end ML research loop: generate ideas (novelty-checked), run experiments, plot and analyze, write a LaTeX paper, and score it with an automated reviewer — then iterate.",
+    "results": [
+      "Produces complete papers at ~$15 each, with some results later independently reproduced/validated.",
+      "A fully reusable idea→paper→review loop for machine-learning research."
+    ],
+    "limitations": [
+      "No vision experiments; occasionally mismatches idea and paper; the automated reviewer is weaker than human review; can hallucinate in the manuscript."
+    ],
+    "fits": "The concrete 'AI doing AI research' baseline. v2 (stage 8) removes the template and adds agentic search; read both.",
+    "reading": "Read the pipeline (§3) and the honest limitations (§6) — the limitations are as instructive as the method."
+  },
+  "nature-ai-scientist-v2-2026": {
+    "tldr": "Automates the entire research cycle — ideas, code, experiments, plots, manuscript, and peer review — end to end, in focused (template-scaffolded) and template-free open-ended (agentic tree search) modes.",
+    "results": [
+      "Its generated manuscript passed first-round peer review at a top-tier ML workshop (70% acceptance rate).",
+      "Template-free agentic search expands exploration beyond human-provided scaffolds."
+    ],
+    "limitations": [
+      "Still confined to machine-learning research; workshop peer review is not full top-conference review."
+    ],
+    "fits": "The peer-reviewed milestone that moves automated research from demo to capability. Compare its gains over v1 to see what 'removing the template' buys.",
+    "reading": "Read the two modes (§2–3) and the peer-review outcome; contrast with v1's limitations."
+  },
+  "nature-funsearch-2024": {
+    "tldr": "A frozen LLM proposes candidate functions in a problem skeleton; a separate evaluator scores them; the best are fed back as few-shot examples — an evolutionary loop that found new mathematics.",
+    "results": [
+      "Discovered new cap-set constructions (size 512 in dimension 8) — the first progress on the problem in years.",
+      "Also found an improved online bin-packing heuristic."
+    ],
+    "limitations": [
+      "Needs a clean, fast evaluator; only works for problems expressible as program search."
+    ],
+    "fits": "The clearest proof that LLM + evaluator + evolution can produce *novel* results humans hadn't found. The model/evaluator split is the key lesson AlphaEvolve scales up.",
+    "reading": "Read the evaluate→select→prompt loop (§2–3) and the cap-set result. The DeepMind blog is a good companion."
+  },
+  "2506.13131": {
+    "tldr": "A Gemini-powered coding agent that generates candidate algorithms, evaluates them (often with fast approximate evaluators over a distributed pool), and improves them via island-based evolutionary search.",
+    "results": [
+      "Discovered a faster 4×4 matrix-multiplication algorithm (fewer multiplications than prior best) and improved kernels.",
+      "Improvements include components used to train AI systems — the stack improving the stack."
+    ],
+    "limitations": [
+      "Depends on fast/approximate evaluators; specialized to algorithmic kernels rather than general code."
+    ],
+    "fits": "FunSearch at industrial scale, aimed at *practical* algorithmic kernels. The most direct modern instance of 'AI improving the AI training stack'.",
+    "reading": "Read the evaluator-guided evolution loop (§3) and the matrix-multiplication case; pair with the DeepMind blog."
+  },
+  "1905.10985": {
+    "tldr": "Clune's agenda paper: instead of hand-designing intelligence piece by piece, treat the *learning algorithm itself* as the thing to be searched for.",
+    "method": "Position paper: proposes three pillars for producing general AI — meta-learn the architecture, meta-learn the algorithm (evolve/search over learning algorithms), and meta-learn the environments — so the AI-generating algorithm (AI-GA) does the search, not humans.",
+    "results": [
+      "Formalizes the 'AI-generating algorithm' thesis: learning is the search target, not the artifact.",
+      "Articulates the safety argument that AI-GAs avoid hand-designing intelligence and can be bounded by design."
+    ],
+    "limitations": [
+      "Conceptual only — no working system; all three pillars remain open research programs."
+    ],
+    "fits": "The philosophical blueprint for this entire list — nearly every later entry instantiates one of Clune's pillars (AutoML-Zero = pillar 2, POET = pillar 3).",
+    "reading": "Read the three pillars (§2–4); it's short and defines the vocabulary the rest of the list uses."
+  },
+  "frontiers-quality-diversity-2016": {
+    "tldr": "The survey that named 'Quality Diversity': optimize for a *collection* of diverse, high-performing solutions rather than a single optimum.",
+    "method": "Survey/position: QD algorithms return an archive of solutions indexed by a behavior/feature descriptor, seeking to illuminate the whole search space (diversity) while maximizing each niche's quality.",
+    "results": [
+      "Defines the illumination objective — diversity + quality — as a distinct alternative to pure optimization.",
+      "Frames MAP-Elites, Novelty Search, and their hybrids as one family under a shared lens."
+    ],
+    "limitations": [
+      "Survey, no new algorithm; the difficulty of choosing a meaningful behavior characterization is left open."
+    ],
+    "fits": "Why DGM and AlphaEvolve keep *archives* instead of one best answer — the QD objective is the substrate that lets self-improvement explore without collapsing.",
+    "reading": "Read the illumination framing (§2) and the MAP-Elites description; skim the taxonomy."
+  },
+  "1504.04909": {
+    "tldr": "MAP-Elites: keep the best solution found in every cell of a behavior grid, illuminating the space of possible high-quality designs.",
+    "method": "Map each individual to a low-dimensional behavior/feature descriptor; maintain a grid where each cell stores the best-performing solution for that niche (elitism); keep perturbing elites to fill and improve cells.",
+    "results": [
+      "Illuminates search spaces (e.g., 6-legged robot gaits) where a single optimum hides useful alternatives.",
+      "Elite diversity provides robustness and reusable stepping stones for later search."
+    ],
+    "limitations": [
+      "Needs a cheap, meaningful descriptor; scales poorly as descriptor dimensionality grows."
+    ],
+    "fits": "The specific QD algorithm reused by DGM's archive — 'keep the best of every niche' is what lets open-ended self-improvement explore without collapse.",
+    "reading": "Read the algorithm box (§3) and the gait experiments; the mechanism matters more than the domain."
+  },
+  "1112.5309": {
+    "tldr": "POWERPLAY: continually invent the simplest problem you can't yet solve, learn it, and freeze the skill — growing a general solver from scratch.",
+    "method": "Two coupled searches: one finds new tasks the current solver can't do (the 'simplest still unsolvable' problem), the other trains the solver to master them; each learned skill is added and frozen so later learning doesn't destroy it.",
+    "results": [
+      "Demonstrates unsupervised task invention that grows capability without a predefined curriculum.",
+      "Frozen, reusable skills prevent catastrophic forgetting as new abilities accumulate."
+    ],
+    "limitations": [
+      "Tiny hand-crafted domains; the 'simplest still unsolvable' criterion is hard to scale to real tasks."
+    ],
+    "fits": "The earliest 'generate your own curriculum' loop — POET (stage 9) is its modern, evolutionary descendant.",
+    "reading": "Read the two coupled search processes (§3); skim the experiments."
+  },
+  "2309.03409": {
+    "tldr": "OPRO: use the LLM itself as the optimizer — feed it scored solution history and ask for better candidates, in natural language.",
+    "method": "Prompt the LLM with the optimization problem plus a sorted history of (solution, score) pairs; it proposes new candidate solutions (prompts); evaluate them and repeat the loop.",
+    "results": [
+      "Discovers novel, sometimes human-unreadable prompts (like 'Take a deep breath') that beat hand-designed prompts on GSM8K and Big-Bench Hard."
+    ],
+    "limitations": [
+      "Optimization is meta-prompt/temperature sensitive; needs a reliable scalar score signal."
+    ],
+    "fits": "The simplest 'LLM as optimizer' loop — the prompt becomes the search space. Ancestor of Promptbreeder and the whole optimization-as-language arc.",
+    "reading": "Read the meta-prompt design (§3) and the discovered-prompts results (§5)."
+  },
+  "2309.16797": {
+    "tldr": "Promptbreeder: evolve a *population* of prompts — and evolve the mutation prompts too, making the self-improvement self-referential.",
+    "method": "Maintain a population of task prompts plus 'mutation prompts' (thinking styles); an LLM mutates prompts, evaluates fitness on a training set, and the mutation-prompt level is itself evolved — a two-level self-improvement loop.",
+    "results": [
+      "Evolved prompts outperform strong hand-crafted baselines on arithmetic, commonsense, and ethics benchmarks."
+    ],
+    "limitations": [
+      "Expensive (many evaluations); fitness is domain-specific and can overfit the training set."
+    ],
+    "fits": "The self-referential version of OPRO: it evolves not just prompts but the *mutator* of prompts.",
+    "reading": "Read the population + self-referential mutation design (§3); skim results."
+  },
+  "2310.04406": {
+    "tldr": "LATS: wrap a frozen LM in Monte Carlo Tree Search — the model acts, an LM value function scores, and reflection on failures backpropagates learning.",
+    "method": "MCTS where the LM proposes actions, an LM-trained value function scores states, the environment returns rewards, and reflection on failed trajectories is injected back into search.",
+    "results": [
+      "State-of-the-art at the time on HumanEval, HotpotQA, and WebShop among reasoning/agent frameworks."
+    ],
+    "limitations": [
+      "High inference cost (tree search); needs an environment or reliable reward for the search to work."
+    ],
+    "fits": "Shows a frozen model can be improved by the *scaffold* (search), not its weights — a core harness-RSI motif.",
+    "reading": "Read the MCTS integration (§3) and how reflection feeds search (§4)."
+  },
+  "2303.17651": {
+    "tldr": "Self-Refine: the same model generates, critiques its own output, and refines — the minimal self-improvement loop.",
+    "method": "Iterate: generate an output, have the *same* model critique it, refine based on that feedback, and repeat until a stop condition — no training, no extra data.",
+    "results": [
+      "Improves across 7 tasks (dialogue, code, math, …) with no training or extra data, in just a few iterations."
+    ],
+    "limitations": [
+      "Feedback quality is bounded by the model itself; can loop without converging (see 'Cannot Self-Correct')."
+    ],
+    "fits": "The minimal self-improvement loop — one model as both solver and critic. Most stage-3/4 work refines this.",
+    "reading": "Read the feedback/refine loop (§2) and the ablation on feedback quality (§5)."
+  },
+  "2309.11495": {
+    "tldr": "Chain-of-Verification: draft, then plan *independent* verification questions, answer them in isolation, and produce a fact-checked final answer.",
+    "method": "Four steps: draft a response; generate verification questions; answer each independently (to avoid bias from the draft); produce a final response conditioned on the verified facts.",
+    "results": [
+      "Reduces hallucination on factoid QA (e.g., Wikidata) with no external tools or retraining."
+    ],
+    "limitations": [
+      "Only covers facts the model can self-check; independent answers still draw from the same model."
+    ],
+    "fits": "Verification-as-scaffold: decompose the check so the model can't just confirm its own error.",
+    "reading": "Read the four-step pipeline (§3); note why 'independent answering' is the key design choice."
+  },
+  "2305.11738": {
+    "tldr": "CRITIC: self-correction with *external tools* — search, an interpreter, and other tools gather corrective evidence before revising.",
+    "method": "Generate → ask the model to critique its own output → use external tools (web search, code interpreter, etc.) to gather corrective evidence → revise against that grounded feedback.",
+    "results": [
+      "Improves factuality (with search), code execution (with interpreter), and safety across several benchmarks."
+    ],
+    "limitations": [
+      "Depends on tool availability/quality; still bounded by the model's revision ability."
+    ],
+    "fits": "Adds *grounded* feedback to Self-Refine — the correction loop touches the real world instead of only self-assessing.",
+    "reading": "Read the tool-interactive critique loop (§3) and one tool's results (§4)."
+  },
+  "2203.11171": {
+    "tldr": "Self-Consistency: sample many chain-of-thought paths and take the majority answer — reliability through diversity, not refinement.",
+    "method": "Sample a diverse set of reasoning paths (instead of greedy decoding), then select the most consistent final answer by marginalizing over the sampled paths (majority vote).",
+    "results": [
+      "Large accuracy gains over greedy decoding on arithmetic and commonsense reasoning, with no extra training."
+    ],
+    "limitations": [
+      "Pure inference-time ensemble — multiplies compute and only helps when errors are independent."
+    ],
+    "fits": "The 'variance reduction' cousin of self-improvement; complements Self-Refine (diversity vs. refinement).",
+    "reading": "Read the sampling/marginalization idea (§3); the mechanism is one short section."
+  },
+  "2305.20050": {
+    "tldr": "Let's Verify Step by Step: reward *each reasoning step* (process supervision), not just the final answer — and show it beats outcome supervision.",
+    "method": "Train a reward model with process supervision — feedback on every intermediate step, not just the final result — and use it to rank/generate solutions; active learning picks which steps to label.",
+    "results": [
+      "Process-supervised RM solves 78.2% of MATH vs. 72.4% for outcome supervision; step-level active learning is notably data-efficient."
+    ],
+    "limitations": [
+      "Requires expensive step-level human labels; the PRM is itself a large trained model."
+    ],
+    "fits": "Shows *where* feedback is placed changes what a self-improving system learns — the verification layer is itself trainable.",
+    "reading": "Read the process vs. outcome supervision contrast (§2–3) and the MATH result."
+  },
+  "2310.01798": {
+    "tldr": "The counterweight: LLMs often *can't* reliably self-correct their own reasoning without external feedback — and trying can make them worse.",
+    "method": "Systematic measurement: test whether intrinsic self-correction helps; show that when the model can't detect its own errors, self-correction frequently degrades accuracy relative to the initial answer.",
+    "results": [
+      "Intrinsic self-correction often hurts; reliable gains appear only with external feedback or ground-truth signals."
+    ],
+    "limitations": [
+      "A cautionary measurement paper, not a method; conclusions reflect then-current models."
+    ],
+    "fits": "The essential check on the whole stage-3 arc — self-correction is not free. Read it to know *when* loops help vs. hurt.",
+    "reading": "Read the experiments contrasting intrinsic vs. extrinsic feedback (§4)."
+  },
+  "2308.10144": {
+    "tldr": "ExpeL: distill successful trajectories into an insight rule-base, reflect on failures to revise it, and retrieve insights at inference — no weight updates.",
+    "method": "Two phases: (1) gather successful trajectories and extract natural-language insights; (2) on failure, reflect and update the insight base — then retrieve relevant insights to guide future attempts.",
+    "results": [
+      "Consistent gains on HotpotQA and ALFWorld vs. strong baselines (e.g., Reflexion), including transfer of insights across similar tasks."
+    ],
+    "limitations": [
+      "Extraction/retrieval quality is the bottleneck; open-ended but bounded by the insight bank."
+    ],
+    "fits": "The 'distill trajectories into a rule base' memory agent — bridges Reflexion's episodic memory toward persistent, transferable principles.",
+    "reading": "Read the insight extraction + success/failure split (§3); note the transfer experiment."
+  },
+  "2502.12110": {
+    "tldr": "A-MEM: memory as a Zettelkasten-style linked graph that *reorganizes itself* — an agentic memory system, not a fixed store.",
+    "method": "Structures memories as linked notes with context and timestamps; a memory agent dynamically creates, links, and updates memories from new dialogs, so organization evolves with experience.",
+    "results": [
+      "Improves recall and downstream QA on LoCoMo and other long-context memory benchmarks over fixed-structure memory."
+    ],
+    "limitations": [
+      "Graph organization depends on the memory agent's decisions; retrieval can still surface irrelevant nodes."
+    ],
+    "fits": "Memory that reorganizes itself — the memory system is an agent. Sets up the 'evolve the memory' line (MemEvolve).",
+    "reading": "Read the memory formation + evolution loops (§3–4) and the LoCoMo results."
+  },
+  "2305.10250": {
+    "tldr": "MemoryBank: long-term memory for companions — summarize events and apply an Ebbinghaus forgetting curve for consistent, long-horizon recall.",
+    "method": "Maintain a long-term memory bank of summarized past events with an Ebbinghaus-inspired decay; retrieve relevant memories so multi-day companion/counseling interactions stay consistent beyond the context window.",
+    "results": [
+      "Enables consistent multi-day companion interactions (persona and history recall) beyond context limits."
+    ],
+    "limitations": [
+      "Domain-specific (companion/counseling); summary-based storage loses detail."
+    ],
+    "fits": "The 'memory as database with decay' baseline — contrast with agentic memory (A-MEM) and evolving memory (MemEvolve).",
+    "reading": "Read the memory bank + forgetting-curve design (§3)."
+  },
+  "2604.15097": {
+    "tldr": "Strategy Genes: skill *documents* are unstable control; compact 'strategy genes' (skill IDs + parameters) control and evolve more reliably.",
+    "method": "4.6k controlled trials across 45 code scenarios: compare documentation-oriented skill packages vs. compact 'strategy genes' (skill identifiers + config); show compact, stable representations control and evolve better.",
+    "results": [
+      "Expanding compact experience into fuller docs often fails to help and can degrade average performance.",
+      "Compact strategy genes give stabler test-time control and a cleaner substrate for iterative evolution."
+    ],
+    "limitations": [
+      "Beta technical report; results are specific to code-solving scenarios."
+    ],
+    "fits": "A warning for the skill-library paradigm (Voyager/ACE): bigger skill docs ≠ better control. The 'gene' framing links memory evolution to evolutionary RSI.",
+    "reading": "Read the skill-package vs. strategy-gene comparison (§3) and the controlled-trial design."
+  },
+  "2602.07755": {
+    "tldr": "ALMA: meta-learn the memory *design* itself — learning to continually learn, instead of hand-crafting a fixed memory.",
+    "method": "Instead of a hand-crafted fixed memory, meta-learn the memory design (what to store, how to update/retrieve) so it adapts to task diversity and non-stationarity — learning-to-continually-learn.",
+    "results": [
+      "Outperforms fixed, human-designed memory on continual-learning/adaptation tasks."
+    ],
+    "limitations": [
+      "Meta-learning adds a training loop; learned memory designs are task-distribution-specific."
+    ],
+    "fits": "Memory whose *architecture* is learned, not engineered — the same target MemEvolve reaches via evolution, here via meta-learning.",
+    "reading": "Read the meta-learning-over-memory formulation (§3) and how it differs from fixed memory."
+  },
+  "2607.14159": {
+    "tldr": "MemoHarness: optimize the whole agent *harness* (context, tools, orchestration, memory, decoding) — and learn it from the agent's own executions.",
+    "method": "Frames the harness as the optimization target; MemoHarness learns harness policies from its own execution traces rather than optimizing a single narrow artifact like a prompt.",
+    "results": [
+      "Adaptive per-case harnesses improve agent behavior vs. a single global harness."
+    ],
+    "limitations": [
+      "Large harness search space; needs execution feedback to attribute harness edits to outcomes."
+    ],
+    "fits": "Expands the self-improvement target from prompts/pipelines to the *whole harness* — the bridge from stage-4 memory to stage-5 harness evolution.",
+    "reading": "Read how harness components are parameterized and learned (§3–4)."
+  },
+  "2607.26784": {
+    "tldr": "SkillRise: learn reusable skills *across* related tasks with a unified RL objective and progressive curricula — not per-task retries.",
+    "method": "Unified RL framework that groups related task instances into progressive curricula and learns transferable skills across tasks, replacing per-task RL and multi-stage extraction/retrieval/execution pipelines.",
+    "results": [
+      "Cross-task skill learning outperforms per-task RL and pipeline-based skill baselines."
+    ],
+    "limitations": [
+      "Requires tasks that genuinely share solution patterns; RL sample cost."
+    ],
+    "fits": "Unifies skill acquisition with RL so skills transfer — closing the gap between Voyager-style skill libraries and agentic RL.",
+    "reading": "Read the curriculum grouping + unified RL objective (§3–4)."
+  },
+  "2512.18746": {
+    "tldr": "MemEvolve: evolve the memory *system itself* — its storage, distillation, and tool synthesis — not just its contents.",
+    "method": "Treat the memory architecture (storage, distillation, tool synthesis) as the evolving object: an outer evolutionary loop mutates and selects memory-system designs, removing the 'static memory' bottleneck.",
+    "results": [
+      "Evolving the memory system yields gains over manually engineered memory across agent tasks."
+    ],
+    "limitations": [
+      "Evolutionary search over memory architectures is expensive; gains are environment-dependent."
+    ],
+    "fits": "The 'evolve the memory, not just use it' position — one level above agent-level evolution. Pairs with ALMA as two routes to the same target.",
+    "reading": "Read how the memory-system space is encoded and evolved (§3–4)."
+  },
+  "2607.05297": {
+    "tldr": "MetaSkill-Evolve: recursive skill improvement — a fast loop rewrites task skills, a slow loop evolves the meta-skill that improves skills.",
+    "method": "Two-timescale loop: a fast loop rewrites task skills from execution traces; a slow loop evolves the meta-skill (the skill that improves skills), making self-improvement recursive rather than one-level.",
+    "results": [
+      "Recursive improvement of the skill-improver yields gains beyond non-recursive skill rewriting."
+    ],
+    "limitations": [
+      "Two-timescale stability is tricky; recursive gain can plateau."
+    ],
+    "fits": "Makes skill evolution actually *recursive* — the improver is itself improved, the definitional move of RSI applied to skills.",
+    "reading": "Read the two-timescale separation (§3) and how the meta-skill is updated."
+  },
+  "2604.25850": {
+    "tldr": "Agentic Harness Engineering: automate harness evolution by instrumenting three things — components, trajectories, and edit attribution.",
+    "method": "Closed loop over three observability pillars: (1) component observability (track each harness component), (2) trajectory observability (surface actionable signal in long traces), (3) attribution (link edits to effects) — to automate harness editing for coding agents.",
+    "results": [
+      "Automatic harness evolution improves coding-agent performance where manual harness tuning was the bottleneck."
+    ],
+    "limitations": [
+      "Observability infrastructure is heavy; attribution of edits remains approximate."
+    ],
+    "fits": "Turns harness engineering from manual craft into a measurable, closed-loop process — the instrumentation prerequisite for all stage-5 harness evolution.",
+    "reading": "Read the three observability pillars (§3) and the attribution mechanism (§4)."
+  },
+  "2608.12307": {
+    "tldr": "AI4AI at Test-Time: a strong builder model constructs inference-time harnesses that help a *weaker* model — strong-to-weak transfer with no weight updates.",
+    "method": "A strong builder model constructs inference-time harnesses/scaffolds that let a weaker target model solve tasks more reliably — strong-to-weak distillation, but at test time with no parameter updates.",
+    "results": [
+      "Builder-constructed harnesses improve weak-model reliability across four representative Theory-of-Mind benchmarks."
+    ],
+    "limitations": [
+      "Transfer is bounded by what the harness can express; no durable gain (the weak model is unchanged)."
+    ],
+    "fits": "Harness as a *transfer* channel: the improving intelligence lives in the scaffold, not the weights — a clean contrast to SIA's joint weight updates.",
+    "reading": "Read the strong-to-weak scaffolding setup (§3) and the four-benchmark results."
+  },
+  "2603.03329": {
+    "tldr": "AutoHarness: automatically synthesize a code harness of guards so the agent can't take illegal actions (like the illegal chess moves behind 78% of Gemini losses).",
+    "method": "The LLM synthesizes a code harness around the agent — a guard layer that wraps raw actions so illegal ones are caught or blocked before execution.",
+    "results": [
+      "Auto-synthesized harnesses eliminate illegal-move failures and improve agent reliability."
+    ],
+    "limitations": [
+      "Covers only actions anticipated at synthesis time; needs re-synthesis as the domain shifts."
+    ],
+    "fits": "The 'safety-rail as harness' perspective — self-improvement by constraining the action space, complementing the exploration-focused harness work.",
+    "reading": "Read the harness-synthesis loop (§3) and the chess case study."
+  },
+  "2608.05446": {
+    "tldr": "EvoHarness-RL: learn the runtime harness with RL — forming state from noisy traces and controlling access to external state.",
+    "method": "RL trains a runtime harness to (1) form state from noisy interaction traces and (2) control access to external state, replacing prompt/heuristic/convention-based workspace management.",
+    "results": [
+      "Learned harness state + policy improves long-horizon agent execution over hand-crafted conventions."
+    ],
+    "limitations": [
+      "RL over harness actions needs a task-outcome reward; state formation from noisy traces is hard."
+    ],
+    "fits": "Harness evolution *as reinforcement learning* — the workspace and its policy are learned, not engineered.",
+    "reading": "Read the state-formation + runtime-control formulation (§3–4)."
+  },
+  "2603.19461": {
+    "tldr": "Hyperagents: the meta-level mechanism that improves the agent is itself code, so it too can be improved — self-improvement without a fixed handcrafted meta-layer.",
+    "method": "Builds on the Darwin Gödel Machine: since evaluation and self-modification are both coding tasks, the meta-level (the improvement mechanism) is coded and improvable — hyperagents improve their own improvement.",
+    "results": [
+      "Demonstrates improvable meta-levels, removing the fixed handcrafted meta-mechanism that bounds ordinary self-improvement."
+    ],
+    "limitations": [
+      "Framework + coding-domain bound; open-ended meta-improvement is hard to validate."
+    ],
+    "fits": "The deepest step on the self-improvement ladder — not just improving the agent, but improving the *improver*. Read after DGM.",
+    "reading": "Read the meta-level vs. object-level framing (§2–3) and the DGM relationship."
+  },
+  "2603.18000": {
+    "tldr": "AgentFactory: store successful solutions as executable *subagent code* (not text reflections), refined by execution feedback and reused as building blocks.",
+    "method": "Self-evolution that preserves successful task solutions as executable subagent code; subagents are continuously refined from execution feedback and accumulated for reuse.",
+    "results": [
+      "Executable subagent accumulation re-executes complex tasks more reliably than textual experience."
+    ],
+    "limitations": [
+      "Code subagents can be brittle across task shifts; accumulation needs curation to avoid bloat."
+    ],
+    "fits": "Voyager's 'code-as-skill' applied to *subagents* — the library holds working programs, the strongest form of reusable experience.",
+    "reading": "Read the subagent-as-code representation and the refine-from-feedback loop (§3–4)."
+  },
+  "2604.20133": {
+    "tldr": "EvoAgent: multi-file structured skills with triggers + a hierarchical sub-agent delegation loop, closed by user feedback.",
+    "method": "Models skills as multi-file structured units with triggers and evolutionary metadata; a user-feedback-driven loop generates/optimizes skills, and three-stage matching + three-layer memory route tasks to hierarchical sub-agents.",
+    "results": [
+      "Structured skill learning + delegation improves evolvability and task handling over flat skill stores."
+    ],
+    "limitations": [
+      "Relies on user feedback for the closed loop; delegation hierarchy adds complexity."
+    ],
+    "fits": "Industrializes the Voyager idea — structured (multi-file, metadata, triggers) skill units plus delegation.",
+    "reading": "Read the skill-unit structure and the matching/delegation mechanism (§3–4)."
+  },
+  "2507.03616": {
+    "tldr": "EvoAgentX: an open-source platform that automates generation, execution, and optimization of agentic workflows in one framework.",
+    "method": "Platform that automates the generation, execution, and optimization of multi-agent workflows, integrating evolution/optimization algorithms into a unified framework with native dynamic evolution.",
+    "results": [
+      "Automates workflow configuration that was previously manual, with built-in dynamic evolution."
+    ],
+    "limitations": [
+      "Platform-level contribution; evolved workflows are bounded by available operators."
+    ],
+    "fits": "The tooling that operationalizes harness/workflow evolution — read when you want to *run* workflow evolution, not just read about it.",
+    "reading": "Read the generation–execution–optimization architecture (§3) and the integrated algorithms."
+  },
+  "2510.23601": {
+    "tldr": "Alita-G: a generalist agent self-evolves into a domain expert by generating, abstracting, and curating MCP tools.",
+    "method": "A generalist agent runs a curation loop that generates, abstracts, and curates Model Context Protocol (MCP) tools, transforming itself into a domain expert by accumulating reusable tools.",
+    "results": [
+      "Self-generated MCP tools turn a generalist into a domain specialist, improving domain performance."
+    ],
+    "limitations": [
+      "Tool quality is bounded by the generator; curation needs a feedback signal."
+    ],
+    "fits": "Tool-creation as self-improvement — the agent extends itself by building the tools it needs (the MCP-native path).",
+    "reading": "Read the tool generation/abstraction/curation loop (§3)."
+  },
+  "2402.17574": {
+    "tldr": "Agent-Pro: evolve the agent's *behavioral policy* (beliefs and decisions), not just its prompts, for interactive games.",
+    "method": "Learns policy-level knowledge — beliefs and decision rules — for interactive games via reflection and optimization, evolving the behavioral policy through play rather than tuning fixed prompts.",
+    "results": [
+      "Improves on dynamic game scenarios (e.g., Blackjack) where prompt-only agents plateau."
+    ],
+    "limitations": [
+      "Policy space is domain-specific; evaluated on small interactive games."
+    ],
+    "fits": "Moves self-evolution from prompts to the *decision layer* — a precursor to policy-level RL agents.",
+    "reading": "Read the policy-level reflection/optimization (§3)."
+  },
+  "2409.00872": {
+    "tldr": "Self-evolving Reflective Memory: combine iterative feedback, reflection, and an Ebbinghaus memory optimizer for multi-task, long-span agents.",
+    "method": "Integrates iterative feedback, reflective mechanisms, and an Ebbinghaus-forgetting-curve memory optimizer to improve continuous decision-making across multi-task, long-span settings.",
+    "results": [
+      "Enhanced multi-tasking and long-span information handling over fixed-memory baselines."
+    ],
+    "limitations": [
+      "Generic framework; gains are incremental and task-dependent."
+    ],
+    "fits": "A compact synthesis of stage-3 reflection and stage-4 memory for long-horizon agents.",
+    "reading": "Read the reflection + memory-optimization integration (§3)."
+  },
+  "2305.19118": {
+    "tldr": "Divergent Thinking: self-reflection alone degenerates ('degeneration of thought'); multi-agent *debate* preserves divergent, higher-quality reasoning.",
+    "method": "Multiple LLM agents hold a debate, each proposing and challenging solutions; the paper demonstrates that single-agent self-reflection suffers from Degeneration-of-Thought while debate sustains divergence.",
+    "results": [
+      "Multi-agent debate improves reasoning and mitigates the 'degeneration of thought' observed in single-agent self-reflection."
+    ],
+    "limitations": [
+      "Needs multiple agents/compute; debate quality depends on agent diversity."
+    ],
+    "fits": "The empirical argument that *other agents* — not self-feedback — are a better correction signal; motivates the multi-agent arc.",
+    "reading": "Read the DoT analysis (§3) and the debate setup (§4)."
+  },
+  "2305.14325": {
+    "tldr": "Multiagent Debate: multiple model instances propose and debate their answers, iteratively converging on more factual reasoning.",
+    "method": "Multiple LLM instances propose answers and reasoning, then iterate — each sees the others' responses and refines — converging toward a more truthful/factual answer.",
+    "results": [
+      "Improves factuality (truthfulness, arithmetic, reasoning) over single-model baselines."
+    ],
+    "limitations": [
+      "Compute multiplies with agents; agreement can still converge on shared errors."
+    ],
+    "fits": "The canonical multi-agent debate — the social alternative to single-model self-correction.",
+    "reading": "Read the debate protocol (§3) and how disagreement drives convergence."
+  },
+  "2511.16043": {
+    "tldr": "Agent0: evolve agents from *zero human data* via tool-integrated reasoning and self-play RL.",
+    "method": "Removes human-curated data: the agent self-generates a curriculum via tool-integrated reasoning and self-play RL, evolving skills (tool use, dynamic reasoning) without external supervision.",
+    "results": [
+      "Evolves agents capable of tool use and dynamic reasoning from zero human data."
+    ],
+    "limitations": [
+      "Self-generated curricula risk low-quality or degenerate signals; heavy compute."
+    ],
+    "fits": "The 'zero human data' extreme of self-evolution, pairing with the multi-agent self-play lineage.",
+    "reading": "Read the curriculum generation + tool-integrated reasoning (§3–4)."
+  },
+  "2406.14228": {
+    "tldr": "EvoAgent (multi-agent): automatically generate specialized multi-agent teams via evolutionary algorithms, instead of hand-designing them.",
+    "method": "Evolutionary algorithm over agent designs: generate, select, and mutate specialized multi-agent teams so expert roles emerge automatically.",
+    "results": [
+      "Auto-generated multi-agent systems match/beat human-designed frameworks on several tasks."
+    ],
+    "limitations": [
+      "EA over agent populations is LLM-call expensive; specialist roles can overfit tasks."
+    ],
+    "fits": "Applies ADAS-style search to *multi-agent teams* — the meta-agent now composes societies, not just single agents.",
+    "reading": "Read the evolutionary generation/selection loop (§3)."
+  },
+  "2403.08715": {
+    "tldr": "SOTOPIA-π: train social intelligence — behavior cloning + self-reinforcement on LLM-rated social interactions.",
+    "method": "Interactive social learning: behavior cloning + self-reinforcement training on filtered social-interaction data, using LLM ratings to improve social goal-achievement (not just task skill).",
+    "results": [
+      "A 7B model trained this way improves social goal-achievement on SOTOPIA."
+    ],
+    "limitations": [
+      "Social intelligence is hard to evaluate; LLM ratings are a proxy."
+    ],
+    "fits": "Extends self-improvement to *social* capability — the dimension multi-agent settings actually exercise.",
+    "reading": "Read the behavior-cloning + self-reinforcement loop (§3)."
+  },
+  "2412.21139": {
+    "tldr": "SWE-Gym: the first *training environment* for software-engineering agents — 2,438 real Python tasks with runtime + tests — used to train agents and verifiers.",
+    "method": "First training environment for SWE agents: 2,438 real-world Python task instances (codebase + executable runtime + unit tests + NL task); used to RL-train agents and inference-time verifiers.",
+    "results": [
+      "Trained agents gain up to +19% absolute on SWE-Bench Verified/Lite; verifiers add inference-time scaling."
+    ],
+    "limitations": [
+      "Python-only; training an agent still needs a strong base model."
+    ],
+    "fits": "The infrastructure that turns code self-improvement from demo into trainable capability — supplies the environment DGM and self-modifying agents assume.",
+    "reading": "Read the environment design (§3) and the training results (§4–5)."
+  },
+  "2304.05128": {
+    "tldr": "Self-Debug: teach the LLM to debug its own code — explain the program, then generate a fix — via few-shot demonstrations.",
+    "method": "Few-shot demonstrations teach the LLM to debug its predicted program by explaining the code, then generating a fix; optionally uses execution results (traceback) as extra signal.",
+    "results": [
+      "Large gains on code generation (e.g., up to ~12%+ on Text-to-SQL, TransCoder, MBPP) without training."
+    ],
+    "limitations": [
+      "Improvement depends on the debugging demonstrations; gains vary by task."
+    ],
+    "fits": "The code-domain instantiation of Self-Refine — self-correction applied to programs, with execution as optional ground truth.",
+    "reading": "Read the explain-then-fix loop (§3) and the execution-feedback variant."
+  },
+  "2312.13010": {
+    "tldr": "AgentCoder: split code generation into programmer + test-designer + test-executor agents that iterate against execution feedback.",
+    "method": "Decomposes code generation into specialized agents — programmer, test designer, and test executor — that iterate: generate tests, run them, and refine code against execution feedback.",
+    "results": [
+      "Improves code-generation accuracy (e.g., HumanEval/MBPP) over single-agent generation."
+    ],
+    "limitations": [
+      "Multi-agent orchestration adds calls/latency; wrong tests can steer the fix astray."
+    ],
+    "fits": "The multi-agent + execution-feedback recipe for code — the same ingredients (agents + tests + iteration) SWE agents use at scale.",
+    "reading": "Read the three-role decomposition and iterative loop (§3)."
+  },
+  "2601.14525": {
+    "tldr": "Execution-Grounded AI Research: build an automated executor to implement ideas and launch parallel GPU experiments, then let the LLM learn from execution feedback.",
+    "method": "Builds an automated executor that implements research ideas and launches large-scale parallel GPU experiments, then converts two real problems (LLM pre-training and LLM evaluation) into execution-grounded RL so the LLM learns from real execution.",
+    "results": [
+      "Shows automated execution is feasible and that LLMs can learn from execution feedback on real research problems."
+    ],
+    "limitations": [
+      "Scoped to two research problems; large GPU cost; 'feasible', not yet broadly general."
+    ],
+    "fits": "The missing piece the AI Scientist v1 lacked — grounding idea generation in *actual execution*, closing the idea→experiment→feedback loop.",
+    "reading": "Read the executor design and the two converted problems (§3–4)."
+  },
+  "2608.17906": {
+    "tldr": "AutoResearch: a two-stage system — Idea Generation integrates research signals into hypotheses; Idea Execution establishes them experimentally ('insight in, hallucination out').",
+    "method": "Two stages: Idea Generation continuously integrates emerging research signals with accumulated domain knowledge to identify hypotheses; Idea Execution reliably establishes them through experimentation.",
+    "results": [
+      "Grounds autonomous research workflows so ideas are experimentally established, reducing hallucinated claims."
+    ],
+    "limitations": [
+      "Still narrows to ML research; idea quality depends on the signal-integration stage."
+    ],
+    "fits": "Splits AI research into generation vs. execution and glues them — the mature form of the idea→experiment loop.",
+    "reading": "Read the two-stage decomposition (§3) and how execution grounds ideas."
+  },
+  "2607.28568": {
+    "tldr": "Frontis-MA1 / OpenMLE: an open full-stack testbed for RSI in machine-learning engineering — gym + RL + evolutionary search — training a 35B meta-evolution agent.",
+    "method": "OpenMLE: open full-stack for RSI in MLE — verifiable task environments (Gym), operator learning (RL), long-horizon search (Evo) — on which a 35B model (Frontis-MA1) is post-trained as a meta-evolution agent.",
+    "results": [
+      "Provides an executable, verifiable testbed for AI4AI/RSI in MLE, with a trained meta-evolution agent."
+    ],
+    "limitations": [
+      "MLE-scoped; requires the OpenMLE stack; the 35B model is a research artifact."
+    ],
+    "fits": "Turns 'AI improving the AI-building process' into a concrete, verifiable benchmark + agent — the RSI claim made testable.",
+    "reading": "Read the three-layer stack (Gym/RL/Evo) and the agent post-training (§3–4)."
+  },
+  "2603.01712": {
+    "tldr": "FT-Dojo: an interactive benchmark for autonomous LLM fine-tuning — 13 tasks across 5 domains for end-to-end fine-tuning agents.",
+    "method": "Interactive benchmark where an agent must curate data, configure training, and diagnose model behavior end-to-end, across 13 tasks in 5 domains.",
+    "results": [
+      "Systematically studies end-to-end fine-tuning as an agent task, exposing where agents fail."
+    ],
+    "limitations": [
+      "A benchmark, not a method; task coverage is still small."
+    ],
+    "fits": "The 'fine-tuning as an agent task' testbed — the environment for the next level of self-improvement (improving training itself).",
+    "reading": "Read the task taxonomy (§3) and the agent baselines/analysis (§5)."
+  },
+  "2606.06473": {
+    "tldr": "MLEvolve: self-evolving multi-agent framework for automated ML algorithm discovery, with hierarchical control and cross-branch memory.",
+    "method": "Extends ML-engineering agents with hierarchical control, cross-branch information sharing, and persistent (non-memoryless) search to evolve end-to-end ML algorithms over long horizons.",
+    "results": [
+      "Improves long-horizon ML algorithm discovery vs. prior MLE agents by removing inter-branch isolation and memoryless search."
+    ],
+    "limitations": [
+      "Compute-heavy evolutionary search; gains are in MLE task settings."
+    ],
+    "fits": "AlphaEvolve/AutoML-Zero's descendant for *ML algorithm* discovery — with the memory/control machinery to make long-horizon search work.",
+    "reading": "Read the hierarchical-control + cross-branch memory design (§3–4)."
+  },
+  "2601.10657": {
+    "tldr": "PACEvolve: diagnose *why* self-evolving agents stall (context pollution, mode collapse) and fix it with progress-aware, consistency-preserving evolution.",
+    "method": "Identifies that self-evolving agents anchor reasoning to local context; PACEvolve adds progress-aware, consistency-preserving mechanisms to keep long-horizon evolution on track.",
+    "results": [
+      "Mitigates local-anchoring failure modes, improving long-horizon evolution across code optimization and discovery."
+    ],
+    "limitations": [
+      "Mechanisms add complexity; evaluated on specific long-horizon domains."
+    ],
+    "fits": "The diagnostic + fix for why self-evolving agents stall — the engineering prerequisite for truly long-horizon open-ended evolution.",
+    "reading": "Read the failure-mode study (§2–3) and the progress-aware mechanism (§4)."
+  },
+  "openreview-higher-order-evolution-2024": {
+    "tldr": "Higher-order evolution: evolve the mutation rate, recursively the meta-mutation rate, up to a self-referential top-level parameter that modifies itself.",
+    "method": "Evolves higher-order parameters (mutation rate → meta-mutation rate → … up to a self-referential top-level parameter that modifies itself), showing this improves robustness in Population-Based Training and Unsupervised Environment Design.",
+    "results": [
+      "Self-referential mutation improves robustness to initial hyperparameters and enables complex adaptation in competitive multi-agent settings."
+    ],
+    "limitations": [
+      "Small-scale domains (PBT/UED); self-referential levels are still bounded in practice."
+    ],
+    "fits": "The evolutionary-computation counterpart to the Gödel Agent — the meta-parameters of evolution are themselves evolved, one step toward self-referential search.",
+    "reading": "Read the higher-order/self-referential mutation definitions (§2–3) and the PBT/UED results."
+  },
+  "1901.01753": {
+    "tldr": "POET: co-evolve environments and their solutions, transferring solutions between niches — an endless self-generated curriculum of stepping stones.",
+    "method": "Co-evolves a population of environments and their specialized solutions; solutions transfer between niches, and the system continually generates more complex/diverse environments.",
+    "results": [
+      "Finds solutions to problems it never directly targeted (stepping-stone transfer), including a hard-to-discover bipedal walker via indirect transfer."
+    ],
+    "limitations": [
+      "Simple 2D-locomotion domains; the open-ended loop is hard to stabilize and scale."
+    ],
+    "fits": "The canonical 'generate your own problems' system — POWERPLAY made evolutionary and open-ended; the lineage behind UED and modern self-generated curricula.",
+    "reading": "Read the co-evolution + transfer mechanism (§3) and the stepping-stone result (§4)."
+  },
+  "agent-zero": {
+    "what": "A general-purpose agent framework that gives the agent a full Linux computer — a Dockerized desktop, annotated browser, document cowork, skills/plugins, and a bridge back to your host.",
+    "architecture": [
+      "Dockerized Linux desktop + browser with DOM annotation for real computer/GUI control.",
+      "Projects, skills, and plugins as persistent capabilities the agent composes.",
+      "Host bridge lets the agent act on and coordinate with the user's own machine."
+    ],
+    "run": "Docker-based: `docker compose up` (see the Quick Start in the README) launches the desktop + browser; add your LLM API key.",
+    "note": "An 'extensible substrate' — the harness *is* a whole computer. Study it for how an OS-level workspace generalizes far beyond a chat loop."
+  },
+  "deepseek-harness": {
+    "what": "DeepSeek's open-source agent harness, built on an everything-is-a-plugin architecture (powered by Cordis), with web and CLI runtimes.",
+    "architecture": [
+      "Everything-is-a-plugin: tools, memory, and orchestration are all plugins composed via Cordis (spatiotemporal composability).",
+      "Web UI + CLI launch modes; developer preview with a documented safety notice."
+    ],
+    "run": "`npx @deepseek-ai/dsh web` starts the Web UI at http://127.0.0.1:3080 (Node.js required).",
+    "note": "A production-grade harness from a frontier lab — the plugin architecture is the reusable idea (contrast with monolithic harnesses)."
+  },
+  "openclaw": {
+    "what": "A self-hosted personal assistant that runs on your own devices and lives in your chats (Node.js, MIT).",
+    "architecture": [
+      "Runs locally across your devices rather than in a hosted cloud.",
+      "Chat-native: plugs into existing messaging surfaces as an assistant.",
+      "Distributed as `openclaw` on npm; Node.js runtime."
+    ],
+    "run": "`npm install -g openclaw` (or `npx openclaw`) then follow onboarding; Node.js required.",
+    "note": "The 'assistant on your own hardware' substrate — useful for studying how self-improvement is shaped by local, persistent execution."
+  },
+  "pi": {
+    "what": "Pi's agent harness — a monorepo whose centerpiece is a self-extensible coding agent.",
+    "architecture": [
+      "Monorepo packages: `pi-coding-agent` (interactive CLI), `pi-agent-core` (agent runtime with tool calling + state), `pi-ai` (unified multi-provider LLM API).",
+      "The self-extensible coding agent builds on the runtime to extend its own capabilities."
+    ],
+    "run": "npm packages; `npx @earendil-works/pi-coding-agent` for the CLI.",
+    "note": "A clean split of runtime / LLM-API / coding-agent — the layered design makes 'self-extension' concrete (the agent modifies its own tool set)."
+  },
+  "hermes-agent": {
+    "what": "Nous Research's Hermes agent and desktop app — a general-purpose local agent with a full desktop interface.",
+    "architecture": [
+      "Agent runtime + desktop client (macOS/Windows/Linux).",
+      "MIT-licensed; docs at hermes-agent.nousresearch.com."
+    ],
+    "run": "Install the desktop app or run from source per the README/docs.",
+    "note": "A usability-focused harness — good for seeing how memory/tools surface in a real product rather than a research scaffold."
+  },
+  "seal": {
+    "what": "SEAL (Self-Adapting LLMs) trains models via RL to generate *self-edits* — their own finetuning data and update directives — in response to new inputs.",
+    "architecture": [
+      "RL loop where the model proposes edits (finetuning data + update directives) to itself.",
+      "Two domains: general-knowledge (absorb new facts) and few-shot (adapt to new tasks).",
+      "MIT CSAIL; code + data for both domains in the repo."
+    ],
+    "run": "Python; `git clone`, set up a conda/venv (README §Setup), then run the domain scripts.",
+    "note": "A model-level self-improvement substrate: the model writes the *data and update instructions* for its own adaptation — a concrete bridge between weight-space and data-space RSI."
+  },
+  "letta-code": {
+    "what": "A stateful agent harness where agents have memory, identity, and experience — and can rewrite their own memory, skills, prompts, and the harness itself via 'mods'.",
+    "architecture": [
+      "Stateful agents with persistent memory/identity/experience over long horizons.",
+      "Self-modification: agents rewrite their own memory, skills, prompts, and harness (mods).",
+      "Surfaces: CLI, desktop app, browser (chat.letta.com), and messaging channels."
+    ],
+    "run": "`npx @letta-ai/letta-code` for the CLI; desktop app available for macOS/Windows/Linux.",
+    "note": "One of the most direct 'harness that modifies itself' products — study the mods mechanism for how self-modification is scoped safely."
+  },
+  "memento-skills": {
+    "what": "A skill-centric agent runtime where agents design agents — deploying reusable, persistent, extensible skills.",
+    "architecture": [
+      "Skill-centric runtime: capabilities are packaged as reusable skills.",
+      "Reflection-based replanning on top of skill calls for multi-step tasks.",
+      "Desktop app (Windows/macOS) plus source build."
+    ],
+    "run": "Desktop app (memento.run/release) or build from source per the README.",
+    "note": "The 'skills as the unit of agent capability' substrate — compare its skill model to Voyager/AgentFactory's code-as-skill."
+  },
+  "reef": {
+    "what": "Continual-learning infrastructure for self-improving agents.",
+    "architecture": [
+      "Infrastructure for agents that continually learn and self-improve.",
+      "Python 3.12+, Apache-2.0, published as `reef-infra` on PyPI."
+    ],
+    "run": "`pip install reef-infra` (Python 3.12+).",
+    "note": "Infrastructure rather than a single agent — the plumbing (experience collection, updates, evaluation) a self-improving agent needs to run continuously."
+  },
+  "autoresearch": {
+    "what": "Karpathy's experiment: hand an agent a small but real LLM-training setup and let it improve it autonomously overnight.",
+    "architecture": [
+      "Agent modifies training code, trains ~5 minutes, checks whether the result improved, keeps or discards, repeats.",
+      "Built on a simplified single-GPU nanochat implementation.",
+      "Logs experiments so you wake up to a history — and hopefully a better model."
+    ],
+    "run": "Python; single-GPU; see README for the nanochat-based setup.",
+    "note": "A deliberately *small, real* self-improvement loop — the minimal reproducible 'AI improving its own training code'. Note: distinct from the AutoResearch *paper* (2608.17906)."
+  },
+  "evolutionary-model-merge": {
+    "what": "Sakana's Evolutionary Model Merge — evolve recipes for merging multiple foundation models in weight space (no training).",
+    "architecture": [
+      "Evolution (CMA-ES) searches layer-wise merge ratios and permutations.",
+      "Combines several open models into one merged model with each's strengths (e.g., Japanese + math + code).",
+      "Hub for released merged models (e.g., EvoLLM-JP-v1-7B) + evaluation code."
+    ],
+    "run": "Python; evaluation scripts + released models on Hugging Face (SakanaAI org).",
+    "note": "Model-level self-improvement by *recombination* — improving an AI by evolving how existing weights are mixed, cheaper than gradient descent."
+  },
+  "openevolve": {
+    "what": "An open-source evolutionary coding agent — turns an LLM into an autonomous code optimizer that discovers better algorithms.",
+    "architecture": [
+      "Evolutionary loop: LLM proposes code variants, an evaluator scores them, the best survive and seed the next generation.",
+      "From random search to state-of-the-art — refines programs against a fitness signal.",
+      "Distributed as `openevolve` on PyPI with system-message guides."
+    ],
+    "run": "`pip install openevolve`; see Quick Start and Examples in the README.",
+    "note": "The 'LLM + evaluator + evolution' recipe (FunSearch/AlphaEvolve) packaged as a drop-in library — the fastest way to *run* an evolutionary coding loop."
+  },
+  "agentfactory": {
+    "what": "Code for AgentFactory — self-evolution by accumulating executable subagents.",
+    "architecture": [
+      "Successful solutions are saved as executable subagent code, refined by execution feedback.",
+      "The subagent library is reused as composable building blocks for new tasks."
+    ],
+    "run": "Python; set an LLM API key and run the agent-factory loop (see README).",
+    "note": "Run it after reading the paper to see 'code-as-skill' concretely — watch how subagents accumulate and get refined."
+  },
+  "dgm": {
+    "what": "The Darwin Gödel Machine — the self-modifying coding agent with archive-based evolution.",
+    "architecture": [
+      "The agent edits its own source code; only empirically-validated edits are kept.",
+      "A MAP-Elites-style archive stores and evolves past improvements open-endedly."
+    ],
+    "run": "Python; provide an LLM API key; the agent runs its edit → evaluate → keep loop on a task (see README).",
+    "note": "The flagship self-modifier — run it to watch the improver-improves-the-improver loop on real code."
+  },
+  "godel-agent": {
+    "what": "Gödel Agent — a self-referential agent whose behavior is code it can inspect and rewrite.",
+    "architecture": [
+      "Prompts + tools form the agent's 'code', which it can read and modify.",
+      "Self-modification loop with heuristic validation."
+    ],
+    "run": "Python; LLM API key; run the self-modification loop per README.",
+    "note": "The theory-side companion to DGM — run it to see self-reference as code-as-identity in practice."
+  },
+  "hyperagents": {
+    "what": "HyperAgents — self-improvement where the meta-level (the improver) is itself improvable code.",
+    "architecture": [
+      "Meta-level and object-level are both coding tasks, so both are editable.",
+      "Builds on DGM: the improvement mechanism is itself coded and improvable."
+    ],
+    "run": "Python (Meta); LLM API key; see README for the hyperagent loop.",
+    "note": "Read DGM first, then run this to see the meta-level made explicit and improvable."
+  },
+  "sia": {
+    "what": "SIA — Self Improving AI with joint harness + weight updates.",
+    "architecture": [
+      "A Feedback-Agent updates both the harness and the task agent's weights.",
+      "Unifies the harness-update and test-time-training schools."
+    ],
+    "run": "Python; LLM API key + training setup; run the Feedback-Agent loop per README.",
+    "note": "The 'close the loop' system — study how harness edits and weight updates are coordinated in one feedback agent."
+  },
+  "ace": {
+    "what": "ACE — Agentic Context Engineering; evolves the whole context as a playbook.",
+    "architecture": [
+      "Context as an evolving playbook: generation, reflection, curation.",
+      "Structured incremental edits avoid context collapse."
+    ],
+    "run": "Python; LLM API key; run the context-evolution loop per README.",
+    "note": "Watch how the *whole context* evolves (vs. Voyager's code skills) — prompt-space self-improvement."
+  },
+  "alma": {
+    "what": "ALMA — meta-learned agentic memory designs.",
+    "architecture": [
+      "Meta-learning over the memory design (what to store, update, retrieve).",
+      "Memory adapts to task diversity and non-stationarity instead of being fixed."
+    ],
+    "run": "Python; meta-learning setup; see README.",
+    "note": "Run to see memory *architecture* learned rather than hand-crafted — the meta level over memory."
+  },
+  "continual-harness": {
+    "what": "Continual Harness — reset-free online self-improvement (the Gemini Plays Pokémon lineage).",
+    "architecture": [
+      "The agent alternates acting and refining its prompt, sub-agents, skills, and memory.",
+      "Single continuous trajectory, no resets."
+    ],
+    "run": "Python; embodied/Pokémon environment + LLM API; see README.",
+    "note": "Run if you want the reset-free, embodied flavor of harness self-improvement."
+  },
+  "evoagentx": {
+    "what": "EvoAgentX — a platform to generate, execute, and optimize agentic workflows.",
+    "architecture": [
+      "Automates workflow generation + execution + optimization.",
+      "Integrates evolution/optimization algorithms in one unified framework."
+    ],
+    "run": "Python; pip-installable; see README quickstart.",
+    "note": "The tooling for *running* workflow evolution — pair with the paper to see the search algorithms concretely."
+  },
+  "evolver": {
+    "what": "EvolveR — self-evolving agents via an experience-driven lifecycle.",
+    "architecture": [
+      "Trajectories are distilled into abstract strategic principles.",
+      "Offline distillation + online retrieval + outcome-reinforced policy."
+    ],
+    "run": "Python; LLM API key; run the lifecycle loop per README.",
+    "note": "The end-to-end 'experience → principle → policy' loop — run to see *strategy* (not fact) memory."
+  },
+  "voyager": {
+    "what": "Voyager — an open-ended embodied agent that builds a growing skill library in Minecraft.",
+    "architecture": [
+      "An automatic curriculum proposes tasks; execution-verified code skills accumulate in a library.",
+      "Environment feedback refines skills; later tasks reuse earlier skills."
+    ],
+    "run": "Python; needs Minecraft + MineDojo and an OpenAI API key; entry point `voyage.py`.",
+    "note": "The canonical skill-library agent — run it (if you have Minecraft) to watch skills compound."
+  },
+  "adas": {
+    "what": "ADAS (Automated Design of Agentic Systems) — a meta-agent that programs new agents.",
+    "architecture": [
+      "A meta-agent proposes agent designs as executable code and evaluates them.",
+      "A re-architect step improves the meta-agent's own prompt."
+    ],
+    "run": "Python; LLM API key; run the meta-agent search per README.",
+    "note": "The harness-level flagship — run to see an improver that *generates executable improvements*."
+  },
+  "ai-scientist": {
+    "what": "The AI Scientist — an end-to-end ML research loop (idea → experiment → paper → review).",
+    "architecture": [
+      "Idea generation (novelty-checked) → experiments → plots → LaTeX paper → automated reviewer.",
+      "Iterates; on the order of ~$15 per paper."
+    ],
+    "run": "Python; LLM API keys; run the pipeline over a research template (see README).",
+    "note": "Run it to see 'AI doing AI research' end to end; read v2 for the agentic-search upgrade."
+  },
+  "funsearch": {
+    "what": "FunSearch — LLM + evaluator + evolution that discovered new mathematics (cap sets).",
+    "architecture": [
+      "A frozen LLM proposes candidate functions in a problem skeleton; an evaluator scores them.",
+      "The best functions are fed back as few-shot examples (an evolutionary loop)."
+    ],
+    "run": "Python (Jupyter); provides the evaluator + program-sampler framework.",
+    "note": "The cleanest 'LLM + evaluator' loop — study the evaluate → select → prompt cycle, then run a toy problem."
+  },
+  "mlevolve": {
+    "what": "MLEvolve — a self-evolving multi-agent framework for automated ML algorithm discovery.",
+    "architecture": [
+      "Hierarchical control + cross-branch memory + persistent search.",
+      "Evolves end-to-end ML algorithms over long horizons."
+    ],
+    "run": "Python; LLM API key; run the evolutionary search per README.",
+    "note": "AlphaEvolve's descendant for *ML algorithm* discovery — run to see long-horizon evolutionary search."
+  },
+  "poet": {
+    "what": "POET (Paired Open-Ended Trailblazer) — co-evolves environments and their solutions.",
+    "architecture": [
+      "Co-evolves a population of environments and their specialized solutions; transfers between niches.",
+      "Endlessly generates harder, more diverse environments."
+    ],
+    "run": "Python (legacy TensorFlow era); entry point `es/poet_distributed.py`.",
+    "note": "The canonical 'generate your own problems' system — run the classic to see open-ended curricula in miniature."
+  }
+}

@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>EvolveR — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="evoagentx.html">← EvoAgentX</a> · <a href="letta-code.html">Letta Code →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>EvolveR</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/KnowledgeXLab/EvolveR" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>EvolveR — self-evolving agents via an experience-driven lifecycle.</p></section><section class="block"><h2>How it works</h2><ul><li>Trajectories are distilled into abstract strategic principles.</li><li>Offline distillation + online retrieval + outcome-reinforced policy.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2510.16079.html">EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; LLM API key; run the lifecycle loop per README.</pre></section><section class="block"><h2>Learning note</h2><p>The end-to-end 'experience → principle → policy' loop — run to see *strategy* (not fact) memory.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><div align="center">
+
+<h1>EvolveR: Self‑Evolving LLM Agents through an Experience‑Driven Lifecycle</h1>
+</div>
+<p align="center">
+    <!-- Paper & License -->
+    <a href="http://arxiv.org/abs/2510.16079" target="_blank">
+        <img alt="arXiv" src="https://img.shields.io/badge/arXiv-2510.16079-b31b1b.svg?style=for-the-badge">
+    </a>
+    <a href="LICENSE" target="_blank">
+        <img alt="License" src="https://img.shields.io/github/license/Edaizi/EvolveR?style=for-the-badge&color=blue">
+    </a>
+    <!-- Hugging Face Resources -->
+    <a href="https://huggingface.co/Edaizi/EvolveR" target="_blank">
+        <img alt="Hugging Face Model" src="https://img.shields.io/badge/%F0%9F%A4%97%20Model-EvolveR--3B-blue?style=for-the-badge">
+    </a>
+    <a href="https://huggingface.co/datasets/Edaizi/EvolveR-NQ-HotpotQA" target="_blank">
+        <img alt="Hugging Face Dataset" src="https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-EvolveR--data-green?style=for-the-badge">
+    </a>
+</p>
+
+<p>This repository contains the official implementation of <strong>EvolveR</strong>, a framework enabling LLM agents to self-improve through a closed-loop experience lifecycle, where they distill abstract principles from past trajectories and retrieve them to guide future actions.</p>
+<div align="center">
+    <img src="assets/framework.png" width="800"/>
+</div>
+
+<hr>
+<h2>📰 Updates</h2>
+<ul>
+<li><strong><code>2026-05-01</code></strong>: 🎉 Paper accepted at ICML 2026.</li>
+<li><strong><code>2025-10-21</code></strong>: Paper is publicly available in <a href="http://arxiv.org/abs/2510.16079">arxiv</a>.</li>
+<li><strong><code>2025-10-20</code></strong>: Codebase is publicly available.</li>
+</ul>
+<h2>🎯 Getting Started</h2>
+<h3>Installation</h3>
+<p>We recommend using Python 3.10 and Conda for environment management.</p>
+<h4>1. Create Training Environment</h4>
+<pre><code class="language-bash"># 1. Clone the repository
+git clone https://github.com/Edaizi/EvolveR.git
+cd EvolveR
+
+# 2. Create and activate conda environment
+conda create -n evolver python=3.10 -y
+conda activate evolver
+
+# 3. Install dependencies
+# install pytorch
+pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121
+# install vllm
+pip3 install vllm==0.6.3 # or you can install 0.5.4, 0.4.2 and 0.3.1
+
+# verl
+pip install -e .
+
+# flash attention 2
+pip3 install flash-attn --no-build-isolation
+pip install wandb
+</code></pre>
+<h4>2. Create Embedding Server Environment</h4>
+<pre><code class="language-bash">conda create -n vllm python=3.10
+pip install vllm
+</code></pre>
+<h4>3. Create Local Retrieval Server Environment</h4>
+<pre><code class="language-bash">conda create -n retriever python=3.10
+conda activate retriever
+
+# we recommend installing torch with conda for faiss-gpu
+conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.1 -c pytorch -c nvidia
+pip install transformers datasets pyserini
+
+## install the gpu version faiss to guarantee efficient RL rollout
+conda install -c pytorch -c nvidia faiss-gpu=1.8.0
+
+## API function
+pip install uvicorn fastapi
+</code></pre>
+<h3>🗄️ Data Preparation</h3>
+<p>We will provide the processed data on Hugging Face Hub. You can download it from the following link:</p>
+<ul>
+<li><strong><a href="https://huggingface.co/datasets/Edaizi/EvolveR-NQ-HotpotQA">EvolveR-Data</a></strong></li>
+</ul>
+<p>Place your training and validation data in the following structure. The provided training script uses this path by default.</p>
+<pre><code>./data/nq_hotpotqa_train/
+├── train.parquet
+└── test.parquet
+</code></pre>
+<p>You can modify the <code>DATA_DIR</code> variable in <code>scripts/train_grpo-3b.sh</code> to point to your dataset location.</p>
+<h2>🚀 Training</h2>
+<h3>1. Deploy Embedding Server</h3>
+<pre><code class="language-bash">conda activate vllm
+bash scripts/vllm_server.sh
+</code></pre>
+<h3>2. Deploy Local Retrieval Server</h3>
+<h4>Download the indexing and corpus.</h4>
+<pre><code class="language-bash">conda activate retriever
+
+save_path=data/Wiki-corpus-embedd
+python scripts/download.py --save_path $save_path
+cat $save_path/part_* &gt; $save_path/e5_Flat.index
+gzip -d $save_path/wiki-18.jsonl.gz
+</code></pre>
+<h4>Launch Local Retrieval Server</h4>
+<pre><code class="language-bash">conda activate retriever
+bash scripts/retrieval_launch.sh
+</code></pre>
+<h3>3. Execute the main training script.</h3>
+<pre><code class="language-bash">bash scripts/train_grpo-3b.sh
+</code></pre>
+<p>The script will handle all training steps, including lauching Launching Experience Vector Database (VDB), interacting with the Experience VDB.</p>
+<h2>🤗 Model Zoo</h2>
+<p>For those with limited resources or who wish to bypass the training process, we provide direct access to our open-sourced model weights on the Hugging Face Hub.</p>
+<div align="center">
+
+<table>
+<thead>
+<tr>
+<th align="center">Model</th>
+<th align="center">Base Architecture</th>
+<th align="center">Params</th>
+<th align="center">Hugging Face Hub Link</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">EvolveR-3B</td>
+<td align="center">Qwen2.5</td>
+<td align="center">3B</td>
+<td align="center"><a href="https://huggingface.co/Edaizi/EvolveR">Link</a></td>
+</tr>
+</tbody></table>
+</div>
+
+<h2>🚀 Vision &amp; Community</h2>
+<p>We believe the experience-driven lifecycle of EvolveR is a generalizable paradigm for agent self-improvement. We encourage and welcome the community to extend this framework to other exciting domains, such as <code>code generation</code>, <code>mathematical reasoning</code>, and beyond. We are excited to see what you build!</p>
+<h2>Acknowledgements</h2>
+<p>We would like to thank the developers of the following projects for their open-source contributions.</p>
+<ul>
+<li><a href="https://github.com/QwenLM/Qwen3/tree/v2.5">Qwen2.5</a></li>
+<li><a href="https://github.com/PeterGriffinJin/Search-R1">Search-R1</a></li>
+<li><a href="https://github.com/KnowledgeXLab/O2-Searcher">O2-Searcher</a></li>
+</ul>
+<h2>Contact</h2>
+<p>For any questions or feedback, please:</p>
+<ul>
+<li>Open an issue in the GitHub repository</li>
+<li>Reach out to us at <a href="mailto:wurong1159@zju.edu.cn">wurong1159@zju.edu.cn</a></li>
+</ul>
+<h2>Citation</h2>
+<p>If you find our paper and code useful, please kindly cite us. A BibTeX entry will be provided upon publication.</p>
+<pre><code class="language-bibtex">@misc{wu2025evolverselfevolvingllmagents,
+      title={EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle}, 
+      author={Rong Wu and Xiaoman Wang and Jianbiao Mei and Pinlong Cai and Daocheng Fu and Cheng Yang and Licheng Wen and Xuemeng Yang and Yufan Shen and Yuxin Wang and Botian Shi},
+      year={2025},
+      eprint={2510.16079},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2510.16079}, 
+}v
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="evoagentx.html">EvoAgentX<small>repo</small></a><a href="letta-code.html">Letta Code<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

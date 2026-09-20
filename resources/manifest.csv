@@ -1,0 +1,71 @@
+file,title,arxiv_id,section,url,status
+1606.04474.pdf,"Learning to Learn by Gradient Descent by Gradient Descent",1606.04474,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/1606.04474,ok
+2410.04444.pdf,"Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement",2410.04444,Harness-level RSI,https://arxiv.org/abs/2410.04444,ok
+2003.03384.pdf,"AutoML-Zero: Evolving Machine Learning Algorithms From Scratch",2003.03384,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/2003.03384,ok
+1905.10985.pdf,"AI-GAs: AI-Generating Algorithms, an Alternate Paradigm for Producing General Artificial Intelligence",1905.10985,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/1905.10985,ok
+1504.04909.pdf,"Illuminating Search Spaces by Mapping Elites",1504.04909,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/1504.04909,ok
+1112.5309.pdf,"POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem",1112.5309,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/1112.5309,ok
+2310.03714.pdf,"DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines",2310.03714,Harness-level RSI,https://arxiv.org/abs/2310.03714,ok
+2406.07496.pdf,"TextGrad: Automatic ""Differentiation"" via Text",2406.07496,Harness-level RSI,https://arxiv.org/abs/2406.07496,ok
+2309.03409.pdf,"Large Language Models as Optimizers",2309.03409,Harness-level RSI,https://arxiv.org/abs/2309.03409,ok
+2309.16797.pdf,"Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution",2309.16797,Harness-level RSI,https://arxiv.org/abs/2309.16797,ok
+2310.04406.pdf,"Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models",2310.04406,Harness-level RSI,https://arxiv.org/abs/2310.04406,ok
+2303.17651.pdf,"Self-Refine: Iterative Refinement with Self-Feedback",2303.17651,Harness-level RSI,https://arxiv.org/abs/2303.17651,ok
+2309.11495.pdf,"Chain-of-Verification Reduces Hallucination in Large Language Models",2309.11495,Harness-level RSI,https://arxiv.org/abs/2309.11495,ok
+2305.11738.pdf,"CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing",2305.11738,Harness-level RSI,https://arxiv.org/abs/2305.11738,ok
+2203.11171.pdf,"Self-Consistency Improves Chain of Thought Reasoning in Language Models",2203.11171,Harness-level RSI,https://arxiv.org/abs/2203.11171,ok
+2305.20050.pdf,"Let's Verify Step by Step",2305.20050,Harness-level RSI,https://arxiv.org/abs/2305.20050,ok
+2310.01798.pdf,"Large Language Models Cannot Self-Correct Reasoning Yet",2310.01798,Harness-level RSI,https://arxiv.org/abs/2310.01798,ok
+2303.11366.pdf,"Reflexion: Language Agents with Verbal Reinforcement Learning",2303.11366,Harness-level RSI,https://arxiv.org/abs/2303.11366,ok
+2305.16291.pdf,"Voyager: An Open-Ended Embodied Agent with Large Language Models",2305.16291,Harness-level RSI,https://arxiv.org/abs/2305.16291,ok
+2308.10144.pdf,"ExpeL: LLM Agents Are Experiential Learners",2308.10144,Harness-level RSI,https://arxiv.org/abs/2308.10144,ok
+2502.12110.pdf,"A-MEM: Agentic Memory for LLM Agents",2502.12110,Harness-level RSI,https://arxiv.org/abs/2502.12110,ok
+2305.10250.pdf,"MemoryBank: Enhancing Large Language Models with Long-Term Memory",2305.10250,Harness-level RSI,https://arxiv.org/abs/2305.10250,ok
+2510.04618.pdf,"Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models",2510.04618,Harness-level RSI,https://arxiv.org/abs/2510.04618,ok
+2510.16079.pdf,"EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle",2510.16079,Harness-level RSI,https://arxiv.org/abs/2510.16079,ok
+2604.15097.pdf,"From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution",2604.15097,Harness-level RSI,https://arxiv.org/abs/2604.15097,ok
+2602.07755.pdf,"Learning to Continually Learn via Meta-learning Agentic Memory Designs",2602.07755,Harness-level RSI,https://arxiv.org/abs/2602.07755,ok
+2607.14159.pdf,"MemoHarness: Agent Harnesses That Learn from Experience",2607.14159,Harness-level RSI,https://arxiv.org/abs/2607.14159,ok
+2607.26784.pdf,"SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution",2607.26784,Harness-level RSI,https://arxiv.org/abs/2607.26784,ok
+2605.23904.pdf,"SkillOpt: Executive Strategy for Self-Evolving Agent Skills",2605.23904,Harness-level RSI,https://arxiv.org/abs/2605.23904,ok
+2512.18746.pdf,"MemEvolve: Meta-Evolution of Agent Memory Systems",2512.18746,Harness-level RSI,https://arxiv.org/abs/2512.18746,ok
+2607.05297.pdf,"MetaSkill-Evolve: Recursive Self-Improvement of LLM Agents via Two-Timescale Meta-Skill Evolution",2607.05297,Harness-level RSI,https://arxiv.org/abs/2607.05297,ok
+2408.08435.pdf,"Automated Design of Agentic Systems",2408.08435,Harness-level RSI,https://arxiv.org/abs/2408.08435,ok
+2310.02304.pdf,"Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation",2310.02304,Harness-level RSI,https://arxiv.org/abs/2310.02304,ok
+2604.25850.pdf,"Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses",2604.25850,Harness-level RSI,https://arxiv.org/abs/2604.25850,ok
+2608.12307.pdf,"AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses",2608.12307,Harness-level RSI,https://arxiv.org/abs/2608.12307,ok
+2603.03329.pdf,"AutoHarness: Improving LLM Agents by Automatically Synthesizing a Code Harness",2603.03329,Harness-level RSI,https://arxiv.org/abs/2603.03329,ok
+2605.09998.pdf,"Continual Harness: Online Adaptation for Self-Improving Foundation Agents",2605.09998,Harness-level RSI,https://arxiv.org/abs/2605.09998,ok
+2608.05446.pdf,"EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents",2608.05446,Harness-level RSI,https://arxiv.org/abs/2608.05446,ok
+2603.19461.pdf,"Hyperagents",2603.19461,Harness-level RSI,https://arxiv.org/abs/2603.19461,ok
+2605.27276.pdf,"SIA: Self Improving AI with Harness & Weight Updates",2605.27276,Harness-level RSI,https://arxiv.org/abs/2605.27276,ok
+2603.18000.pdf,"AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse",2603.18000,Harness-level RSI,https://arxiv.org/abs/2603.18000,ok
+2604.20133.pdf,"EvoAgent: An Evolvable Agent Framework with Skill Learning and Multi-Agent Delegation",2604.20133,Harness-level RSI,https://arxiv.org/abs/2604.20133,ok
+2507.03616.pdf,"EvoAgentX: An Automated Framework for Evolving Agentic Workflows",2507.03616,Harness-level RSI,https://arxiv.org/abs/2507.03616,ok
+2510.23601.pdf,"Alita-G: Self-Evolving Generative Agent for Agent Generation",2510.23601,Harness-level RSI,https://arxiv.org/abs/2510.23601,ok
+2402.17574.pdf,"Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization",2402.17574,Harness-level RSI,https://arxiv.org/abs/2402.17574,ok
+2409.00872.pdf,"Self-evolving Agents with Reflective and Memory-Augmented Abilities",2409.00872,Harness-level RSI,https://arxiv.org/abs/2409.00872,ok
+2305.19118.pdf,"Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate",2305.19118,Multi-Agent Self-Improvement,https://arxiv.org/abs/2305.19118,ok
+2305.14325.pdf,"Improving Factuality and Reasoning in Language Models through Multiagent Debate",2305.14325,Multi-Agent Self-Improvement,https://arxiv.org/abs/2305.14325,ok
+2505.15734.pdf,"DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning",2505.15734,Multi-Agent Self-Improvement,https://arxiv.org/abs/2505.15734,ok
+2511.16043.pdf,"Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning",2511.16043,Multi-Agent Self-Improvement,https://arxiv.org/abs/2511.16043,ok
+2406.14228.pdf,"EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms",2406.14228,Multi-Agent Self-Improvement,https://arxiv.org/abs/2406.14228,ok
+2403.08715.pdf,"SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents",2403.08715,Multi-Agent Self-Improvement,https://arxiv.org/abs/2403.08715,ok
+2505.22954.pdf,"Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents",2505.22954,Coding / Software-Engineering Self-Improvement,https://arxiv.org/abs/2505.22954,ok
+2504.15228.pdf,"A Self-Improving Coding Agent",2504.15228,Coding / Software-Engineering Self-Improvement,https://arxiv.org/abs/2504.15228,ok
+2412.21139.pdf,"Training Software Engineering Agents and Verifiers with SWE-Gym",2412.21139,Coding / Software-Engineering Self-Improvement,https://arxiv.org/abs/2412.21139,ok
+2304.05128.pdf,"Teaching Large Language Models to Self-Debug",2304.05128,Coding / Software-Engineering Self-Improvement,https://arxiv.org/abs/2304.05128,ok
+2312.13010.pdf,"AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation",2312.13010,Coding / Software-Engineering Self-Improvement,https://arxiv.org/abs/2312.13010,ok
+2408.06292.pdf,"The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery",2408.06292,Automated AI R&D,https://arxiv.org/abs/2408.06292,ok
+2601.14525.pdf,"Towards Execution-Grounded Automated AI Research",2601.14525,Automated AI R&D,https://arxiv.org/abs/2601.14525,ok
+2608.17906.pdf,"AutoResearch: Insight In, Hallucination Out",2608.17906,Automated AI R&D,https://arxiv.org/abs/2608.17906,ok
+2607.28568.pdf,"Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering",2607.28568,Automated AI R&D,https://arxiv.org/abs/2607.28568,ok
+2603.01712.pdf,"FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents",2603.01712,Automated AI R&D,https://arxiv.org/abs/2603.01712,ok
+2606.06473.pdf,"MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery",2606.06473,Automated AI R&D,https://arxiv.org/abs/2606.06473,ok
+2506.13131.pdf,"AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery",2506.13131,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/2506.13131,ok
+2601.10657.pdf,"PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution",2601.10657,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/2601.10657,ok
+1901.01753.pdf,"Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions",1901.01753,Evolutionary & Open-Ended RSI,https://arxiv.org/abs/1901.01753,ok
+frontiers-quality-diversity-2016.pdf,"Quality Diversity: A New Frontier for Evolutionary Computation",,Evolutionary & Open-Ended RSI,https://www.frontiersin.org/articles/10.3389/frobt.2016.00040/pdf,ok
+nature-funsearch-2024.pdf,"Mathematical Discoveries from Program Search with Large Language Models (FunSearch)",,Evolutionary & Open-Ended RSI,https://www.nature.com/articles/s41586-023-06924-6.pdf,ok
+nature-ai-scientist-v2-2026.pdf,"Towards End-to-End Automation of AI Research (The AI Scientist-v2)",,Automated AI R&D,https://www.nature.com/articles/s41586-026-10265-5.pdf,ok
+openreview-3tk6AES1Aj.pdf,"Higher Order and Self-Referential Evolution for Population-based Methods",,Evolutionary & Open-Ended RSI,https://openreview.net/pdf?id=3tk6AES1Aj,failed

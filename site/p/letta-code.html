@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Letta Code — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="evolver.html">← EvolveR</a> · <a href="memento-skills.html">Memento-Skills →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Letta Code</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/letta-ai/letta-code" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>A stateful agent harness where agents have memory, identity, and experience — and can rewrite their own memory, skills, prompts, and the harness itself via 'mods'.</p></section><section class="block"><h2>How it works</h2><ul><li>Stateful agents with persistent memory/identity/experience over long horizons.</li><li>Self-modification: agents rewrite their own memory, skills, prompts, and harness (mods).</li><li>Surfaces: CLI, desktop app, browser (chat.letta.com), and messaging channels.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">`npx @letta-ai/letta-code` for the CLI; desktop app available for macOS/Windows/Linux.</pre></section><section class="block"><h2>Learning note</h2><p>One of the most direct 'harness that modifies itself' products — study the mods mechanism for how self-modification is scoped safely.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>Letta Code</h1>
+<p><a href="https://www.npmjs.com/package/@letta-ai/letta-code"><img src="https://img.shields.io/npm/v/@letta-ai/letta-code.svg?style=flat-square" alt="npm"></a> <a href="https://discord.gg/letta"><img src="https://img.shields.io/badge/discord-join-blue?style=flat-square&logo=discord" alt="Discord"></a></p>
+<p>Letta Code is a stateful agent harness for creating agents that are more like people than tools. Letta Code agents have memory, identity, and a sense of experience over time. They learn and evolve over long horizons through rewriting their own memory, skills, prompts, and even the harness itself (through mods). </p>
+<p>Letta Code can be used interactively, or to power always-on agents that work proactively. Interact with agents through:</p>
+<ul>
+<li>A local <a href="https://docs.letta.com/letta-code/cli"><strong>CLI</strong></a></li>
+<li>The <a href="https://docs.letta.com/letta-code/desktop-app"><strong>desktop app</strong></a> for macOS, Windows, and Linux</li>
+<li>Your browser, including <a href="https://docs.letta.com/letta-code/remote-mobile">mobile</a>, at <a href="https://chat.letta.com">chat.letta.com</a></li>
+<li>Messaging integrations, including <a href="https://docs.letta.com/letta-code/channels#telegram-cli">Telegram</a>, <a href="https://docs.letta.com/letta-code/channels#slack-cli">Slack</a>, <a href="https://docs.letta.com/letta-code/channels#discord-cli">Discord</a>, and <a href="https://github.com/letta-ai/letta-code/blob/main/src/channels/README.md">custom channels</a></li>
+</ul>
+<p><img src="https://github.com/letta-ai/letta-code/blob/main/assets/letta-code-demo.gif" alt=""></p>
+<h2>Feature Overview</h2>
+<blockquote>
+<p>[!TIP]
+Letta Code agents are designed to be self-configuring. If you want to configure something (e.g. skills, behavior, hooks, permissions), try asking your agent to do it for you.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://docs.letta.com/letta-code/memory">Self-improvement &amp; Learning</a></td>
+<td>Agents programmatically rewrite their context to improve and adapt over time, including system prompt learning (through <a href="https://www.letta.com/blog/memory-blocks">memory blocks</a>) and <a href="https://www.letta.com/blog/skill-learning">skill learning</a>. Configure periodic dreaming with <code>/sleeptime</code>, investigate agent behavior with <code>/doctor [symptom]</code>, and view memory with <code>/palace</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/slash-commands">Message search</a></td>
+<td>Search across all messages and agents with <code>/search</code>. Agent can also search their own conversations or the conversations of other agents</td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/memfs">MemFS</a></td>
+<td>All context (including memory blocks) is tracked via git. Sync context to a custom GitHub repository by setting <code>/memory-repository set git@github.com:...</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/skills">Skills</a></td>
+<td>Loads global skills (<code>~/.letta</code>), project-scoped skills (<code>.agents/skills</code>), and agent-scoped skills (stored in MemFS). View skills with <code>/skills</code> and create with <code>/skill-creator</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/subagents">Subagents &amp; Multi-agent</a></td>
+<td>Call built-in subagents (general-purpose, forked, recall, history-analyzer) in the background. Agents can call any other agent (including themselves) as subagents</td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/channels">Messaging Integrations</a></td>
+<td>Chat with the same agent from Slack, Telegram, your browser (chat.letta.com) including mobile, and through <a href="https://github.com/letta-ai/skills/blob/main/letta/creating-letta-code-channels/SKILL.md">custom channels</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/hooks">Hooks</a></td>
+<td>Run custom scripts at key points of agent execution to automate workflows</td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/permissions">Permissions</a></td>
+<td>Set permission modes and customize what actions are auto-approved or auto-denied</td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/scheduling">Crons &amp; Schedules</a></td>
+<td>Configure heartbeats and crons, and let agents work across time with self-managed schedules</td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/platform/computers/byom">Remote computers</a> (requires signing in with Letta)</td>
+<td>Agents work across multiple computers. Connect any machine by running <code>letta server --computer-name &quot;...&quot;</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.letta.com/letta-code/secrets">Secrets</a> (requires signing in with Letta)</td>
+<td>Make secrets available as environment variables (across machines) while obfuscating their values from context</td>
+</tr>
+</tbody></table>
+<p>See the full list of slash commands in our <a href="https://docs.letta.com/letta-code/slash-commands">documentation</a>.</p>
+<h2>Get started</h2>
+<p>Install the package via <a href="https://docs.npmjs.com/downloading-and-installing-node-js-and-npm">npm</a>:</p>
+<pre><code class="language-bash">npm install -g @letta-ai/letta-code
+</code></pre>
+<p>Navigate to your project directory and run <code>letta</code> (see command-line options <a href="https://docs.letta.com/letta-code/commands">in the docs</a>). You can also run the tutorial agent with: </p>
+<pre><code>letta --new-agent --personality tutorial
+</code></pre>
+<p>Run <code>/connect</code> to configure your own LLM API keys (OpenAI / ChatGPT, Anthropic, Z.ai coding plan, etc.), and use <code>/model</code> to swap models.</p>
+<p>You can also download the <a href="https://docs.letta.com/letta-code/desktop-app"><strong>desktop app</strong></a> for macOS, Windows, and Linux. Agents created in the CLI are available via the desktop app, and vice versa.</p>
+<h2>Letta Cloud</h2>
+<p>Agents stored in Letta Cloud keep their memory, identity, and conversations there while the Letta Code harness can run on any connected computer: your laptop, <a href="https://github.com/letta-ai/letta-code-action">GitHub Actions</a>, a managed cloud sandbox, a remote VM, or a Mac Mini. You can chat with the same agents through <a href="https://chat.letta.com/">chat.letta.com</a> or the desktop app.</p>
+<pre><code class="language-mermaid">graph TD
+    LettaCloud[&quot;Letta Cloud&lt;br/&gt;Agent state&quot;]
+    LettaCloud --&gt; A[&quot;💻 Your Laptop&quot;]
+    LettaCloud --&gt; B[&quot;☁️ Cloud VM&quot;]
+    LettaCloud --&gt; C[&quot;🖥️ Mac Mini&quot;]
+    LettaCloud --&gt; D[&quot;📦 Managed Sandbox&quot;]
+</code></pre>
+<p>Run <code>/login</code> from the CLI or sign in through the desktop app to access agents in your Letta account.</p>
+<h3>Remote computers</h3>
+<p>Agents stored in Letta Cloud can run across multiple machines. Connect any machine by running:</p>
+<pre><code class="language-bash">letta server
+letta server --computer-name &quot;work-laptop&quot;
+</code></pre>
+<p>List discoverable computers from the CLI:</p>
+<pre><code class="language-bash">letta computers list --online-only
+</code></pre>
+<p>Get the current computer connection for routing another agent onto this same machine:</p>
+<pre><code class="language-bash">letta computers current
+</code></pre>
+<p>Route a headless message through a specific computer:</p>
+<pre><code class="language-bash">letta -p --agent &lt;agent-id&gt; --computer &quot;work-laptop&quot; &quot;hello from that machine&quot;
+</code></pre>
+<p>Use <code>--computer cloud</code> to start or reuse the target agent&#39;s cloud sandbox.
+Agent-to-agent headless messages without <code>--computer</code> run on the same computer.
+See our guides for using <a href="https://docs.letta.com/letta-code/remote#railway">Railway</a>, <a href="https://docs.letta.com/letta-code/remote#digitalocean">DigitalOcean</a>, and <a href="https://docs.letta.com/letta-code/remote#flyio">Fly.io</a> as remote computers.</p>
+<p>The previous <code>environments</code>/<code>envs</code>, <code>--environment</code>/<code>--env</code>, and <code>--env-name</code>
+spellings remain available for backwards compatibility.</p>
+<h2>AgentFile deprecation</h2>
+<p>AgentFile (<code>.af</code>) export and import are deprecated and have been removed from Letta Code. The <code>/export</code> and <code>/download</code> slash commands and the <code>--import</code> and <code>--from-af</code> CLI flags are no longer supported, including imports from the agent registry.</p>
+<p>This does not affect memory import/export or conversation transcript export.</p>
+<h2>Installing external skills</h2>
+<p>Install skills into a specific agent&#39;s memory with <code>letta skills install &lt;skill&gt;</code>: </p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GitHub</td>
+<td><code>letta skills install https://github.com/owner/repo</code><br><code>letta skills install https://github.com/owner/repo/tree/main/path/to/skill</code><br><code>letta skills install https://github.com/owner/repo/blob/main/path/to/skill/SKILL.md</code></td>
+</tr>
+<tr>
+<td><a href="https://clawhub.ai/">ClawHub</a></td>
+<td><code>openclaw skills install &lt;skill-slug&gt;</code> → <code>letta skills install &lt;skill-slug&gt;</code></td>
+</tr>
+<tr>
+<td><a href="https://hermes-agent.nousresearch.com/docs/skills/">Hermes Skills Hub</a></td>
+<td><code>hermes skills install &lt;skill-path&gt;</code> → <code>letta skills install &lt;skill-path&gt;</code></td>
+</tr>
+</tbody></table>
+<p>To view skills run <code>letta skills list --agent &lt;agent-id&gt;</code>, and delete skills with <code>letta skills delete &lt;skill-name&gt; --agent &lt;agent-id&gt;</code>.</p>
+<h2>Research</h2>
+<p>Letta Code is developed by the creators of <a href="https://arxiv.org/abs/2310.08560">MemGPT</a> and <a href="https://arxiv.org/abs/2504.13171">sleep-time compute</a> (now called &quot;dreaming&quot;), and driven by our <a href="https://www.letta.com/research">research</a> in AI memory and continual learning.</p>
+<h2>Other</h2>
+<p>Community maintained packages are available for Arch Linux users on the <a href="https://aur.archlinux.org/packages/letta-code">AUR</a>:</p>
+<pre><code class="language-bash">yay -S letta-code # release
+yay -S letta-code-git # nightly
+</code></pre>
+<p>Nix users can run or install Letta Code through the repository flake:</p>
+<pre><code class="language-bash">nix run github:letta-ai/letta-code
+nix profile install github:letta-ai/letta-code
+</code></pre>
+<p>See <a href="docs/nix.md">docs/nix.md</a> for Home Manager and NixOS service examples.</p>
+<hr>
+<p>Made with 💜 in San Francisco</p>
+<p><img
+  referrerpolicy="no-referrer-when-downgrade"
+  src="https://static.scarf.sh/a.png?x-pxid=76801c33-8e75-4055-8eea-2c8092519a90&page=README.md"
+  alt=""
+  aria-hidden="true"
+/></p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="evolver.html">EvolveR<small>repo</small></a><a href="memento-skills.html">Memento-Skills<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

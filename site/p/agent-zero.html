@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Agent Zero — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="1901.01753.html">← Paired Open-Ended Trailblazer (POET): En</a> · <a href="deepseek-harness.html">DeepSeek Harness →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Harness-level RSI</div>
+    <h1>Agent Zero</h1>
+    
+    <p class="meta">repo · substrate</p>
+    <div class="links"><a class="" href="https://github.com/agent0ai/agent-zero" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>A general-purpose agent framework that gives the agent a full Linux computer — a Dockerized desktop, annotated browser, document cowork, skills/plugins, and a bridge back to your host.</p></section><section class="block"><h2>How it works</h2><ul><li>Dockerized Linux desktop + browser with DOM annotation for real computer/GUI control.</li><li>Projects, skills, and plugins as persistent capabilities the agent composes.</li><li>Host bridge lets the agent act on and coordinate with the user's own machine.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">Docker-based: `docker compose up` (see the Quick Start in the README) launches the desktop + browser; add your LLM API key.</pre></section><section class="block"><h2>Learning note</h2><p>An 'extensible substrate' — the harness *is* a whole computer. Study it for how an OS-level workspace generalizes far beyond a chat loop.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><div align="center">
+
+<img src="docs/res/a0-vector-graphics/horizontal_banner.svg" alt="Agent Zero Banner" width="100%"/>
+
+<h1>Agent Zero</h1>
+<h3>Give your agent a full Linux computer.</h3>
+<p>Agent Zero is an open agent framework for work that needs more than chat: a Dockerized Linux desktop, a browser with DOM annotation, live document cowork, projects, skills, plugins, and a bridge back to your host machine.</p>
+<p><a href="https://agent-zero.ai"><img src="https://img.shields.io/badge/Website-agent--zero.ai-0A192F?style=for-the-badge&logo=vercel&logoColor=white" alt="Website"></a>
+<a href="./docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20guides-1F6FEB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Docs"></a>
+<a href="https://discord.gg/B8KZKNsPpj"><img src="https://img.shields.io/badge/Discord-Join%20us-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
+<a href="https://github.com/sponsors/agent0ai"><img src="https://img.shields.io/badge/Sponsors-Thank%20you-FF69B4?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
+<a href="https://deepwiki.com/agent0ai/agent-zero"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a></p>
+<p><a href="#quick-start">Quick Start</a> |
+<a href="#why-agent-zero">Why Agent Zero</a> |
+<a href="#try-these-first">Try These First</a> |
+<a href="#deep-dives">Deep Dives</a> |
+<a href="#documentation">Docs</a></p>
+</div>
+
+<div align="center">
+<img alt="Agent Zero driving Blender in its built-in XFCE desktop" src="docs/res/usage/webui/agentzero-xfce-computer.gif" width="100%" />
+</div>
+
+<h1>Why Agent Zero</h1>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Full Linux desktop</strong></td>
+<td>The agent can use real GUI software, terminals, files, and desktop apps inside the Canvas.</td>
+</tr>
+<tr>
+<td><strong>Browser DOM annotation</strong></td>
+<td>Click page elements and turn them into inspect, change, lift, or review instructions.</td>
+</tr>
+<tr>
+<td><strong>Live document cowork</strong></td>
+<td>Edit Markdown, Writer, Spreadsheet, and Presentation files together instead of losing work in chat.</td>
+</tr>
+<tr>
+<td><strong>Plugin Hub</strong></td>
+<td>Install 100+ community plugins or publish your own extension points.</td>
+</tr>
+<tr>
+<td><strong>Projects and memory</strong></td>
+<td>Keep files, instructions, secrets, memories, repositories, and model-preset choices isolated per project.</td>
+</tr>
+<tr>
+<td><strong>Host-machine bridge</strong></td>
+<td>Connect with the A0 CLI so the same agent can work in your real local repositories.</td>
+</tr>
+<tr>
+<td><strong>Multi-agent cooperation</strong></td>
+<td>Let agents delegate research, coding, analysis, or review tasks to focused subagents.</td>
+</tr>
+<tr>
+<td><strong>Transparent internals</strong></td>
+<td>Prompts, tools, plugins, skills, and settings are inspectable and editable.</td>
+</tr>
+</tbody></table>
+<h1>Quick Start</h1>
+<h2>Recommended: A0 Launcher</h2>
+<p>The desktop <strong>A0 Launcher</strong> is the fastest guided path on a personal machine. Download it, open it, and let it check Docker, create Instances, manage ports, and connect to local or remote Agent Zero installs.</p>
+<p>Agent Zero runs wherever Docker runs, from a $6 VPS or Raspberry Pi to a local workstation or GPU server.</p>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>macOS</th>
+<th>Linux</th>
+<th>Windows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>x86</td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-macos-x64.dmg">Mac Intel</a></td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-linux-x64.AppImage">Linux x86</a></td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-windows-x64.exe">Windows x86</a></td>
+</tr>
+<tr>
+<td>ARM64</td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-macos-arm64.dmg">Mac Apple Silicon</a></td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-linux-arm64.AppImage">Linux ARM64</a></td>
+<td><a href="https://github.com/agent0ai/a0-launcher/releases/download/v1.7/a0-launcher-1.7-windows-arm64.exe">Windows ARM64</a></td>
+</tr>
+</tbody></table>
+<p>See the <a href="https://github.com/agent0ai/a0-launcher/releases/tag/v1.7">A0 Launcher v1.7 release</a> for release notes and updater metadata. See the <a href="./docs/guides/launcher.md">Launcher guide</a> for the first-run walkthrough.</p>
+<details>
+<summary><strong>Other install paths</strong></summary>
+
+<h2>A0 Install</h2>
+<p>Use <strong>A0 Install</strong> when you want the terminal path: SSH sessions, servers, recovery shells, or a scriptable setup. It creates Dockerized Agent Zero instances, mounts each instance&#39;s data into <code>/a0/usr</code> inside the container, and uses a reuse-before-setup policy: it tries your current Docker CLI configuration, <code>DOCKER_HOST</code>, Docker contexts, and known local Docker-compatible endpoints before setting up a runtime.</p>
+<h3>macOS / Linux</h3>
+<pre><code class="language-bash">curl -fsSL https://bash.agent-zero.ai | bash
+</code></pre>
+<h3>Windows PowerShell</h3>
+<pre><code class="language-powershell">irm https://ps.agent-zero.ai | iex
+</code></pre>
+<h3>Headless / scripted</h3>
+<p>For servers and automation, run the installer in Quick Start mode so it creates one instance and exits without opening menus:</p>
+<pre><code class="language-bash">curl -fsSL https://bash.agent-zero.ai | bash -s -- --quick-start --name agent-zero --port 5080
+</code></pre>
+<pre><code class="language-powershell">&amp; ([scriptblock]::Create((irm https://ps.agent-zero.ai))) -QuickStart -Name agent-zero -Port 5080
+</code></pre>
+<p>Use <code>--skip-runtime-setup</code> / <code>-SkipRuntimeSetup</code> when Docker must already be working and the installer should not try to set up a runtime. See the <a href="https://github.com/agent0ai/a0-install">A0 Install repository</a> for all installer flags.</p>
+<h2>Docker already installed? Run this directly</h2>
+<pre><code class="language-bash">docker run -p 80:80 -v a0_usr:/a0/usr agent0ai/agent-zero
+</code></pre>
+<p>Open the Web UI, configure your LLM provider, and start with a concrete task. For the full setup and onboarding experience, see the <a href="./docs/setup/installation.md">Installation guide</a>.</p>
+</details>
+
+<h2>Troubleshooting</h2>
+<ul>
+<li><strong>Docker is not running:</strong> start Docker Desktop or your Docker service, then reopen the Launcher or rerun the install command.</li>
+<li><strong>Port 80 is already in use:</strong> use the Launcher to pick another port, or run Docker directly with <code>-p 5080:80</code> and open <code>http://localhost:5080</code>.</li>
+<li><strong>Installing on a server:</strong> use the A0 Install Quick Start command with <code>--quick-start --name agent-zero --port 5080</code>.</li>
+<li><strong>Still blocked:</strong> see the <a href="./docs/guides/troubleshooting.md">Troubleshooting guide</a>.</li>
+</ul>
+<h1>Try These First</h1>
+<ul>
+<li><strong>Annotate a design you like:</strong> &quot;Open this template site in the Browser. I&#39;ll annotate the hero section - re-implement it in my project&#39;s React + Tailwind stack.&quot;</li>
+<li><strong>Cowork on a spreadsheet:</strong> &quot;Create an editable ODS budget model with assumptions and monthly projections.&quot;</li>
+<li><strong>Drive a desktop app:</strong> &quot;Use the Linux Desktop to open Blender and create a simple 3D logo for me.&quot;</li>
+<li><strong>Review a web UI:</strong> &quot;Open my local app in the Browser. I will annotate the page with comments; then implement the requested UI fixes.&quot;</li>
+<li><strong>Create a specialist:</strong> &quot;Create an Agent Profile for financial analysis with cautious reasoning, clear assumptions, and spreadsheet-first deliverables.&quot;</li>
+<li><strong>Recover a workspace:</strong> &quot;Show me recent Time Travel snapshots and explain what changed before I revert anything.&quot;</li>
+</ul>
+<h1>Deep Dives</h1>
+<h2>A Real Linux Desktop in the Canvas</h2>
+<p>Agent Zero opens its own Linux desktop inside the right-side Canvas. Not a remote VM, not a shared clipboard, but a real XFCE desktop session running in the container.</p>
+<p>That means the agent can drive <em>real desktop software</em>: open Blender to model a 3D object, jump into a terminal window, manage files visually, run a GUI tool that has no API.</p>
+<p>You watch every action, and you can intervene at any moment because your mouse and keyboard share the same desktop.</p>
+<p>See the <a href="./docs/guides/desktop.md">Desktop guide</a> for the walkthrough, prompt examples, and how Desktop differs from Browser.</p>
+<h2>Native Browser With DOM Annotations</h2>
+<img alt="Annotating a webpage element in the Agent Zero browser" src="docs/res/usage/browser/annotation.gif" />
+<br>
+
+<p>Agent Zero ships a built-in Browser with an optional live surface in the Canvas. The agent can open pages, read them, click, type, upload files, and take screenshots - the usual. The unusual part is <strong>Annotate mode</strong>.</p>
+<p>Annotate mode turns any webpage into an interactive directive surface. Click an element to:</p>
+<ul>
+<li><strong>Change it</strong> - &quot;make this button blue and round the corners&quot; runs as a JS instruction the agent applies and verifies.</li>
+<li><strong>Inspect it</strong> - pull the DOM, the styles, the parent chain, the framework hints into the conversation.</li>
+<li><strong>Lift it</strong> - see a card, hero, or component on someone else&#39;s site that you like? Capture it and have the agent re-implement it in your own project&#39;s stack.</li>
+<li><strong>Comment it</strong> - leave actionable notes pinned to elements during a UI review; the agent reads the comments and ships the fixes.</li>
+</ul>
+<p>The Docker browser is the default live Browser surface. Browser history keeps screenshots of important steps, so older chats can still show what the agent saw. The Browser also supports Chrome extensions inside the Docker browser, and <strong>Bring Your Own Browser</strong> through the A0 CLI Connector lets the agent drive Chrome, Edge, Brave, Opera, Vivaldi, or Chromium on your own machine.</p>
+<p>See the <a href="./docs/guides/browser.md">Browser guide</a> for screenshots, settings, host-browser setup, and troubleshooting.</p>
+<h2>Cowork on Documents</h2>
+<h3>Markdown Editor With Live Cowork</h3>
+<img alt="Agent Zero writing a TODO plan in the Canvas markdown editor" src="docs/res/usage/webui/markdown-editor.gif" />
+<br>
+
+<p>The Canvas includes a rich Markdown editor designed for genuine cowork. Ask the agent to &quot;write a plan to do X in a TODO.md in the open doc&quot; and you&#39;ll see the file appear in the editor, character by character, while you keep typing in another section.</p>
+<p>It&#39;s not a preview pane. It&#39;s a real editor with toolbar, formatting buttons, tables, and an editable source view - built so that the agent&#39;s edits and yours are equal first-class operations on the same document.</p>
+<p>Use it for plans, TODOs, meeting notes, RFCs, project handoffs, or any artifact where the deliverable should <em>live as text</em> rather than be trapped inside chat scrollback.</p>
+<h3>LibreOffice Integration</h3>
+<p>LibreOffice Writer, Calc, and Impress are wired up so you can type by hand while Agent Zero creates, updates, saves, and verifies the same files in real time.</p>
+<p>ODT, ODS, and ODP binary formats are first-class citizens in the Agent Zero Desktop environment to align with the Open Document Format (ODF).</p>
+<p>Use the Desktop toolbar to create and edit Writer, Spreadsheet, and Presentation LibreOffice files.</p>
+<h2>Plugin Hub - 100+ Community Plugins</h2>
+<img alt="Agent Zero Plugin Hub showing community plugins" src="docs/res/usage/plugins/plugin-hub-browse.png" />
+<br>
+
+<p>Agent Zero is built for extension, not just configuration. The built-in <strong>Plugin Hub</strong> browses a growing catalog of community plugins - currently more than 100, covering:</p>
+<ul>
+<li><strong>Development frameworks</strong> like the <a href="https://github.com/bmad-code-org/bmad-method">BMAD Method</a> (full software development lifecycle with 20 specialist agents) and <a href="https://github.com/addyosmani/agent-skills">Agent Skills</a>.</li>
+<li><strong>Memory systems</strong> - alternative memory backends, intelligent consolidation strategies, vector recall plugins.</li>
+<li><strong>Tools and integrations</strong> - embedded terminals, custom browsers, deployment helpers, API clients.</li>
+<li><strong>UI extensions</strong> - chat rename controls, sidebar tweaks, theme packs, custom Canvas panels.</li>
+<li><strong>Workflow plugins</strong> - schedulers, multi-agent orchestration, project automations.</li>
+</ul>
+<p>Install with a click from the Web UI, or publish your own to the index repository. Combined with custom prompts in <code>prompts/</code>, custom tools in <code>tools/</code>, MCP servers, A2A connectors, and project-scoped configuration, Agent Zero gives you a real surface area to shape the agent into whatever you need.</p>
+<p>See the <a href="./docs/guides/skills.md">Skills guide</a>, the <a href="./docs/guides/create-plugin.md">Create a Small Plugin</a> tutorial, and the <a href="./docs/guides/mcp-setup.md">MCP setup</a> guide.</p>
+<h2>Use Your OpenAI Codex Plan</h2>
+<img alt="OAuth LLM plans in Agent Zero" src="docs/res/codex-screenshot.png" />
+<br>
+
+<p>Agent Zero connects to your OpenAI Codex plan through the new OAuth flow. Sign in with your account, pick the Codex-backed provider, and let Agent Zero use the plan you already have. Click &quot;Connect&quot;, enter the device code in the OpenAI page, choose your model, and you&#39;re set.</p>
+<p>This is the first step toward account-backed LLM plans in Agent Zero. More integrations are coming, including Gemini CLI and Claude Code through extra-usage.</p>
+<h2>A0 CLI Connector: Extend Onto Your Host Machine</h2>
+<img alt="A0 CLI driving the host browser through a Google Cloud VM creation flow" src="docs/res/usage/a0-cli/host-browser.gif" />
+<br>
+
+<p>The <strong>A0 CLI Connector</strong> is not a separate CLI agent. It connects to a running Agent Zero instance and gives that instance a terminal-native bridge to your host machine - so the same agent (with all its memory, projects, and skills) can also work on real files outside the Docker container.</p>
+<p>Install the connector on the machine you want Agent Zero to work on, <strong>not</strong> inside the Agent Zero container.</p>
+<h3>macOS / Linux</h3>
+<pre><code class="language-bash">curl -LsSf https://cli.agent-zero.ai/install.sh | sh
+</code></pre>
+<h3>Windows PowerShell</h3>
+<pre><code class="language-powershell">irm https://cli.agent-zero.ai/install.ps1 | iex
+</code></pre>
+<p>Then run <code>a0</code> to connect your terminal to an existing Agent Zero instance. It can usually discover a local instance automatically, or you can point it at a remote URL hosted somewhere else, such as a VPS or tunnel.</p>
+<p>This is especially useful if you:</p>
+<ul>
+<li>prefer CLI workflows;</li>
+<li>want Agent Zero to work in an existing local repository;</li>
+<li>are running Agent Zero on a remote server;</li>
+<li>want Docker isolation for Agent Zero while still granting explicit, controlled access to host-side work.</li>
+</ul>
+<p>For full setup, see the <a href="https://www.agent-zero.ai/p/docs/a0-cli-connector/">A0 CLI Connector guide</a> (or the <a href="./docs/guides/a0-cli-connector.md">in-repo guide</a>).</p>
+<h2>Projects, Skills, Agent Profiles, and Model Presets</h2>
+<p><strong>Projects</strong> isolate workspaces, instructions, memory, secrets, knowledge, repositories, and model-preset choices. Clone a public or private Git repo into a project and give the agent context that belongs to that work alone.</p>
+<p><strong>Skills</strong> can be loaded on demand by Agent Zero, or pinned from the chat input when you want a specific procedure to stay active.</p>
+<p><strong>Agent Profiles</strong> change the broader working style of the current chat.</p>
+<p><strong>Model Presets</strong> are named shortcuts for model setups, so you can quickly switch between fast, balanced, cheap, local, or high-power model choices.</p>
+<h2>Multi-Agent Cooperation</h2>
+<p>Every agent can create subordinate agents to break down work. The superior gives tasks and receives reports; subagents keep their own contexts focused and return their findings when done.</p>
+<p>This makes Agent Zero useful for research, software engineering, data analysis, plugin development, and tasks where several specialized perspectives are better than one overloaded context.</p>
+<h2>Transparent and Extensible by Design</h2>
+<p>Almost nothing is hidden. Prompts live in <code>prompts/</code>, tools live in <code>tools/</code> or plugins, and built-in behavior can be inspected, changed, replaced, or extended.</p>
+<p>Agent Zero supports plugins, MCP, A2A, custom tools, custom prompts, project-scoped configuration, environment-based deployment settings, and a Web UI designed to keep the agent&#39;s work readable in real time.</p>
+<h2>Time Travel</h2>
+<p>Time Travel gives Agent Zero-owned <code>/a0/usr</code> workspaces snapshot history, diff inspection, travel, and revert. It is designed for recoverable agent work: see what changed, compare files, inspect a past state, and roll back when needed.</p>
+<img alt="Time Travel" src="docs/res/time-travel.png" />
+
+<p>It is not a replacement for Git or backups. It is a practical safety layer for the workspace where agents are actively creating and editing files.</p>
+<h2>Real-World Use Cases</h2>
+<ul>
+<li><strong>Software engineering:</strong> inspect a codebase, make scoped edits, run tests, explain tradeoffs, and keep a recoverable history of file changes.</li>
+<li><strong>Host-machine development:</strong> connect with <code>a0</code> and let Agent Zero work in your real local repositories, or clone them through Git Projects feature in the Web UI.</li>
+<li><strong>Design inspiration and UI iteration:</strong> browse the web, annotate elements you like, and pull components into your own stack.</li>
+<li><strong>Financial analysis and charting:</strong> collect data, correlate events, create spreadsheets, and generate editable charts.</li>
+</ul>
+</div><p class="abstract">… (truncated for length) — <a href="https://github.com/agent0ai/agent-zero" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="1901.01753.html">Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions<small>GECCO 2019</small></a><a href="deepseek-harness.html">DeepSeek Harness<small>repo · substrate</small></a><a href="2410.04444.html">Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement<small>ACL 2025</small></a><a href="2310.03714.html">DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines<small>NeurIPS 2023 (R0-FoMo)</small></a><a href="2406.07496.html">TextGrad: Automatic &quot;Differentiation&quot; via Text<small>Nature 2025</small></a><a href="2309.03409.html">Large Language Models as Optimizers<small>ICLR 2024</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>OpenEvolve — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="mlevolve.html">← MLEvolve</a> · <a href="poet.html">POET →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>OpenEvolve</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/algorithmicsuperintelligence/openevolve" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>An open-source evolutionary coding agent — turns an LLM into an autonomous code optimizer that discovers better algorithms.</p></section><section class="block"><h2>How it works</h2><ul><li>Evolutionary loop: LLM proposes code variants, an evaluator scores them, the best survive and seed the next generation.</li><li>From random search to state-of-the-art — refines programs against a fitness signal.</li><li>Distributed as `openevolve` on PyPI with system-message guides.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">`pip install openevolve`; see Quick Start and Examples in the README.</pre></section><section class="block"><h2>Learning note</h2><p>The 'LLM + evaluator + evolution' recipe (FunSearch/AlphaEvolve) packaged as a drop-in library — the fastest way to *run* an evolutionary coding loop.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>OpenEvolve</h1>
+<div align="center">
+
+<img src="openevolve-logo.png" alt="OpenEvolve Logo" width="400">
+
+<p><strong>🧬 The most advanced open-source evolutionary coding agent</strong></p>
+<p><em>Turn your LLMs into autonomous code optimizers that discover breakthrough algorithms</em></p>
+<p align="center">
+  <a href="https://pypi.org/project/openevolve/"><img src="https://img.shields.io/pypi/v/openevolve" alt="PyPI version"></a>
+  <a href="https://pepy.tech/projects/openevolve"><img src="https://static.pepy.tech/personalized-badge/openevolve?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads%2Fmonth" alt="PyPI Downloads"></a>
+  <a href="https://github.com/algorithmicsuperintelligence/openevolve/blob/main/LICENSE"><img src="https://img.shields.io/github/license/algorithmicsuperintelligence/openevolve" alt="License"></a>
+</p>
+
+<p><a href="#quick-start">🚀 <strong>Quick Start</strong></a> • <a href="#examples-gallery"><strong>Examples</strong></a> • <a href="#crafting-effective-system-messages"><strong>System Messages</strong></a> • <a href="https://github.com/algorithmicsuperintelligence/openevolve/discussions"><strong>Discussions</strong></a></p>
+<p><em>From random search to state-of-the-art: Watch your code evolve in real-time</em></p>
+</div>
+
+<hr>
+<h2>Why OpenEvolve?</h2>
+<table>
+<tr>
+<td width="33%">
+
+<h3><strong>Autonomous Discovery</strong></h3>
+<p>LLMs don&#39;t just optimize—they <strong>discover</strong> entirely new algorithms. No human guidance needed.</p>
+</td>
+<td width="33%">
+
+<h3><strong>Proven Results</strong></h3>
+<p><strong>2-3x speedups</strong> on real hardware. <strong>State-of-the-art</strong> circle packing. <strong>Breakthrough</strong> optimizations.</p>
+</td>
+<td width="33%">
+
+<h3><strong>Research Grade</strong></h3>
+<p>Full reproducibility, extensive evaluation pipelines, and scientific rigor built-in.</p>
+</td>
+</tr>
+</table>
+
+<p><strong>OpenEvolve vs Manual Optimization:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Manual Optimization</th>
+<th>OpenEvolve</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Time to Solution</strong></td>
+<td>Days to weeks</td>
+<td>Hours</td>
+</tr>
+<tr>
+<td><strong>Exploration Breadth</strong></td>
+<td>Limited by human creativity</td>
+<td>Unlimited LLM creativity</td>
+</tr>
+<tr>
+<td><strong>Reproducibility</strong></td>
+<td>Hard to replicate</td>
+<td>Fully deterministic</td>
+</tr>
+<tr>
+<td><strong>Multi-objective</strong></td>
+<td>Complex tradeoffs</td>
+<td>Automatic Pareto optimization</td>
+</tr>
+<tr>
+<td><strong>Scaling</strong></td>
+<td>Doesn&#39;t scale</td>
+<td>Parallel evolution across islands</td>
+</tr>
+</tbody></table>
+<h2>Proven Achievements</h2>
+<div align="center">
+
+<table>
+<thead>
+<tr>
+<th><strong>Domain</strong></th>
+<th><strong>Achievement</strong></th>
+<th><strong>Example</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GPU Optimization</strong></td>
+<td>Hardware-optimized kernel discovery</td>
+<td><a href="examples/mlx_metal_kernel_opt/">MLX Metal Kernels</a></td>
+</tr>
+<tr>
+<td><strong>Mathematical</strong></td>
+<td>State-of-the-art circle packing (n=26)</td>
+<td><a href="examples/circle_packing/">Circle Packing</a></td>
+</tr>
+<tr>
+<td><strong>Algorithm Design</strong></td>
+<td>Adaptive sorting algorithms</td>
+<td><a href="examples/rust_adaptive_sort/">Rust Adaptive Sort</a></td>
+</tr>
+<tr>
+<td><strong>Scientific Computing</strong></td>
+<td>Automated filter design</td>
+<td><a href="examples/signal_processing/">Signal Processing</a></td>
+</tr>
+<tr>
+<td><strong>Multi-Language</strong></td>
+<td>Python, Rust, R, Metal shaders</td>
+<td><a href="examples/">All Examples</a></td>
+</tr>
+</tbody></table>
+</div>
+
+<h2>🚀 Quick Start</h2>
+<p>Get from zero to evolving code in <strong>30 seconds</strong>:</p>
+<pre><code class="language-bash"># Install OpenEvolve
+pip install openevolve
+
+# The example uses Google Gemini by default (free tier available)
+# Get your API key from: https://aistudio.google.com/apikey
+export OPENAI_API_KEY=&quot;your-gemini-api-key&quot;  # Yes, use OPENAI_API_KEY env var
+
+# Run your first evolution!
+python openevolve-run.py examples/function_minimization/initial_program.py \
+  examples/function_minimization/evaluator.py \
+  --config examples/function_minimization/config.yaml \
+  --iterations 50
+</code></pre>
+<p><strong>Note:</strong> The example config uses Gemini by default, but you can use any OpenAI-compatible provider by modifying the <code>config.yaml</code>. See the <a href="configs/">configs</a> for full configuration options.</p>
+<h3><strong>Library Usage</strong></h3>
+<p>OpenEvolve can be used as a library without any external files:</p>
+<pre><code class="language-python">from openevolve import run_evolution, evolve_function
+
+# Evolution with inline code (no files needed!)
+result = run_evolution(
+    initial_program=&#39;&#39;&#39;
+    def fibonacci(n):
+        if n &lt;= 1: return n
+        return fibonacci(n-1) + fibonacci(n-2)
+    &#39;&#39;&#39;,
+    evaluator=lambda path: {&quot;score&quot;: benchmark_fib(path)},
+    iterations=100
+)
+
+# Evolve Python functions directly
+def bubble_sort(arr):
+    for i in range(len(arr)):
+        for j in range(len(arr)-1):
+            if arr[j] &gt; arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j] 
+    return arr
+
+result = evolve_function(
+    bubble_sort,
+    test_cases=[([3,1,2], [1,2,3]), ([5,2,8], [2,5,8])],
+    iterations=50
+)
+print(f&quot;Evolved sorting algorithm: {result.best_code}&quot;)
+</code></pre>
+<p><strong>Prefer Docker?</strong> See the <a href="#installation--setup">Installation &amp; Setup</a> section for Docker options.</p>
+<h2>See It In Action</h2>
+<details>
+<summary><b>Circle Packing: From Random to State-of-the-Art</b></summary>
+
+<p><strong>Watch OpenEvolve discover optimal circle packing in real-time:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Generation 1</th>
+<th>Generation 190</th>
+<th>Generation 460 (Final)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><img src="examples/circle_packing/circle_packing_1.png" alt="Initial"></td>
+<td><img src="examples/circle_packing/circle_packing_190.png" alt="Progress"></td>
+<td><img src="examples/circle_packing/circle_packing_460.png" alt="Final"></td>
+</tr>
+<tr>
+<td>Random placement</td>
+<td>Learning structure</td>
+<td><strong>State-of-the-art result</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Result</strong>: Matches published benchmarks for n=26 circle packing problem.</p>
+</details>
+
+<details>
+<summary><b>GPU Kernel Evolution</b></summary>
+
+<p><strong>Before (Baseline)</strong>:</p>
+<pre><code class="language-metal">// Standard attention implementation
+kernel void attention_baseline(/* ... */) {
+    // Generic matrix multiplication
+    float sum = 0.0;
+    for (int i = 0; i &lt; seq_len; i++) {
+        sum += query[tid] * key[i];
+    }
+}
+</code></pre>
+<p><strong>After Evolution (2.8x faster)</strong>:</p>
+<pre><code class="language-metal">// OpenEvolve discovered optimization
+kernel void attention_evolved(/* ... */) {
+    // Hardware-aware tiling + unified memory optimization
+    threadgroup float shared_mem[256];
+    // ... evolved algorithm exploiting Apple Silicon architecture
+}
+</code></pre>
+<p><strong>Performance Impact</strong>: 2.8x speedup on Apple M1 Pro, maintaining numerical accuracy.</p>
+</details>
+
+<h2>How OpenEvolve Works</h2>
+<p>OpenEvolve implements a sophisticated <strong>evolutionary coding pipeline</strong> that goes far beyond simple optimization:</p>
+<p><img src="openevolve-architecture.png" alt="OpenEvolve Architecture"></p>
+<h3><strong>Core Innovation</strong>: MAP-Elites + LLMs</h3>
+<ul>
+<li><strong>Quality-Diversity Evolution</strong>: Maintains diverse populations across feature dimensions</li>
+<li><strong>Island-Based Architecture</strong>: Multiple populations prevent premature convergence</li>
+<li><strong>LLM Ensemble</strong>: Multiple models with intelligent fallback strategies</li>
+<li><strong>Artifact Side-Channel</strong>: Error feedback improves subsequent generations</li>
+</ul>
+<h3><strong>Advanced Features</strong></h3>
+<details>
+<summary><b>Scientific Reproducibility</b></summary>
+
+<ul>
+<li><strong>Comprehensive Seeding</strong>: Every component (LLM, database, evaluation) is seeded</li>
+<li><strong>Default Seed=42</strong>: Immediate reproducible results out of the box</li>
+<li><strong>Deterministic Evolution</strong>: Exact reproduction of runs across machines</li>
+<li><strong>Component Isolation</strong>: Hash-based isolation prevents cross-contamination</li>
+</ul>
+</details>
+
+<details>
+<summary><b>Advanced LLM Integration</b></summary>
+
+<ul>
+<li><strong>Universal API</strong>: Works with OpenAI, Google, Claude Code CLI, local models, and proxies</li>
+<li><strong>Intelligent Ensembles</strong>: Weighted combinations with sophisticated fallback</li>
+<li><strong>Test-Time Compute</strong>: Enhanced reasoning through proxy systems (see <a href="#llm-provider-setup">OptiLLM setup</a>)</li>
+<li><strong>Plugin Ecosystem</strong>: Support for advanced reasoning plugins</li>
+</ul>
+</details>
+
+<details>
+<summary><b>Evolution Algorithm Innovations</b></summary>
+
+<ul>
+<li><strong>Double Selection</strong>: Different programs for performance vs inspiration</li>
+<li><strong>Adaptive Feature Dimensions</strong>: Custom quality-diversity metrics</li>
+<li><strong>Migration Patterns</strong>: Ring topology with controlled gene flow</li>
+<li><strong>Multi-Strategy Sampling</strong>: Elite, diverse, and exploratory selection</li>
+</ul>
+</details>
+
+<h2>Perfect For</h2>
+<table>
+<thead>
+<tr>
+<th><strong>Use Case</strong></th>
+<th><strong>Why OpenEvolve Excels</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Performance Optimization</strong></td>
+<td>Discovers hardware-specific optimizations humans miss</td>
+</tr>
+<tr>
+<td><strong>Algorithm Discovery</strong></td>
+<td>Finds novel approaches to classic problems</td>
+</tr>
+<tr>
+<td><strong>Scientific Computing</strong></td>
+<td>Automates tedious manual tuning processes</td>
+</tr>
+<tr>
+<td><strong>Competitive Programming</strong></td>
+<td>Generates multiple solution strategies</td>
+</tr>
+<tr>
+<td><strong>Multi-Objective Problems</strong></td>
+<td>Pareto-optimal solutions across dimensions</td>
+</tr>
+</tbody></table>
+<h2>🛠 Installation &amp; Setup</h2>
+<h3>Requirements</h3>
+<ul>
+<li><strong>Python</strong>: 3.10+ </li>
+<li><strong>LLM Access</strong>: Any OpenAI-compatible API, or <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code CLI</a></li>
+<li><strong>Optional</strong>: Docker for containerized runs</li>
+</ul>
+<h3>Installation Options</h3>
+<details>
+<summary><b>📦 PyPI (Recommended)</b></summary>
+
+<pre><code class="language-bash">pip install openevolve
+</code></pre>
+</details>
+
+<details>
+<summary><b>🔧 Development Install</b></summary>
+
+<pre><code class="language-bash">git clone https://github.com/algorithmicsuperintelligence/openevolve.git
+cd openevolve
+pip install -e &quot;.[dev]&quot;
+</code></pre>
+</details>
+
+<details>
+<summary><b>🐳 Docker</b></summary>
+
+<pre><code class="language-bash"># Pull the image
+docker pull ghcr.io/algorithmicsuperintelligence/openevolve:latest
+
+# Run an example
+docker run --rm -v $(pwd):/app ghcr.io/algorithmicsuperintelligence/openevolve:latest \
+  examples/function_minimization/initial_program.py \
+  examples/function_minimization/evaluator.py --iterations 100
+</code></pre>
+</details>
+
+<h3>Cost Estimation</h3>
+<p><strong>Cost depends on your LLM provider and iterations:</strong></p>
+<ul>
+<li><strong>o3</strong>: ~$0.15-0.60 per iteration (depending on code size)</li>
+<li><strong>o3-mini</strong>: ~$0.03-0.12 per iteration (more cost-effective)</li>
+<li><strong>Gemini-2.5-Pro</strong>: ~$0.08-0.30 per iteration</li>
+<li><strong>Gemini-2.5-Flash</strong>: ~$0.01-0.05 per iteration (fastest and cheapest)</li>
+<li><strong>Local models</strong>: Nearly free after setup</li>
+<li><strong>OptiLLM</strong>: Use cheaper models with test-time compute for better results</li>
+</ul>
+<p><strong>Cost-saving tips:</strong></p>
+<ul>
+<li>Start with fewer iterations (100-200)</li>
+<li>Use o3-mini, Gemini-2.5-Flash or local models for exploration</li>
+<li>Use cascade evaluation to filter bad programs early</li>
+<li>Configure smaller population sizes initially</li>
+</ul>
+<h3>LLM Provider Setup</h3>
+<p>OpenEvolve works with <strong>any OpenAI-compatible API</strong>:</p>
+<details>
+<summary><b>🔥 OpenAI (Direct)</b></summary>
+
+<pre><code class="language-bash">export OPENAI_API_KEY=&quot;sk-...&quot;
+# Uses OpenAI endpoints by default
+</code></pre>
+</details>
+
+<details>
+<summary><b>🤖 Google Gemini</b></summary>
+
+<pre><code class="language-yaml"># config.yaml
+llm:
+  api_base: &quot;https://generativelanguage.googleapis.com/v1beta/openai/&quot;
+  model: &quot;gemini-2.5-pro&quot;
+</code></pre>
+<pre><code class="language-bash">export OPENAI_API_KEY=&quot;your-gemini-api-key&quot;
+</code></pre>
+</details>
+
+<details>
+<summary><b>🏠 Local Models (Ollama/vLLM)</b></summary>
+
+<pre><code class="language-yaml"># config.yaml
+llm:
+  api_base: &quot;http://localhost:11434/v1&quot;  # Ollama
+  model: &quot;codellama:7b&quot;
+</code></pre>
+</details>
+
+<details>
+<summary><b>⚡ OptiLLM (Advanced)</b></summary>
+
+<p>For maximum flexibility with rate limiting, model routing, and test-time compute:</p>
+<pre><code class="language-bash"># Install OptiLLM
+pip install optillm
+
+# Start OptiLLM proxy
+optillm --port 8000
+
+# Point OpenEvolve to OptiLLM
+export OPENAI_API_KEY=&quot;your-actual-key&quot;
+</code></pre>
+<pre><code class="language-yaml">llm:
+  api_base: &quot;http://localhost:8000/v1&quot;
+  model: &quot;moa&amp;readurls-o3&quot;  # Test-time compute + web access
+</code></pre>
+</details>
+
+<details>
+<summary><b>🔮 Claude Code CLI (No API Key)</b></summary>
+
+<p>Use the <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code CLI</a> as the LLM backend — no API keys needed, authentication uses the CLI&#39;s OAuth session.</p>
+<pre><code class="language-bash"># Install and authenticate
+npm install -g @anthropic-ai/claude-code
+claude login
+</code></pre>
+<pre><code class="language-yaml"># config.yaml
+llm:
+  provider: &quot;claude_code&quot;
+  models:
+    - name: &quot;sonnet&quot;
+      weight: 0.8
+      max_tokens: 16000
+      max_budget_usd: 1.0
+    - name: &quot;haiku&quot;
+      weight: 0.2
+      max_tokens: 8000
+</code></pre>
+<p>See the <a href="examples/claude_code_quickstart/">Claude Code quickstart example</a> for a complete walkthrough.</p>
+</details>
+
+<h2>Examples Gallery</h2>
+<div align="center">
+
+<h3><strong>Showcase Projects</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Domain</th>
+<th>Achievement</th>
+<th>Demo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="examples/function_minimization/"><strong>Function Minimization</strong></a></td>
+<td>Optimization</td>
+<td>Random → Simulated Annealing</td>
+<td><a href="examples/function_minimization/openevolve_output/">View Results</a></td>
+</tr>
+<tr>
+<td><a href="examples/mlx_metal_kernel_opt/"><strong>MLX GPU Kernels</strong></a></td>
+<td>Hardware</td>
+<td>Apple Silicon optimization</td>
+<td><a href="examples/mlx_metal_kernel_opt/README.md">Benchmarks</a></td>
+</tr>
+<tr>
+<td><a href="examples/rust_adaptive_sort/"><strong>Rust Adaptive Sort</strong></a></td>
+<td>Algorithms</td>
+<td>Data-aware sorting</td>
+<td><a href="examples/rust_adaptive_sort/">Code Evolution</a></td>
+</tr>
+<tr>
+<td><a href="examples/symbolic_regression/"><strong>Symbolic Regression</strong></a></td>
+<td>Science</td>
+<td>Automated equation discovery</td>
+<td><a href="examples/symbolic_regression/">LLM-SRBench</a></td>
+</tr>
+<tr>
+<td><a href="examples/web_scraper_optillm/"><strong>Web Scraper + OptiLLM</strong></a></td>
+<td>AI Integration</td>
+<td>Test-time compute optimization</td>
+<td><a href="examples/web_scraper_optillm/">Smart Scraping</a></td>
+</tr>
+</tbody></table>
+</div>
+
+<h3><strong>Quick Example</strong>: Function Minimization</h3>
+<p><strong>Watch OpenEvolve evolve from random search to sophisticated optimization:</strong></p>
+<pre><code class="language-python"># Initial Program (Random Search)
+def minimize_function(func, bounds, max_evals=1000):
+    best_x, best_val = None, float(&#39;inf&#39;)
+    for _ in range(max_evals):
+        x = random_point_in_bounds(bounds)
+        val = func(x)
+        if val &lt; best_val:
+            best_x, best_val = x, val
+    return best_x, best_val
+</code></pre>
+<p><strong>Evolution Process</strong></p>
+<pre><code class="language-python"># Evolved Program (Simulated Annealing + Adaptive Cooling)
+def minimize_function(func, bounds, max_evals=1000):
+    x = random_point_in_bounds(bounds)
+    temp = adaptive_initial_temperature(func, bounds)
+    
+    for i in range(max_evals):
+        neighbor = generate_neighbor(x, temp, bounds)
+        delta = func(neighbor) - func(x)
+        
+        if delta &lt; 0 or random.random() &lt; exp(-delta/temp):
+            x = neighbor
+            
+        temp *= adaptive_cooling_rate(i, max_evals)  # Dynamic cooling
+    
+    return x, func(x)
+</code></pre>
+<p><strong>Performance</strong>: 100x improvement in convergence speed!</p>
+<h3><strong>Advanced Examples</strong></h3>
+<details>
+<summary><b>Prompt Evolution</b></summary>
+
+<p><strong>Evolve prompts instead of code</strong> for better LLM performance. See the <a href="examples/llm_prompt_optimization/">LLM Prompt Optimization example</a> for a complete case study with HotpotQA achieving +23% accuracy improvement.</p>
+<p><a href="examples/llm_prompt_optimization/">Full Example</a></p>
+</details>
+
+<details>
+<summary><b>🏁 Competitive Programming</b></summary>
+
+<p><strong>Automatic solution generation</strong> for programming contests:</p>
+<pre><code class="language-python"># Problem: Find maximum subarray sum
+# OpenEvolve discovers multiple approaches:
+
+# Evolution Path 1: Brute Force → Kadane&#39;s Algorithm
+# Evolution Path 2: Divide &amp; Conquer → Optimized Kadane&#39;s
+# Evolution Path 3: Dynamic Programming → Space-Optimized DP
+</code></pre>
+<p><a href="examples/online_judge_programming/">Online Judge Integration</a></p>
+</details>
+
+<h2>Configuration</h2>
+<p>OpenEvolve offers extensive configuration for advanced users:</p>
+<pre><code class="language-yaml"># Advanced Configuration Example
+max_iterations: 1000
+random_seed: 42  # Full reproducibility
+
+llm:
+  # Ensemble configuration
+  models:
+    - name: &quot;gemini-2.5-pro&quot;
+      weight: 0.6
+    - name: &quot;gemini-2.5-flash&quot;
+      weight: 0.4
+  temperature: 0.7
+
+database:
+  # MAP-Elites quality-diversity
+  population_size: 500
+  num_islands: 5  # Parallel evolution
+  migration_interval: 20
+  feature_dimensions: [&quot;complexity&quot;, &quot;diversity&quot;, &quot;performance&quot;]
+
+  # Optional novelty filtering with Gemini embeddings
+  embedding_model: &quot;gemini-embedding-001&quot;
+  similarity_threshold: 0.99
+
+evaluator:
+  enable_artifacts: true      # Error feedback to LLM
+  cascade_evaluation: true    # Multi-stage testing
+  use_llm_feedback: true      # AI code quality assessment
+
+prompt:
+  # Sophisticated inspiration system
+  num_top_programs: 3         # Best performers
+  num_diverse_programs: 2     # Creative exploration
+  include_artifacts: true     # Execution feedback
+  
+  # Custom templates
+  template_dir: &quot;custom_prompts/&quot;
+  use_template_stochasticity: true  # Randomized prompts
+</code></pre>
+<p>For Gemini embeddings, set <code>GEMINI_API_KEY</code>. <code>GOOGLE_API_KEY</code> is also supported
+as a fallback. OpenEvolve uses Google&#39;s OpenAI-compatible endpoint automatically.</p>
+<details>
+<summary><b>🎯 Feature Engineering</b></summary>
+
+<p><strong>Control how programs are organized in the quality-diversity grid:</strong></p>
+<pre><code class="language-yaml">database:
+  feature_dimensions: 
+    - &quot;complexity&quot;      # Built-in: code length
+    - &quot;diversity&quot;       # Built-in: structural diversity
+    - &quot;performance&quot;     # Custom: from your evaluator
+</code></pre>
+</div><p class="abstract">… (truncated for length) — <a href="https://github.com/algorithmicsuperintelligence/openevolve" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="mlevolve.html">MLEvolve<small>repo</small></a><a href="poet.html">POET<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

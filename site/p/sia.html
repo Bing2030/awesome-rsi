@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>SIA — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="seal.html">← SEAL</a> · <a href="ace.html">ACE →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>SIA</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/hexo-ai/sia" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>SIA — Self Improving AI with joint harness + weight updates.</p></section><section class="block"><h2>How it works</h2><ul><li>A Feedback-Agent updates both the harness and the task agent's weights.</li><li>Unifies the harness-update and test-time-training schools.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2605.27276.html">SIA: Self Improving AI with Harness &amp; Weight Updates</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; LLM API key + training setup; run the Feedback-Agent loop per README.</pre></section><section class="block"><h2>Learning note</h2><p>The 'close the loop' system — study how harness edits and weight updates are coordinated in one feedback agent.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>SIA (Self-Improving AI)</h1>
+<p><a href="https://arxiv.org/abs/2605.27276"><img src="https://img.shields.io/badge/arXiv-2605.27276-b31b1b.svg" alt="arXiv"></a>
+<a href="https://github.com/hexo-ai/sia/actions/workflows/ci.yml"><img src="https://github.com/hexo-ai/sia/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://pypi.org/project/sia-agent/"><img src="https://img.shields.io/pypi/v/sia-agent.svg" alt="PyPI version"></a>
+<a href="https://pypi.org/project/sia-agent/"><img src="https://img.shields.io/pypi/dm/sia-agent.svg" alt="PyPI downloads"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+<a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"></a></p>
+<p>Official implementation of <a href="https://arxiv.org/abs/2605.27276"><strong>SIA: Self Improving AI with Harness &amp; Weight Updates</strong></a> (Hebbar et al., 2026) — a self-improving loop where a language-model agent updates both the harness and the weights of a task-specific agent. The paper reports a 56.6% gain on LawBench, 91.9% runtime reduction on GPU kernels, and 502% improvement on single-cell RNA denoising over baseline.</p>
+<p>SIA is a Self Improving AI framework to autonomously improve the performance of any AI system (Model / Agent) on a benchmark task.</p>
+<blockquote>
+<p><strong>Just want to try it?</strong> Skip to <a href="#run-sia-locally-with-built-in-tasks">Run SIA locally</a>.</p>
+</blockquote>
+<h2>Introduction Videos</h2>
+<ul>
+<li><a href="https://www.loom.com/share/be0534bc818d408bab937033c6457ec9">SIA setup</a></li>
+<li><a href="https://www.loom.com/share/5b1dc2dc858b4493b4b348f0b88d5b9e">SIA Runs Visualizer</a></li>
+</ul>
+<h2>Architecture</h2>
+<p align="center"><img src="docs/flow.png" alt="SIA orchestration flow" width="720"></p>
+<p align="center"><i>Control flow between Meta, Target, and Feedback agents over successive generations.</i></p>
+
+<p>SIA operates by coordinating three main types of AI agents that work together to continuously improve task performance:</p>
+<h3>Glossary</h3>
+<ol>
+<li><strong>Meta-Agent</strong>: Reads the task description and generates an initial Target Agent tailored to the task.</li>
+<li><strong>Target / Task Specific Agent</strong>: Attempts to complete the task and records its actions and results.</li>
+<li><strong>Feedback/Improvement Agent</strong>: Reviews the Target Agent&#39;s performance logs, identifies improvements, and updates the Target Agent accordingly.</li>
+</ol>
+<p>This iterative process allows the system to autonomously refine and enhance its ability to solve scientific tasks.</p>
+<h2>Benchmark Results</h2>
+<p align="center"><img src="docs/mlebench.png" alt="MLE Bench Results" width="720"><br><i>OpenAI MLE-Bench Hard: a gauntlet of real Kaggle ML competitions where agents must write, run, and iterate full ML pipelines. SIA ranks #1 across all generations tested.</i></p>
+
+<p align="center"><img src="docs/lawbench.png" alt="LawBench Results" width="720"><br><i>LawBench: predict the criminal charge from Chinese court case descriptions across 191 charge categories. SIA-W+H reaches 70.1% Top-1 accuracy, beating the prior SOTA of 45%.</i></p>
+
+<p align="center"><img src="docs/trimul_cuda.png" alt="TriMul CUDA Results" width="720"><br><i>AlphaFold-3 TriMul Triton Kernel: implement and optimize the Triangle Multiplicative Update as a Triton kernel, preserving correctness while hitting H100 latency targets. SIA-W+H achieves 14x speedup over baseline.</i></p>
+
+<p align="center"><img src="docs/denoising.png" alt="Denoising Results" width="720"><br><i>scRNA-seq Denoising: impute missing gene expression values in single-cell RNA sequencing data. SIA-W+H scores 0.289 MSE<sub>norm</sub>, surpassing the prior SOTA of 0.240.</i></p>
+
+<hr>
+<h2>Run SIA locally with built-in tasks</h2>
+<p>SIA ships with four built-in tasks: <code>gpqa</code>, <code>lawbench</code>, <code>longcot-chess</code>, <code>spaceship-titanic</code>.</p>
+<h3>Install</h3>
+<p>Pick the agent impl that matches the LLMs you want to run.</p>
+<p><strong>Claude agent impl</strong> (Claude Agent SDK, Claude models only):</p>
+<pre><code class="language-bash">python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install &#39;sia-agent[claude]&#39;
+export ANTHROPIC_API_KEY=&quot;...&quot;
+</code></pre>
+<p><strong>OpenHands agent impl</strong> (multi-provider — Gemini, OpenAI, Anthropic, etc.):</p>
+<pre><code class="language-bash">python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install &#39;sia-agent[openhands]&#39;
+
+# Export the key(s) for the provider(s) you&#39;ll use:
+export ANTHROPIC_API_KEY=&quot;...&quot;   # for anthropic/* models
+export GEMINI_API_KEY=&quot;...&quot;      # for gemini/* models (or GOOGLE_API_KEY)
+export OPENAI_API_KEY=&quot;...&quot;      # for openai/* models
+export OPENROUTER_API_KEY=&quot;...&quot;  # for any model, via the openrouter provider
+</code></pre>
+<p>One key for everything: the bundled <code>openrouter-meta</code> / <code>openrouter-target</code> profiles route both
+agents through <a href="https://openrouter.ai/models">OpenRouter</a>, so a single <code>OPENROUTER_API_KEY</code> covers
+400+ models without a per-provider account:</p>
+<pre><code class="language-bash">sia run --task gpqa --meta-agent-profile openrouter-meta --target-agent-profile openrouter-target
+</code></pre>
+<p>Full provider/model reference: <a href="docs/configuration.md#api-keys">docs/configuration.md</a>.</p>
+<h3>Run</h3>
+<p>The CLI has two sub-commands: <strong><code>sia run</code></strong> (the self-improvement loop) and
+<strong><code>sia web</code></strong> (the runs visualizer, see <a href="#visualize-runs">Visualize runs</a>).</p>
+<pre><code class="language-bash">sia run --task gpqa --max_gen 5 --run_id 1
+</code></pre>
+<p>Swap <code>--task</code> for any of the four bundled tasks. (<code>sia --task ...</code> without the
+<code>run</code> sub-command still works and is treated as <code>sia run ...</code>.)</p>
+<p>Artifacts land in <code>runs/run_{run_id}/gen_{n}/</code>:</p>
+<ul>
+<li><code>target_agent.py</code> — the agent for that generation</li>
+<li><code>agent_execution.json</code> — execution logs</li>
+<li><code>improvement.md</code> — diff rationale (gen 2+)</li>
+</ul>
+<p>While a run is in progress a <strong>live dashboard</strong> auto-starts at
+<code>http://127.0.0.1:8000</code> (disable with <code>--no-web</code>).</p>
+<p><strong>Security:</strong> the default <code>--sandbox none</code> mode runs agent-generated code with host access. For untrusted tasks or models, use <code>--sandbox docker</code>, which isolates execution in a Docker container with no network access. See <a href="SECURITY.md">SECURITY.md</a> for the full security model.</p>
+<h3>Common flags (<code>sia run</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--task</code></td>
+<td>—</td>
+<td>Bundled task name (mutually exclusive with <code>--task_dir</code>)</td>
+</tr>
+<tr>
+<td><code>--task_dir</code></td>
+<td>—</td>
+<td>Path to an external task directory</td>
+</tr>
+<tr>
+<td><code>--max_gen</code></td>
+<td>3</td>
+<td>Number of self-improvement generations</td>
+</tr>
+<tr>
+<td><code>--run_id</code></td>
+<td>1</td>
+<td>Unique run identifier</td>
+</tr>
+<tr>
+<td><code>--meta-agent-profile</code></td>
+<td><code>default-meta</code></td>
+<td>Profile for the meta/feedback agent (name or path to a <code>.json</code>)</td>
+</tr>
+<tr>
+<td><code>--target-agent-profile</code></td>
+<td><code>default-target</code></td>
+<td>Profile for the target agent (name or path to a <code>.json</code>)</td>
+</tr>
+<tr>
+<td><code>--no-web</code></td>
+<td>off</td>
+<td>Don&#39;t auto-start the live dashboard during the run</td>
+</tr>
+<tr>
+<td><code>--web-port</code></td>
+<td>8000</td>
+<td>Port for the live dashboard (<code>--web-host</code> to change the bind host)</td>
+</tr>
+</tbody></table>
+<p>The model, agent impl, and provider for each agent come from a <strong>profile</strong> (see below). For example,
+to evaluate Kimi-K2.6 on Nebius as the target model:</p>
+<pre><code class="language-bash">export NEBIUS_API_KEY=&quot;...&quot;        # + ANTHROPIC_API_KEY for the default meta agent
+sia run --task gpqa --target-agent-profile kimi-nebius-target --max_gen 5 --run_id 2
+</code></pre>
+<p>Full agent-impl, model, and API-key reference: <a href="docs/configuration.md">docs/configuration.md</a>. Hit a snag? <a href="docs/troubleshooting.md">docs/troubleshooting.md</a>.</p>
+<h3>Visualize runs</h3>
+<p>A built-in web dashboard renders everything under <code>runs/</code>: the per-generation
+target-agent code (syntax-highlighted), meta/feedback prompts, improvement
+plans, evaluation scores (with an accuracy-across-generations chart and
+per-domain breakdown), execution trajectories, and logs.</p>
+<pre><code class="language-bash">sia web                          # serve ./runs at http://127.0.0.1:8000
+sia web --runs-dir ./runs --port 8080
+</code></pre>
+<p>It also starts automatically alongside <code>sia run</code> (disable with <code>--no-web</code>), so
+you can watch generations land live.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--runs-dir</code></td>
+<td><code>./runs</code></td>
+<td>Directory of runs to visualize</td>
+</tr>
+<tr>
+<td><code>--host</code></td>
+<td><code>127.0.0.1</code></td>
+<td>Bind host</td>
+</tr>
+<tr>
+<td><code>--port</code></td>
+<td>8000</td>
+<td>Bind port</td>
+</tr>
+<tr>
+<td><code>--no-browser</code></td>
+<td>off</td>
+<td>Don&#39;t open a browser window automatically</td>
+</tr>
+</tbody></table>
+<h3>Author your own profile</h3>
+<p>A <strong>provider</strong> is an endpoint + credentials; a <strong>profile</strong> configures one agent role. A meta-agent
+profile bundles <code>(agent_impl, model, provider)</code>; a target-agent profile bundles <code>(model, provider, agent_reference)</code>. Both are JSON files — bundled defaults live in <code>sia/defaults/{providers,profiles}/</code>,
+and you can add your own under <code>./providers/</code> and <code>./profiles/</code> (or set <code>$SIA_PROVIDERS_DIR</code> /
+<code>$SIA_PROFILES_DIR</code>). No code change required.</p>
+<pre><code class="language-bash">mkdir -p providers profiles
+</code></pre>
+<pre><code class="language-jsonc">// providers/my-endpoint.json   — an OpenAI-compatible provider
+{
+  &quot;provider_id&quot;: &quot;my-endpoint&quot;,
+  &quot;name&quot;: &quot;My Endpoint&quot;,
+  &quot;client_kind&quot;: &quot;openai&quot;,                 // anthropic | openai | google
+  &quot;base_url&quot;: &quot;https://api.example.com/v1&quot;,
+  &quot;api_key_env&quot;: &quot;MY_ENDPOINT_API_KEY&quot;
+}
+</code></pre>
+<pre><code class="language-jsonc">// profiles/my-target.json      — the target agent&#39;s model + provider + reference
+{
+  &quot;profile_id&quot;: &quot;my-target&quot;,
+  &quot;name&quot;: &quot;My model on My Endpoint&quot;,
+  &quot;model&quot;: &quot;vendor/my-model&quot;,
+  &quot;provider_id&quot;: &quot;my-endpoint&quot;,             // references the provider above
+  &quot;agent_reference&quot;: &quot;default&quot;              // &quot;default&quot; = the task package&#39;s reference;
+                                            // or { &quot;source&quot;: &quot;./my_agent_dir/&quot;, &quot;entrypoint&quot;: &quot;main.py&quot; }
+}
+</code></pre>
+<pre><code class="language-bash">export MY_ENDPOINT_API_KEY=&quot;...&quot;
+sia run --task gpqa --target-agent-profile my-target      # by name (resolves ./profiles/my-target.json)
+sia run --task gpqa --target-agent-profile ./profiles/my-target.json   # or by explicit path
+</code></pre>
+<p>The <code>agent_reference</code> is the seed the meta-agent starts from and the feedback-agent improves:
+<code>&quot;default&quot;</code> uses the task package&#39;s bundled reference, or supply your own with
+<code>{ &quot;source&quot;: &quot;./my_agent.py&quot; }</code> (a single file) or <code>{ &quot;source&quot;: &quot;./dir/&quot;, &quot;entrypoint&quot;: &quot;main.py&quot; }</code>
+(a multi-file directory the agent reads with its tools). A <code>requirements.txt</code> inside a directory
+reference is installed per generation.</p>
+<p>To run the <strong>meta/feedback</strong> agent elsewhere, give a meta profile a different <code>agent_impl</code>
+(<code>openhands</code> or <code>pydantic-ai</code>) and pass it with <code>--meta-agent-profile</code>. The <code>claude</code> agent impl is
+Anthropic-only. See <a href="docs/configuration.md">docs/configuration.md</a> for the full schema and more examples.</p>
+<hr>
+<h2>Bring your own task</h2>
+<p>Prepare a task directory with the layout below and point <code>--task_dir</code> at it:</p>
+<pre><code>my-task/
+├── data/
+│   ├── public/
+│   │   ├── task.md          # Task description — SIA reads this
+│   │   └── ...              # Inputs the agent is allowed to see
+│   └── private/             # Held-out eval data; never exposed to the agent
+└── reference/
+    ├── reference_target_agent.py     # Template; copy from sia/tasks/_shared/
+    └── SAMPLE_TASK_DESCRIPTIONS.md   # Optional: example tasks for the meta-agent
+</code></pre>
+<pre><code class="language-bash">sia run --task_dir ./my-task --max_gen 5 --run_id 1
+</code></pre>
+<p><strong>Or bring an MLE-Bench competition.</strong> SIA can bootstrap a task directory directly from any <a href="https://github.com/openai/mle-bench">MLE-Bench</a> competition — it pulls the dataset via the Kaggle API, sets up the public/private split, and drops in the reference agent template:</p>
+<pre><code class="language-bash">python -m sia.prepare_mlebench_dataset -c &quot;spaceship-titanic&quot;
+sia run --task_dir ./tasks/spaceship-titanic --max_gen 5 --run_id 1
+</code></pre>
+<p>Full step-by-step for both paths: <a href="docs/walkthrough.md">docs/walkthrough.md</a>.</p>
+<hr>
+<h2>Evaluation</h2>
+<p>After every generation the orchestrator scores the target agent automatically and
+feeds the result into the next generation&#39;s feedback prompt — this is the signal
+the self-improvement loop optimizes against.</p>
+<ol>
+<li>The target agent writes its output into the generation directory (e.g. <code>gen_1/submission.csv</code>).</li>
+<li>The orchestrator runs the task&#39;s evaluator: <code>python evaluate.py --gen-dir gen_1/</code>.</li>
+<li><code>evaluate.py</code> scores the output against the held-out ground truth in <code>data/private/</code>
+and writes <code>gen_1/results.json</code> (or <code>evaluation_results.json</code>).</li>
+<li>Those metrics are injected into the feedback prompt and surfaced in <code>context.md</code>
+and the <a href="#visualize-runs">web dashboard</a> (accuracy-across-generations chart, per-domain breakdown).</li>
+</ol>
+<p>The four bundled tasks already ship an evaluator. For a <strong>custom task</strong>, drop an
+<code>evaluate.py</code> exposing an <code>evaluate()</code> function into <code>data/public/</code> — it decides the
+submission format, compares against <code>data/private/</code>, and returns a metrics dict.
+Test it standalone before a full run:</p>
+<pre><code class="language-bash">python my-task/data/public/evaluate.py --gen-dir runs/run_1/gen_1   # should write results.json
+</code></pre>
+<p>Full contract, return-format rules, and a complete example: <a href="EVALUATION_GUIDE.md">EVALUATION_GUIDE.md</a>.
+For metric robustness and anti-gaming checks, see <a href="docs/evaluator_design.md">docs/evaluator_design.md</a>.</p>
+<h2>Contributing</h2>
+<p>Contributions are welcome. See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for development setup, test/lint/type-check commands, and guidance for adding new tasks.</p>
+<hr>
+<h2>Further reading</h2>
+<ul>
+<li><a href="docs/architecture.md">docs/architecture.md</a> — directory layout, generation flow, prompt customization</li>
+<li><a href="docs/walkthrough.md">docs/walkthrough.md</a> — detailed custom-task walkthrough</li>
+<li><a href="docs/configuration.md">docs/configuration.md</a> — agent impls, models, API keys, CLI reference</li>
+<li><a href="EVALUATION_GUIDE.md">EVALUATION_GUIDE.md</a> — writing <code>evaluate.py</code> for a custom task</li>
+<li><a href="docs/evaluator_design.md">docs/evaluator_design.md</a> — evaluator robustness, private data separation, anti-gaming checks</li>
+<li><a href="docs/troubleshooting.md">docs/troubleshooting.md</a> — common errors and fixes</li>
+</ul>
+<h2>Citation</h2>
+<p>If you use SIA in your research, please cite:</p>
+<pre><code class="language-bibtex">@article{hebbar2026sia,
+  title   = {SIA: Self Improving AI with Harness \&amp; Weight Updates},
+  author  = {Hebbar, Prannay and Manawat, Yogendra and Verboomen, Samuel and Ivanova, Alesia and Palanimalai, Selvam and Bhatia, Kunal and Baskaran, Vignesh},
+  journal = {arXiv preprint arXiv:2605.27276},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2605.27276}
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="seal.html">SEAL<small>repo</small></a><a href="ace.html">ACE<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

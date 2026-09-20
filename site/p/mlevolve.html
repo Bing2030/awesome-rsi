@@ -1,0 +1,481 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MLEvolve — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="funsearch.html">← FunSearch</a> · <a href="openevolve.html">OpenEvolve →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>MLEvolve</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/InternScience/MLEvolve" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>MLEvolve — a self-evolving multi-agent framework for automated ML algorithm discovery.</p></section><section class="block"><h2>How it works</h2><ul><li>Hierarchical control + cross-branch memory + persistent search.</li><li>Evolves end-to-end ML algorithms over long horizons.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2606.06473.html">MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; LLM API key; run the evolutionary search per README.</pre></section><section class="block"><h2>Learning note</h2><p>AlphaEvolve's descendant for *ML algorithm* discovery — run to see long-horizon evolutionary search.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><p align="center">
+  <img src="assets/logo.svg" alt="MLEvolve" width="400"/>
+</p>
+
+<p align="center">
+  <a href="https://arxiv.org/abs/2606.06473"><img src="https://img.shields.io/badge/arXiv-2606.06473-b31b1b.svg" alt="arXiv"></a>
+  <a href="https://huggingface.co/papers/2606.06473"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Paper-yellow.svg" alt="Hugging Face"></a>
+  <a href="https://internscience.github.io/MLEvolve/"><img src="https://img.shields.io/badge/Project-Page-blue.svg" alt="Project Page"></a>
+  <a href="https://github.com/InternScience/MLEvolve"><img src="https://img.shields.io/github/stars/InternScience/MLEvolve?style=social" alt="GitHub Stars"></a>
+</p>
+
+<p>An agentic MLE (Machine Learning Engineering) system that automatically solves Kaggle-style ML competitions through Monte Carlo Graph Search (MCGS) with multi-agent collaboration. This is an advanced version based on <a href="https://arxiv.org/abs/2510.08511">AutoMLGen</a>. MLEvolve achieves <strong>#1 on the <a href="https://github.com/openai/mle-bench">MLE-bench</a> leaderboard</strong> (65.3% medal rate, 12-hour budget) and obtains competitive results on mathematical optimization tasks.</p>
+<h2>Timeline</h2>
+<ul>
+<li><strong>2026-06-05</strong> — Paper released on arXiv: <a href="https://arxiv.org/abs/2606.06473">MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery</a>.</li>
+<li><strong>2026-06-01</strong> — <strong>65.3% medal rate</strong> on full MLE-bench (75 tasks), also achieves competitive results on mathematical optimization tasks.</li>
+<li><strong>2026-03-23</strong> — Now supports OpenAI-compatible APIs (GPT, Qwen, DeepSeek, etc.). Models with function calling support are recommended for best performance.</li>
+<li><strong>2026-02-14</strong> — MLEvolve codebase is now open-source.</li>
+<li><strong>2026-02-14</strong> — MLEvolve achieves <strong>#1 on MLE-bench</strong> (12-hour budget).</li>
+</ul>
+<h2>MLE-bench Results</h2>
+<p>Performance on the <a href="https://github.com/openai/mle-bench">MLE-bench</a> full set (75 tasks). Medal rates reported across three complexity levels and overall (mean ± SEM over 3 seeds).</p>
+<h4>Proprietary Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>LLM</th>
+<th align="center">Time (h)</th>
+<th>Low (%)</th>
+<th>Medium (%)</th>
+<th>High (%)</th>
+<th>All (%)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FM-Agent</td>
+<td>Gemini-2.5-Pro</td>
+<td align="center">24</td>
+<td>62.1 ± 1.5</td>
+<td>36.8 ± 1.5</td>
+<td>33.3 ± 0.0</td>
+<td>43.6 ± 0.9</td>
+</tr>
+<tr>
+<td>MLE-STAR-Pro-1.5</td>
+<td>Gemini-2.5-Pro</td>
+<td align="center">24</td>
+<td>68.2 ± 2.6</td>
+<td>34.2 ± 1.5</td>
+<td>33.3 ± 0.0</td>
+<td>44.0 ± 1.3</td>
+</tr>
+<tr>
+<td>MARS</td>
+<td>Gemini-3-Pro-preview</td>
+<td align="center">24</td>
+<td>74.2 ± 1.5</td>
+<td>52.6 ± 3.0</td>
+<td>37.8 ± 2.2</td>
+<td>56.0 ± 1.5</td>
+</tr>
+<tr>
+<td>MARS+</td>
+<td>Gemini-3-Pro-preview</td>
+<td align="center">24</td>
+<td>78.8 ± 1.5</td>
+<td>60.5 ± 1.5</td>
+<td>44.4 ± 2.2</td>
+<td>62.7 ± 0.8</td>
+</tr>
+<tr>
+<td>AIBuildAI</td>
+<td>Claude-Opus-4.6</td>
+<td align="center">24</td>
+<td>77.3 ± 0.0</td>
+<td>61.4 ± 0.9</td>
+<td>46.7 ± 0.0</td>
+<td>63.1 ± 0.4</td>
+</tr>
+</tbody></table>
+<h4>Open-Source Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>LLM</th>
+<th align="center">Time (h)</th>
+<th>Low (%)</th>
+<th>Medium (%)</th>
+<th>High (%)</th>
+<th>All (%)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AIDE</td>
+<td>o1-preview</td>
+<td align="center">24</td>
+<td>35.9 ± 1.9</td>
+<td>8.5 ± 0.4</td>
+<td>11.7 ± 1.3</td>
+<td>17.1 ± 0.6</td>
+</tr>
+<tr>
+<td>ML-Master</td>
+<td>DeepSeek-R1</td>
+<td align="center">12</td>
+<td>48.5 ± 1.5</td>
+<td>20.2 ± 2.3</td>
+<td>24.4 ± 2.2</td>
+<td>29.3 ± 0.8</td>
+</tr>
+<tr>
+<td>AIRA-Dojo</td>
+<td>o3</td>
+<td align="center">24</td>
+<td>55.0 ± 1.5</td>
+<td>22.0 ± 1.2</td>
+<td>21.7 ± 1.1</td>
+<td>31.6 ± 0.8</td>
+</tr>
+<tr>
+<td>R&amp;D-Agent</td>
+<td>gpt-5</td>
+<td align="center">12</td>
+<td>68.2 ± 2.6</td>
+<td>21.1 ± 1.5</td>
+<td>22.2 ± 2.2</td>
+<td>35.1 ± 0.4</td>
+</tr>
+<tr>
+<td>Leeroo</td>
+<td>Gemini-3-Pro-preview</td>
+<td align="center">24</td>
+<td>68.2 ± 2.6</td>
+<td>44.7 ± 1.5</td>
+<td>40.0 ± 0.0</td>
+<td>50.7 ± 1.3</td>
+</tr>
+<tr>
+<td>ML-Master 2.0</td>
+<td>DeepSeek-V3.2-Speciale</td>
+<td align="center">24</td>
+<td>75.8 ± 1.5</td>
+<td>50.9 ± 3.5</td>
+<td>42.2 ± 2.2</td>
+<td>56.4 ± 2.5</td>
+</tr>
+<tr>
+<td><strong>MLEvolve (Ours)</strong></td>
+<td><strong>Gemini-3.1-Pro-preview</strong></td>
+<td align="center"><strong>12</strong></td>
+<td><strong>80.3 ± 1.5</strong></td>
+<td><strong>64.0 ± 0.9</strong></td>
+<td><strong>46.7 ± 0.0</strong></td>
+<td><strong>65.3 ± 0.8</strong></td>
+</tr>
+</tbody></table>
+<h2>Mathematical Optimization Results</h2>
+<p>Beyond machine-learning engineering, MLEvolve <strong>generalizes</strong> to open problems in mathematical optimization. Every baseline here (AlphaEvolve and its v2, SimpleTES, TTT-Discover, OpenEvolve) is a framework <strong>purpose-built for optimization</strong>; even so, MLEvolve <strong>matches or surpasses AlphaEvolve on 14 of 15 tasks</strong> and achieves the <strong>best result among all compared methods on 11 of 15 tasks</strong>.</p>
+<p>Comparison on 15 mathematical programming tasks. Each column header carries the optimization direction (<strong>↑</strong> = higher is better, <strong>↓</strong> = lower is better); <strong>bold</strong> marks the best value. The 15 tasks are split across three tables so the page fits — see the legend below for full task names.</p>
+<p><strong>Tasks 1–5</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Hex packing ↓</th>
+<th>Circle/square ↑</th>
+<th>Circle/rect ↑</th>
+<th>Heilbronn convex ↑</th>
+<th>Heilbronn tri ↑</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AlphaEvolve</td>
+<td>3.930092</td>
+<td>2.6358627564</td>
+<td>2.3658321334</td>
+<td>0.0309368890</td>
+<td>0.03652988988003016</td>
+</tr>
+<tr>
+<td>AlphaEvolve-v2</td>
+<td>3.931</td>
+<td>—</td>
+<td>—</td>
+<td>0.0309</td>
+<td>0.0365</td>
+</tr>
+<tr>
+<td>SimpleTES</td>
+<td>3.931</td>
+<td>2.635983</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>TTT-Discover</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>OpenEvolve</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>MLEvolve</strong></td>
+<td><strong>3.9284759302</strong></td>
+<td><strong>2.6359830395</strong></td>
+<td><strong>2.3658323759</strong></td>
+<td><strong>0.0309372079</strong></td>
+<td><strong>0.03652988988003020</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Tasks 6–10</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Kissing d11 ↑</th>
+<th>Sum-diff 1 ↑</th>
+<th>Sum-diff 2 ↑</th>
+<th>Uncertainty ↓</th>
+<th>Autocorr 1 ↓</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AlphaEvolve</td>
+<td><strong>593</strong></td>
+<td>1.1479889651</td>
+<td>1.1584172816</td>
+<td>0.3520991044225</td>
+<td>1.5052939684</td>
+</tr>
+<tr>
+<td>AlphaEvolve-v2</td>
+<td><strong>593</strong></td>
+<td>1.1479</td>
+<td>1.1584</td>
+<td>0.3521</td>
+<td>1.5032</td>
+</tr>
+<tr>
+<td>SimpleTES</td>
+<td>—</td>
+<td>1.143975</td>
+<td>—</td>
+<td>—</td>
+<td>1.503871</td>
+</tr>
+<tr>
+<td>TTT-Discover</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>1.5028628983</td>
+</tr>
+<tr>
+<td>OpenEvolve</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>1.507190</td>
+</tr>
+<tr>
+<td><strong>MLEvolve</strong></td>
+<td>592</td>
+<td><strong>1.1901774219</strong></td>
+<td><strong>1.1585457700</strong></td>
+<td><strong>0.3520991044160</strong></td>
+<td><strong>1.5028628749</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Tasks 11–15</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Autocorr 3v ↓</th>
+<th>Autocorr 3 ↓</th>
+<th>Autocorr 2 ↑</th>
+<th>Max/min ↓</th>
+<th>Min overlap ↓</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AlphaEvolve</td>
+<td>1.4687620697</td>
+<td>1.4556427954</td>
+<td>0.8962799442</td>
+<td>12.88926611203</td>
+<td>0.3809230351</td>
+</tr>
+<tr>
+<td>AlphaEvolve-v2</td>
+<td>—</td>
+<td>1.4557</td>
+<td>0.961</td>
+<td>12.889266112</td>
+<td>0.380924</td>
+</tr>
+<tr>
+<td>SimpleTES</td>
+<td>—</td>
+<td><strong>1.453675</strong></td>
+<td><strong>0.962694</strong></td>
+<td>—</td>
+<td><strong>0.380868</strong></td>
+</tr>
+<tr>
+<td>TTT-Discover</td>
+<td>—</td>
+<td>—</td>
+<td>0.959100</td>
+<td>—</td>
+<td>0.3808753232</td>
+</tr>
+<tr>
+<td>OpenEvolve</td>
+<td>—</td>
+<td>1.460000</td>
+<td>0.944900</td>
+<td>—</td>
+<td>0.380965</td>
+</tr>
+<tr>
+<td><strong>MLEvolve</strong></td>
+<td><strong>1.4587698922</strong></td>
+<td>1.4548507482</td>
+<td>0.9054217971</td>
+<td><strong>12.8892299077</strong></td>
+<td>0.3808968496</td>
+</tr>
+</tbody></table>
+<details>
+<summary><b>Task legend</b> (short header → full task name)</summary>
+
+<table>
+<thead>
+<tr>
+<th>Short</th>
+<th>Full task name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hex packing</td>
+<td>Packing hexagons in hexagons</td>
+</tr>
+<tr>
+<td>Circle/square</td>
+<td>Circle packing in a square</td>
+</tr>
+<tr>
+<td>Circle/rect</td>
+<td>Circle packing in a rectangle</td>
+</tr>
+<tr>
+<td>Heilbronn convex</td>
+<td>Heilbronn convex regions</td>
+</tr>
+<tr>
+<td>Heilbronn tri</td>
+<td>Heilbronn triangles</td>
+</tr>
+<tr>
+<td>Kissing d11</td>
+<td>Kissing number dim 11</td>
+</tr>
+<tr>
+<td>Sum-diff 1</td>
+<td>Sums differences problems 1</td>
+</tr>
+<tr>
+<td>Sum-diff 2</td>
+<td>Sums differences problems 2</td>
+</tr>
+<tr>
+<td>Uncertainty</td>
+<td>An uncertainty inequality</td>
+</tr>
+<tr>
+<td>Autocorr 1</td>
+<td>First autocorrelation inequality</td>
+</tr>
+<tr>
+<td>Autocorr 3v</td>
+<td>Third autocorrelation (variant)</td>
+</tr>
+<tr>
+<td>Autocorr 3</td>
+<td>Third autocorrelation inequality</td>
+</tr>
+<tr>
+<td>Autocorr 2</td>
+<td>Second autocorrelation inequality</td>
+</tr>
+<tr>
+<td>Max/min</td>
+<td>Max-to-min ratios</td>
+</tr>
+<tr>
+<td>Min overlap</td>
+<td>Minimum Overlap Problem</td>
+</tr>
+</tbody></table>
+</details>
+
+
+<h2>Coding Module in AI-Scientist</h2>
+<p>MLEvolve powers the <strong>coding and algorithm optimization</strong> module within the <a href="https://github.com/InternScience/InternAgent">InternAgent</a> system. Built on MLEvolve&#39;s refinement engine, <a href="https://arxiv.org/abs/2602.08990">InternAgent 1.5</a> <strong>further enables autonomous algorithm design and end-to-end scientific discovery</strong>.</p>
+<h2>Key Technical Contributions</h2>
+<p><strong>Multi-Mode Planning &amp; Code Generation</strong> — Supports base (single-shot) and memory-enhanced (two-stage retrieval-augmented) planning, paired with three code generation strategies: single-pass, stepwise multi-agent pipeline, and incremental SEARCH/REPLACE diff patching. Different modes are dispatched adaptively based on search state.</p>
+<p><strong>Experience-Driven Memory</strong> — A global memory layer records plan, code, metrics, and success/failure labels for every node. Retrieval combines BM25 + FAISS allowing the planner to reinforce proven strategies and avoid known pitfalls from its own search history. Different agents query memory in different ways to encourage novel approaches.</p>
+<p><strong>Progressive MCGS with Cross-Branch Fusion</strong> — The search graph extends vanilla UCT with piecewise exploration decay, time-aware explore-exploit switching, and automatic stagnation detection. Multiple solution branches evolve in parallel; when progress stalls, the system performs cross-branch fusion — merging insights from top-performing nodes across different branches into new solution candidates — and trajectory-aware evolution that leverages each branch&#39;s full improvement history to propose informed next steps.</p>
+<h2>Setup</h2>
+<p><strong>1. Prepare mle-bench</strong> — Install <a href="https://github.com/openai/mle-bench">mle-bench</a> and download the dataset following its instructions.</p>
+<p><strong>2. Install MLEvolve dependencies</strong></p>
+<pre><code class="language-bash">pip install --no-deps -r requirements_base.txt
+pip install --no-deps -r requirements_ml.txt
+pip install --no-deps -r requirements_domain.txt
+</code></pre>
+<p><strong>3. Configure</strong> — Edit <code>config/config.yaml</code>, fields you <strong>must</strong> fill in:</p>
+<pre><code class="language-yaml">dataset_dir: &quot;/path/to/mle-bench/data&quot;
+
+agent:
+  code:
+    base_url: &quot;https://your-gemini-endpoint&quot;
+    api_key: &quot;your-api-key&quot;
+  feedback:
+    base_url: &quot;https://your-gemini-endpoint&quot;
+    api_key: &quot;your-api-key&quot;
+</code></pre>
+<p>Other tunable fields (<code>agent.steps</code>, <code>agent.time_limit</code>, etc.) have sensible defaults — see comments in the yaml file.</p>
+<p>If <code>agent.use_global_memory: True</code>, you must also set <code>agent.memory_embedding_model_path</code> to a valid HuggingFace embedding model name or local model path. Set <code>agent.memory_embedding_device</code> to <code>cpu</code> if CUDA is unavailable.</p>
+<h3>Cold-Start Models (optional)</h3>
+<p>Cold-start recommends pretrained models per task category based on <code>engine/coldstart/models_guidance_classified.json</code>. Most models auto-download from HuggingFace; for models requiring local weights, set <code>torch_hub_dir</code> in <code>config.yaml</code>. To disable cold-start entirely, set <code>coldstart.use_coldstart: False</code>.</p>
+<h2>Quick Start</h2>
+<pre><code class="language-bash">bash run_single_task.sh &lt;EXP_ID&gt; &lt;DATASET_DIR&gt; [SERVER_ID]
+
+# Example
+bash run_single_task.sh denoising-dirty-documents /mle-bench/data 1
+</code></pre>
+<p>Results are written to <code>./runs/&lt;timestamp&gt;_&lt;exp_id&gt;/</code> including search tree logs, best solution code, and top-K candidate submissions.</p>
+<h2>Acknowledgments</h2>
+<p>We thank <a href="https://github.com/WecoAI/aideml">AIDE</a> and <a href="https://github.com/sjtu-sai-agents/ML-Master">ML-Master</a> for their contributions to the development of the MCTS in MLE, and <a href="https://github.com/InternScience/InternAgent">InternAgent 1.5</a> for its contributions to the development of the agentic memory mechanism. We sincerely thank all teams for their open-source contributions to the community.</p>
+<h2>Citation</h2>
+<p>If you find this repo useful, please cite our work.</p>
+<pre><code class="language-bibtex">@article{du2026mlevolve,
+  title={MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery},
+  author={Du, Shangheng and Yan, Xiangchao and Shi, Jinxin and Cao, Zongsheng and Feng, Shiyang and Liang, Zichen and Sun, Boyuan and Peng, Tianshuo and Zhou, Yifan and Li, Xin and Zhou, Jie and He, Liang and Zhang, Bo and Bai, Lei},
+  journal={arXiv preprint arXiv:2606.06473},
+  year={2026}
+}
+</code></pre>
+<p>Early version:</p>
+<pre><code class="language-bibtex">@article{du2025automlgen,
+  title={AutoMLGen: Navigating Fine-Grained Optimization for Coding Agents},
+  author={Du, Shangheng and Yan, Xiangchao and Jiang, Dengyang and Yuan, Jiakang and Hu, Yusong and Li, Xin and He, Liang and Zhang, Bo and Bai, Lei},
+  journal={arXiv preprint arXiv:2510.08511},
+  year={2025}
+}
+</code></pre>
+<h2>License</h2>
+<p>This project is licensed under the Apache License 2.0. See the <a href="LICENSE">LICENSE</a> file for details.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="funsearch.html">FunSearch<small>repo</small></a><a href="openevolve.html">OpenEvolve<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

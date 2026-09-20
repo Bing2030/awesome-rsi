@@ -1,0 +1,221 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Continual Harness — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="alma.html">← ALMA</a> · <a href="evoagentx.html">EvoAgentX →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Continual Harness</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/sethkarten/continual-harness" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Continual Harness — reset-free online self-improvement (the Gemini Plays Pokémon lineage).</p></section><section class="block"><h2>How it works</h2><ul><li>The agent alternates acting and refining its prompt, sub-agents, skills, and memory.</li><li>Single continuous trajectory, no resets.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2605.09998.html">Continual Harness: Online Adaptation for Self-Improving Foundation Agents</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; embodied/Pokémon environment + LLM API; see README.</pre></section><section class="block"><h2>Learning note</h2><p>Run if you want the reset-free, embodied flavor of harness self-improvement.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>Continual Harness: Online Adaptation for Self-Improving Foundation Agents</h1>
+<p>Reference implementation for <a href="https://arxiv.org/abs/2605.09998"><strong>Continual Harness</strong></a> (Karten et al., 2026), a reset-free framework that automates agentic-harness refinement through online in-context learning, evaluated on Pokémon Red and Emerald. This repository also contains the Gemini Plays Pokémon (GPP) benchmark harness used to complete Pokémon Blue, Yellow Legacy (hard mode), and Crystal — the first AI system to finish multiple Pokémon RPGs.</p>
+<p>Continual Harness starts from a minimal environment interface (frames, ASCII text map, button inputs) and lets an LLM Refiner rewrite the full harness state — system prompt <code>p</code>, sub-agents <code>G</code>, skills <code>K</code>, memory <code>M</code> — in place mid-episode via CRUD edits on a trajectory window. The same loop extends to joint training of an open-source model&#39;s weights via an online DAgger + process-reward-model pipeline.</p>
+<p>In this repo, Continual Harness is the <code>continualharness</code> scaffold (<code>--scaffold continualharness --enable-prompt-optimization</code>); see <a href="#continual-harness-scaffold">Continual Harness Scaffold</a> below.</p>
+<blockquote>
+<p><strong>Note:</strong> This repository was previously published as <code>sethkarten/pokeagent-speedrun</code>, the reference framework for <a href="https://arxiv.org/abs/2603.15563"><strong>The PokéAgent Challenge</strong></a> (Karten et al., 2026). It has been renamed and generalized — the hand-engineered PokéAgent harness is retained as the <code>pokeagent</code> scaffold (<code>H_expert</code>), and the repository now centers on Continual Harness as the headline contribution. GitHub auto-redirects the old URL, so existing clone commands and links continue to work.</p>
+</blockquote>
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#continual-harness-scaffold">Continual Harness Scaffold</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#features">Features</a></li>
+<li><a href="#directory-structure">Directory Structure</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#installation">Installation</a><ul>
+<li><a href="#1-clone-the-repository">1. Clone the Repository</a></li>
+<li><a href="#2-environment-uv-or-conda">2. Environment (uv or Conda)</a></li>
+<li><a href="#3-mgba-system-library">3. mGBA System Library</a></li>
+<li><a href="#4-python-dependencies">4. Python Dependencies</a></li>
+<li><a href="#5-game-rom">5. Game ROM</a></li>
+</ul>
+</li>
+<li><a href="#vlm-backend-setup-runpy">VLM Backend Setup (run.py)</a></li>
+<li><a href="#cli-agent-backend-setup-run_clipy">CLI Agent Backend Setup (run_cli.py)</a></li>
+<li><a href="#running-the-agent">Running the Agent</a></li>
+<li><a href="#command-line-options">Command Line Options</a></li>
+<li><a href="#customizing-agent-behavior-prompt-editing-guide">Customizing Agent Behavior</a></li>
+<li><a href="#advanced-configuration">Advanced Configuration</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#citation">Citation</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<h2>Overview</h2>
+<p>This repo packages the code for the Continual Harness paper alongside the broader PokéAgent benchmark infrastructure that hosts it. It provides:</p>
+<ul>
+<li>The <strong><code>continualharness</code> scaffold</strong> — <code>H_min</code> plus an automated Refiner that performs reset-free CRUD edits to the prompt, sub-agents, skills, and memory mid-episode (the <code>evolve_harness</code> tool, gated by <code>--enable-prompt-optimization</code>). This is the artifact for the paper&#39;s main results.</li>
+<li>The <strong>PokeAgent benchmark harness</strong> — hand-engineered scaffold (<code>H_expert</code>) with sub-agents, A* pathfinding, type chart, damage calculator, and curated objectives, used as the upper-baseline in the paper.</li>
+<li><strong>Minimal baselines</strong> — <code>simple</code> (<code>H_min</code>) and <code>simplest</code> ablations.</li>
+<li><strong>External CLI harnesses</strong> — Claude Code, Gemini CLI, Codex, and Hermes via an MCP proxy (<code>run_cli.py</code>).</li>
+<li>Emulator integrations, persistence, metrics, and a web UI for both <strong>Pokémon Emerald</strong> and <strong>Pokémon Red</strong>.</li>
+</ul>
+<p>Select the title with <strong><code>--game emerald</code></strong> (default) or <strong><code>--game red</code></strong> on <strong><code>run.py</code></strong> and <strong><code>run_cli.py</code></strong>; this sets <strong><code>GAME_TYPE</code></strong> for the game server and aligns prompt assets in <code>agents/prompts/paths.py</code>. <code>PokeAgent</code> analyzes game frames, structured state, maps, objectives, and long-run memory, then acts through server-backed game tools. External CLI agents instead connect through the restricted MCP surface exposed by <code>run_cli.py</code>.</p>
+<h2>Continual Harness Scaffold</h2>
+<p>The <code>continualharness</code> scaffold is the reference implementation of the paper&#39;s <code>H_CH</code>. It starts from the minimalist interface (frames, ASCII text map, button inputs) and lets the model evolve its own harness in place during a single continuous episode — no resets between updates.</p>
+<p><strong>What it does.</strong> Every <code>--optimization-window-length</code> steps, a Refiner reads the recent trajectory window, identifies failure signatures (navigation loops, tool-call failures, stalled objectives, missed exploration), and runs four passes over the harness components:</p>
+<ol>
+<li>Rewrite the system prompt <code>p</code> against the observed failures.</li>
+<li>CRUD over sub-agents <code>G</code> (create entries for repeated multi-step patterns, edit to address failures, delete unused entries).</li>
+<li>CRUD over skills <code>K</code> (codify successful sequences, repair executable code that raised exceptions).</li>
+<li>CRUD over memory <code>M</code> (fill gaps, refresh stale entries, demote areas the agent has moved past).</li>
+</ol>
+<p>Refinement is exposed to the agent as a single tool, <code>evolve_harness</code>, and the Refiner role uses the same model as the agent. The implementation lives in <a href="agents/utils/harness_evolver.py"><code>agents/utils/harness_evolver.py</code></a>; scaffold wiring is in <a href="agents/tools/registry.py"><code>agents/tools/registry.py</code></a>.</p>
+<p><strong>Running it.</strong></p>
+<pre><code class="language-bash"># Continual Harness on Pokémon Red from the start (Gemini 3 Pro)
+python run.py \
+  --game red \
+  --scaffold continualharness \
+  --enable-prompt-optimization \
+  --optimization-window-length 50 \
+  --backend gemini --model-name gemini-3-pro-preview \
+  --port 8000 --agent-auto
+
+# Bootstrap from a prior run&#39;s evolved harness (loads memory.json, skills.json, subagents.json, evolved prompt)
+python run.py \
+  --game emerald \
+  --scaffold continualharness \
+  --enable-prompt-optimization \
+  --bootstrap-from run_data/&lt;prior_run_id&gt;/end_state/game_state/bootstrap \
+  --backend gemini --model-name gemini-3-pro-preview \
+  --port 8000 --agent-auto
+</code></pre>
+<p>Without <code>--enable-prompt-optimization</code>, the <code>continualharness</code> scaffold behaves like <code>simple</code> plus the <code>evolve_harness</code> tool stub; full reset-free refinement only runs when the flag is set.</p>
+<p><strong>Bootstrap variants</strong> from the paper map to:</p>
+<ul>
+<li><em>from scratch</em> — no <code>--bootstrap-from</code>, refinement enabled.</li>
+<li><em>bootstrap frozen</em> — <code>--bootstrap-from &lt;path&gt;</code> without <code>--enable-prompt-optimization</code>.</li>
+<li><em>bootstrap updating</em> — <code>--bootstrap-from &lt;path&gt;</code> with <code>--enable-prompt-optimization</code>.</li>
+</ul>
+<p><strong>Caveats.</strong> Capability-dependent gains: in the paper, Continual Harness is strictly Pareto-dominant on Gemini 3 Pro, high-variance on Flash, and below the minimalist baseline on Flash-Lite. Don&#39;t expect refinement to bootstrap below that capability floor.</p>
+<h2>Architecture</h2>
+<p>The system uses a <strong>headless server</strong>: the game and emulator run in a server process; agents and UIs run as clients. The server exposes HTTP REST endpoints and <code>POST /mcp/*</code> routes; clients poll for state and submit actions.</p>
+<p>Typical process layout:</p>
+<ul>
+<li><strong><code>run.py</code></strong> starts the FastAPI game server on <code>--port</code> and, when in agent mode, the frame stream server on <code>--port + 1</code>; the in-repo Python agent calls the game server HTTP routes directly.</li>
+<li><strong><code>run_cli.py</code></strong> starts the FastAPI game server on <code>--port</code>, the frame stream server on <code>--port + 1</code>, and an MCP proxy on <code>--mcp-sse-port</code> (default <code>--port + 2</code>) for containerized CLI agents.</li>
+<li>The web UI is served from the game server at <code>http://localhost:{port}/stream</code>.</li>
+</ul>
+<p>For the canonical, code-grounded architecture docs, start with <strong><a href="System-Design/README.md">System-Design/README.md</a></strong>.</p>
+<p>For module-level detail, see the README in each area:</p>
+<ul>
+<li><strong><a href="server/README.md">server/README.md</a></strong> — Game server, frame streaming, MCP proxy, ports and endpoints.</li>
+<li><strong><a href="agents/README.md">agents/README.md</a></strong> — PokeAgent, prompts, objectives, prompt optimization, local subagents.</li>
+<li><strong><a href="pokemon_env/README.md">pokemon_env/README.md</a></strong> — Emerald: mGBA emulator, memory reader, Porymap map data.</li>
+<li><strong><code>pokemon_red_env/</code></strong> — Red: PyBoy emulator, memory/map readers, Red milestones (see <a href="System-Design/architecture/pokemon_infrastructure.md">System-Design/architecture/pokemon_infrastructure.md</a>).</li>
+<li><strong><a href="utils/README.md">utils/README.md</a></strong> — Mapping, persistence, VLM backends, metrics.</li>
+</ul>
+<h2>Features</h2>
+<ul>
+<li><strong>Multiple VLM backends</strong>: OpenAI, OpenRouter, Google Gemini, Anthropic, and Vertex (via <code>utils/agent_infrastructure/vlm_backends.py</code>)</li>
+<li><strong>External CLI Harnesses</strong>: Claude Code, Gemini CLI, Codex, and Hermes via <code>run_cli.py</code></li>
+<li><strong>Custom Agent Harnesses</strong>: Multiple scaffold settings (e.g., <code>continualharness</code>, <code>pokeagent</code>, <code>simple</code>, <code>simplest</code>)</li>
+<li><strong>PokeAgent local subagents</strong>: Custom subagent abstractions accessible to our custom PokeAgent harness: <code>subagent_reflect</code>, <code>subagent_verify</code>, <code>subagent_gym_puzzle</code>, <code>subagent_summarize</code>, <code>subagent_battler</code>, and <code>subagent_plan_objectives</code>.</li>
+<li><strong>Checkpoints &amp; backups</strong>: Save/resume runs; backups in <code>backups/</code>; analysis data in <code>run_data/</code>. Backups restore <strong>disk</strong> state under <code>.pokeagent_cache/</code> (objectives, long-term memory, checkpoint, trajectories file if present, etc.), not the agent’s in-memory short-term conversation window—see <a href="utils/README.md">utils/README.md</a> (<code>data_persistence</code>).</li>
+<li><strong>Metrics &amp; logging</strong>: Per-step and cumulative tokens, cost, actions, and run initialization settings are stored in <code>.pokeagent_cache/{run_id}/cumulative_metrics.json</code>; LLM logs (<code>llm_logs/</code>) and backend session logs are also tracked, though <code>cumulative_metrics.json</code> is the aggregate source of truth.</li>
+<li><strong>Map system</strong>: <strong>Emerald</strong> — Porymap integration, NPC display, movement preview, portal tracking. <strong>Red</strong> — <code>RedMapReader</code> / PyBoy-backed map formatting (no Porymap).</li>
+<li><strong>Web interface</strong>: Real-time stream at <code>http://localhost:8000/stream</code> by default. The port can be manually specified via <code>--port</code> on both <code>run.py</code> and <code>run_cli.py</code>.</li>
+<li><strong>Video recording</strong>: Optional MP4 recording of gameplay saved to <code>run_data/{run_id}/end_state/videos/</code></li>
+<li><strong>Customizable prompts</strong>: Edit prompt assets under <code>agents/prompts/</code> to directly steer agent behavior.</li>
+</ul>
+<h2>Directory Structure</h2>
+<pre><code>continual-harness/
+├── README.md
+├── pyproject.toml            # Project config and dependencies (uv/pip)
+├── uv.lock                   # Locked dependency versions (uv sync uses this)
+├── requirements.txt          # Pip fallback (frozen from env)
+├── run.py                    # Multiprocess entry: starts server + in-repo agent client
+├── run_cli.py                # Entry for external CLI agents (MCP); spawns server + MCP proxy
+├── server/
+│   ├── app.py                # FastAPI game server (emulator, /state, /action, /mcp/*, etc.)
+│   ├── agent_thinking.txt    # Runtime file (gitignored); server writes latest thinking for UI
+│   ├── frame_server.py       # Frame streaming
+│   ├── stream.html           # Web UI for streaming
+│   └── cli/
+│       └── pokemon_mcp_server.py   # MCP proxy: stdio ↔ HTTP to game server
+├── agents/
+│   ├── __init__.py           # Package exports (PokeAgent, VisionOnlyAgent)
+│   ├── PokeAgent.py          # Main benchmark agent
+│   ├── vision_only_agent.py
+│   ├── subagents/            # reflect, verify, summarize, battler, planner, gym_puzzle; utils/ = registry, runtime, context, trajectory_window, puzzle_solver
+│   ├── utils/                # prompt_optimizer, etc.
+│   ├── objectives/           # Direct objectives, types, categorization
+│   └── prompts/              # Canonical prompt assets and path helpers
+├── utils/
+│   ├── mapping/              # ascii_map_loader, map_formatter, map_stitcher, map_stitcher_singleton,
+│   │                          # pathfinding, pokeemerald_parser, porymap_json_builder, porymap_state
+│   ├── data_persistence/     # backup_manager, run_data_manager, llm_logger
+│   ├── agent_infrastructure/ # cli_agent_backends, vlm_backends
+│   ├── metric_tracking/      # session readers (claude, gemini, codex, hermes), server_metrics
+│   ├── state_formatter.py    # Facade; re-exports from utils.mapping.porymap_state
+│   ├── knowledge_base.py     # Shared by agents and server
+│   ├── anticheat.py, error_handler.py, json_utils.py, ocr_dialogue.py
+│   └── ...
+├── pokemon_env/
+│   ├── emulator.py           # EmeraldEmulator (mGBA, input, frame advance)
+│   ├── memory_reader.py      # PokemonEmeraldReader (DO NOT MODIFY for submissions)
+│   ├── emerald_utils.py, enums.py, types.py, utils.py
+│   ├── porymap_paths.py      # Centralized path resolution for porymap data
+│   ├── porymap/              # Pokeemerald decompilation data (data/maps, data/tilesets)
+│   └── ...
+├── pokemon_red_env/
+│   └── red_emulator.py       # RedEmulator (PyBoy), readers, Red milestones
+├── tests/
+│   ├── run_tests.py, states/, ground_truth/, test_*.py
+│   └── ...
+├── Emerald-GBAdvance/        # rom.gba (not included), *.state
+├── PokemonRed-GBC/           # pokered.gbc (not included), Red assets
+├── .pokeagent_cache/        # Runtime cache per run (checkpoints, metrics, maps)
+├── backups/                 # Backup archives
+├── run_data/                # Per-run analysis data
+└── llm_logs/                # LLM interaction logs (auto-generated)
+</code></pre>
+<h2>Requirements</h2>
+<ul>
+<li>Python 3.10–3.11</li>
+<li><strong>Emerald:</strong> Pokémon Emerald ROM (not included; obtain legally)</li>
+<li><strong>Red:</strong> Pokémon Red ROM as <code>PokemonRed-GBC/pokered.gbc</code> (not included; obtain legally)</li>
+<li>An API key for access to one of the supported VLM backends (see VLM Backend Setup)</li>
+<li><strong>mGBA</strong> system library for Python bindings (<strong>Emerald</strong>); <strong>PyBoy</strong> is a Python dependency (<strong>Red</strong>)</li>
+</ul>
+<h2>Installation</h2>
+<h3>1. Clone the Repository</h3>
+<pre><code class="language-bash">git clone https://github.com/sethkarten/continual-harness
+cd continual-harness
+</code></pre>
+<h3>2. Environment (uv or Conda)</h3>
+<p><strong>Option A – uv (recommended):</strong></p>
+<p><a href="https://docs.astral.sh/uv/">uv</a> uses <code>pyproject.toml</code> and <code>uv.lock</code> for reproducible installs.</p>
+<pre><code class="language-bash"># Install uv (if needed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create .venv and install dependencies from uv.lock
+uv sync
+
+# Activate the environment (prompt will show (continual-harness))
+source .venv/bin/activate
+</code></pre>
+<p>To run without activating: <code>uv run python run.py ...</code> (uv uses the project venv automatically). For dev tools (pytest, ruff, mypy): <code>uv sync --group dev</code>.</p>
+<p><strong>Option B – Conda:</strong></p>
+<p>Create a conda env (e.g. <code>conda create -n pokeagent python=3.10</code>), then install a compatible <code>libffi</code> in the env (e.g. <code>conda install libffi</code>) so the mGBA Python bindings work, and install Python deps: <code>pip install -r requirements.txt</code>.</p>
+<h3>3. mGBA System Library</h3>
+<p>Required for <strong>Emerald</strong> (mGBA Python bindings). <strong>Red</strong> does not use mGBA. Example (Ubuntu 20.04):</p>
+<pre><code class="language-bash">wget https://github.com/mgba-emu/mgba/releases/download/0.10.5/mGBA-0.10.5-ubuntu64-focal.tar.xz
+tar -xf mGBA-0.10.5-ubuntu64-focal.tar.xz
+sudo dpkg -i mGBA-0.10.5-ubuntu64-focal/libmgba.deb
+</code></pre>
+<p>macOS (x86_64): <code>brew install mgba</code></p>
+<h3>4. Python Dependencies</h3>
+<ul>
+<li><strong>uv:</strong> Already done in step 2 (<code>uv sync</code>). Re-run <code>uv sync</code> if <code>pyproject.toml</code> or <code>uv.lock</code> change.</li>
+<li><strong>pip:</strong> <code>pip install -r requirements.txt</code> (e.g. inside your conda env).</li>
+</ul>
+<h3>5. Game ROM</h3>
+<ul>
+<li><strong>Emerald:</strong> <code>Emerald-GBAdvance/rom.gba</code>. US English SHA-1: <code>f3ae088181bf583e55daf962a92bb46f4f1d07b7</code>.</li>
+<li><strong>Red:</strong> <code>PokemonRed-GBC/pokered.gbc</code> (expected filename for <code>setup_environment()</code>).</li>
+</ul>
+<p>Use <strong><code>--game red|emerald</code></strong> with <strong><code>run.py</code></strong> / <strong><code>run_cli.py</code></strong> so server and agent prompts match the ROM you placed.</p>
+<h2>VLM Backend Setup (run.py)</h2>
+<p>Set the required env var(s) for your backend, then run with the template below. You can vary flags (e.g. <code>--load-state</code>, <code>--headless</code>, <code>--record</code>) as needed.</p>
+<p><strong>Default template:</strong></p>
+<pre><code class="language-bash">python run.py --backend {backend} --model-name {name} --port 8000 --agent-auto --scaffold pokeagent --direct-objectives categorized_full_game --direct-objectives-start 0 --direct-objectives-battling-start 0
+</code></pre>
+<p>| Backend       | Env var(s)                                                | Example (replace <code>{backend}</code> and <code>{name}</code> in template)                      |</p>
+</div><p class="abstract">… (truncated for length) — <a href="https://github.com/sethkarten/continual-harness" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="alma.html">ALMA<small>repo</small></a><a href="evoagentx.html">EvoAgentX<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

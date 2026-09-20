@@ -1,0 +1,480 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Memento-Skills — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="letta-code.html">← Letta Code</a> · <a href="reef.html">Reef →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Memento-Skills</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/Memento-Teams/Memento-Skills" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>A skill-centric agent runtime where agents design agents — deploying reusable, persistent, extensible skills.</p></section><section class="block"><h2>How it works</h2><ul><li>Skill-centric runtime: capabilities are packaged as reusable skills.</li><li>Reflection-based replanning on top of skill calls for multi-step tasks.</li><li>Desktop app (Windows/macOS) plus source build.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">Desktop app (memento.run/release) or build from source per the README.</pre></section><section class="block"><h2>Learning note</h2><p>The 'skills as the unit of agent capability' substrate — compare its skill model to Voyager/AgentFactory's code-as-skill.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1 align="center">Memento-Skills: Let Agents Design Agents</h1>
+
+<h3 align="center"><b>Deploy an agent with reusable, persistent, and extensible skills.</b></h3>
+
+<p><a id="desktop-app-launch"></a></p>
+<table>
+<tr>
+<td align="center">
+
+<h2>Memento-S Desktop App Is Live</h2>
+
+<p><b>The skill-centric agent runtime is now available as a desktop app.</b></p>
+
+<p>
+You no longer need to start Memento-S from source. Windows and macOS users can install the app directly and try desktop chat, web research, multi-step task execution, skill calls, and reflection-based replanning.
+</p>
+
+<p>
+During the launch period, new app users can receive a generous token package for long tasks, multi-turn collaboration, and agent reflection workflows. Check the app for the latest campaign details.
+</p>
+
+<p align="center">
+  <a href="https://memento.run/release"><img src="https://img.shields.io/badge/Download-Windows-2563eb?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://memento.run/release"><img src="https://img.shields.io/badge/Download-macOS-111827?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+  <a href="docs/MEMENTO_APP_LAUNCH_PR.md"><img src="https://img.shields.io/badge/Read-Launch%20Announcement-ff6f00?style=for-the-badge" alt="Read launch announcement"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Desktop%20App-Live-16a34a?style=flat-square" alt="Desktop app live">
+  <img src="https://img.shields.io/badge/Launch%20Offer-Token%20Gift-ca8a04?style=flat-square" alt="Launch token gift">
+  <img src="https://img.shields.io/badge/Updates-In%20App-0284c7?style=flat-square" alt="In-app updates">
+</p>
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-0.4.0-blue?style=for-the-badge" alt="Version 0.4.0">
+  <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/Skills-4%20built--in-0f766e" alt="4 built-in skills">
+  <img src="https://img.shields.io/badge/Framework-Skill--Centric%20Runtime-b91c1c" alt="Skill-centric runtime">
+  <img src="https://img.shields.io/badge/Lifecycle-Read%20%7C%20Execute%20%7C%20Reflect%20%7C%20Write-0284c7" alt="Skill lifecycle">
+  <img src="https://img.shields.io/badge/Open--Source%20LLMs-Kimi%20%7C%20MiniMax%20%7C%20GLM-ca8a04" alt="Open-source LLM ecosystems">
+  <img src="https://img.shields.io/badge/Interface-CLI%20%2B%20GUI-111827" alt="CLI and GUI">
+  <img src="https://img.shields.io/badge/Execution-Local%20Sandbox-16a34a" alt="Local sandbox">
+  <img src="https://img.shields.io/badge/IM-Feishu%20%7C%20DingTalk%20%7C%20WeCom%20%7C%20WeChat-2563eb" alt="IM platforms">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Memento-Teams/Memento-Skills/actions/workflows/ci.yml"><img src="https://github.com/Memento-Teams/Memento-Skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="Apache-2.0 license"></a>
+</p>
+
+<p align="center">
+  <a href="https://memento.run/"><img src="https://img.shields.io/badge/Memento-Homepage-ff6f00" alt="Memento Homepage"></a>
+  <a href="https://skills.memento.run/"><img src="https://img.shields.io/badge/Memento--Skills-Project%20Site-0284c7" alt="Memento-Skills Project Site"></a>
+  <a href="https://discord.com/invite/ztFS5YmB"><img src="https://img.shields.io/badge/Discord-Community-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+</p>
+
+<p align="center">
+  <a href="#desktop-app-launch">App Launch</a> ·
+  <a href="#-whats-new-in-v040">What's New</a> ·
+  <a href="#-learning-results">Learning Results</a> ·
+  <a href="#-one-click-gui-install">Install</a> ·
+  <a href="#-quick-start-developer">Quick Start</a> ·
+  <a href="#what-is-memento-skills">What Is This</a> ·
+  <a href="#what-makes-it-different">Why It Matters</a> ·
+  <a href="#-memento-ecosystem">Ecosystem</a> ·
+  <a href="#citation">Citation</a>
+</p>
+
+<p align="center">
+  <a href="#what-is-memento-skills"><b>English</b></a> ·
+  <a href="#chinese-summary"><b>中文摘要</b></a>
+</p>
+
+<table>
+<tr><td>
+<p align="center">
+  <img src="Figures/figure4.png" width="100%" alt="Three paradigms of LLM adaptation">
+</p>
+<p align="center"><sub>The accompanying technical study compares parameter training with deployment-time skill learning. Its research configuration keeps <i>θ</i> frozen and stores reusable behaviour in an external skill memory <i>M</i>.</sub></p>
+</td></tr>
+</table>
+
+<table>
+<tr><td>
+<p align="center">
+  <img src="Figures/figure2.jpg" width="100%" alt="Memento-Skills framework">
+</p>
+<p align="center"><sub>Read–Execute–Reflect–Write architecture studied in the accompanying technical work. The public runtime supplies Qwen/keyword skill routing, execution, reflection and replanning, explicit skill creation, and guarded automatic skill repair.</sub></p>
+</td></tr>
+</table>
+
+<hr>
+<h2>What&#39;s New in v0.4.0</h2>
+<blockquote>
+<p><strong>v0.4.0</strong> prepares the public runtime for reproducible software review with
+consistent release metadata, explicit source licensing, installed-package
+checks, and clearer contributor and security guidance.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Update</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Release identity</strong></td>
+<td>Python, Flet, Briefcase, runtime, citation, and configuration metadata identify the v0.4.0 source line consistently.</td>
+</tr>
+<tr>
+<td><strong>Source licensing</strong></td>
+<td>Project-owned source files carry Apache-2.0 SPDX identifiers; separately licensed third-party material remains identified in <code>THIRD_PARTY_NOTICES.md</code>.</td>
+</tr>
+<tr>
+<td><strong>Installed-package CI</strong></td>
+<td>Linux, macOS, and Windows install the built wheel, validate package metadata and dependencies, import public runtime modules, and exercise the CLI help entry point without credentials.</td>
+</tr>
+<tr>
+<td><strong>Public project guidance</strong></td>
+<td>Stale implementation references are corrected, and citation and security-reporting files are included in the source distribution.</td>
+</tr>
+<tr>
+<td><strong>Qwen skill router</strong></td>
+<td>Planning uses configurable keyword, Qwen3/Memento-Qwen, or hybrid local-skill routing with graceful fallback.</td>
+</tr>
+<tr>
+<td><strong>Guarded skill evolution</strong></td>
+<td>Failed traces support automatic attribution, isolated file updates, static/unit/synthetic gates, atomic deployment, audit history, and rollback.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>What&#39;s New in v0.3.8</h2>
+<blockquote>
+<p><strong>v0.3.8</strong> publishes the Memento-S desktop app as the recommended path for most users. Windows and macOS builds are now available directly from the README, with future product updates continuing through the app.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Update</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Desktop app launch</strong></td>
+<td>Memento-S can now be installed directly on Windows and macOS without setting up Python or launching from source.</td>
+</tr>
+<tr>
+<td><strong>Top-level launch banner</strong></td>
+<td>The README now opens with a clear app launch announcement, download buttons, and launch offer messaging.</td>
+</tr>
+<tr>
+<td><strong>Launch announcement</strong></td>
+<td>A standalone English announcement is available at <a href="docs/MEMENTO_APP_LAUNCH_PR.md"><code>docs/MEMENTO_APP_LAUNCH_PR.md</code></a> for external publishing.</td>
+</tr>
+<tr>
+<td><strong>Launch offer</strong></td>
+<td>New app users can receive a generous token package during the launch period. Check the app for current campaign details.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>What&#39;s New in v0.3.0</h2>
+<blockquote>
+<p><strong>v0.3.0</strong> focuses on cleaner separation of concerns. The runtime is now organised into a dedicated infrastructure layer, a unified tool registry, and a long-lived agent profile system, so that core agent logic, infrastructure, and tools can evolve independently.</p>
+</blockquote>
+<h3>Infrastructure Layer (<code>infra/</code>)</h3>
+<p>A new top-level <code>infra/</code> package isolates infrastructure concerns from <code>core/</code> so that agent logic and platform code can evolve independently.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>infra/memory/</code></td>
+<td>Long-term and session memory implementations, plus context-block builders.</td>
+</tr>
+<tr>
+<td><code>infra/context/</code></td>
+<td>Pluggable context providers and shared utilities used by the runtime.</td>
+</tr>
+<tr>
+<td><code>infra/compact/</code></td>
+<td>Context compaction pipeline (strategies, storage, models, utilities) for long-conversation summarisation.</td>
+</tr>
+<tr>
+<td><code>infra/service.py</code></td>
+<td><code>InfraService</code> entry that wires the above into the agent runtime.</td>
+</tr>
+<tr>
+<td><code>infra/shared/</code></td>
+<td>Shared compact / extract helpers reused across providers.</td>
+</tr>
+</tbody></table>
+<h3>Unified Tool Registry (<code>tools/</code>)</h3>
+<p>Tooling has been promoted to a top-level <code>tools/</code> package with a single <code>ToolRegistry</code>. The previous <code>builtin/tools/</code> layer has been retired in favour of this unified surface.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tools/atomics/</code></td>
+<td>Atomic tools (bash, file ops, grep, glob, list, web, python_repl, js_repl, MCP wrappers).</td>
+</tr>
+<tr>
+<td><code>tools/mcp/</code></td>
+<td>MCP client integration for loading external MCP servers as tools.</td>
+</tr>
+<tr>
+<td><code>tools/registry.py</code></td>
+<td>Single registration / discovery surface (<code>get_registry</code>) consumed by the agent and skill executor.</td>
+</tr>
+</tbody></table>
+<h3>Agent Profile System</h3>
+<p><code>core/agent_profile/</code> introduces persistent profiles that capture an agent&#39;s long-term identity, while a matching <code>daemon/agent_profile/</code> package evolves those profiles in the background.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>core/agent_profile/manager.py</code></td>
+<td>Read / write API for soul and user profiles.</td>
+</tr>
+<tr>
+<td><code>core/agent_profile/soul_manager.py</code></td>
+<td>Maintains the agent&#39;s long-term identity, traits, and policies.</td>
+</tr>
+<tr>
+<td><code>core/agent_profile/user_manager.py</code></td>
+<td>Tracks per-user preferences and history.</td>
+</tr>
+<tr>
+<td><code>daemon/agent_profile/orchestrator.py</code></td>
+<td>Background orchestrator that triggers soul / user evolution.</td>
+</tr>
+<tr>
+<td><code>daemon/agent_profile/soul_evolver.py</code> / <code>user_evolver.py</code></td>
+<td>Periodically refines profiles from recent conversations and outcomes.</td>
+</tr>
+</tbody></table>
+<h3>Dream Daemon</h3>
+<p>A new <code>daemon/dream/</code> package runs background consolidation between sessions, similar to how reflection updates the skill library.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>daemon/dream/consolidator.py</code></td>
+<td>Consolidates recent experiences into long-term memory and skill candidates.</td>
+</tr>
+<tr>
+<td><code>daemon/dream/loop.py</code></td>
+<td>Long-running loop that schedules consolidation passes.</td>
+</tr>
+</tbody></table>
+<h3>Shared Layer Expansion (<code>shared/</code>)</h3>
+<p>The <code>shared/</code> package has grown beyond chat utilities into a broader foundation for cross-cutting helpers.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>shared/fs/</code></td>
+<td>Filesystem helpers shared by core, infra, and tools.</td>
+</tr>
+<tr>
+<td><code>shared/hooks/</code></td>
+<td>Lifecycle hooks for runtime extension points.</td>
+</tr>
+<tr>
+<td><code>shared/schema/</code></td>
+<td>Reusable schema definitions.</td>
+</tr>
+<tr>
+<td><code>shared/security/</code></td>
+<td>Path / argument security primitives.</td>
+</tr>
+<tr>
+<td><code>shared/tools/</code></td>
+<td>Common tool utilities and dispatcher helpers.</td>
+</tr>
+</tbody></table>
+<h3>Runtime &amp; Developer Experience</h3>
+<table>
+<thead>
+<tr>
+<th>Addition</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>utils/runtime_requirements/</code></td>
+<td>Runtime dependency checker and auto-installer that resolves missing packages on first use.</td>
+</tr>
+<tr>
+<td><code>utils/runtime_mode.py</code></td>
+<td>Runtime mode detection (CLI vs GUI vs daemon).</td>
+</tr>
+<tr>
+<td><code>utils/log_config.py</code></td>
+<td>Centralised logging configuration.</td>
+</tr>
+<tr>
+<td><code>utils/strings.py</code></td>
+<td>Shared string helpers used across the codebase.</td>
+</tr>
+<tr>
+<td><code>core/skill/downloader/</code></td>
+<td>Dedicated downloader pipeline split out from the skill market.</td>
+</tr>
+<tr>
+<td><code>docs/ARCHITECTURE.md</code>, <code>docs/API_SPEC.md</code></td>
+<td>Up-to-date architecture and API references.</td>
+</tr>
+<tr>
+<td><code>docs/dependency_auto_install.md</code>, <code>docs/README_DEPENDENCY.md</code></td>
+<td>Runtime dependency model and auto-install behaviour.</td>
+</tr>
+<tr>
+<td><code>docs/database_optimization.md</code>, <code>docs/uni_response_design.md</code></td>
+<td>New design notes for storage and unified response handling.</td>
+</tr>
+<tr>
+<td><code>docs/QWEN_ROUTER_AND_SKILL_EVOLUTION.md</code></td>
+<td>Qwen routing and transactional Read-Write skill updates.</td>
+</tr>
+</tbody></table>
+<h3>Refactors and Removals</h3>
+<p>The new layout supersedes several v0.2.0 modules. The v0.2.0 <code>tool_bridge/</code> layer (<code>runner</code>, <code>bridge</code>, <code>context</code>, <code>args_processor</code>, <code>result_processor</code>) is replaced by the unified <code>tools/</code> registry. <code>builtin/tools/</code> (bash, file_ops, grep, python_repl, web) has been moved to <code>tools/atomics/</code>. The monolithic <code>core/skill/execution/executor.py</code> and <code>core/context/manager.py</code>, together with <code>core/context/{block,scratchpad,runtime_state,memory}.py</code>, have been split into <code>tools/</code>, <code>infra/context/</code>, and <code>infra/memory/</code>. IM startup no longer goes through <code>middleware/im/gateway_starter.py</code> and <code>middleware/im/gateway/agent_worker.py</code>; both are removed and replaced by a single <code>EndpointService</code> (<code>server/endpoint/im/</code>) that manages all IM channels and the agent worker. <code>bootstrap.py</code> and <code>middleware/llm/llm_client.py</code> have been reworked to align with this new wiring.</p>
+<h3>Compatibility Notes</h3>
+<ul>
+<li>Modules previously imported from <code>builtin.tools.*</code> are now under <code>tools.*</code> (for example, <code>tools.atomics</code>, <code>tools.mcp</code>, <code>tools.registry</code>).</li>
+<li>Modules previously under <code>core/shared/*</code> (compact, memory, context wiring) now live under <code>infra/*</code>. Update any direct imports accordingly.</li>
+<li><code>core/manager/</code> has been removed; conversation and session management now lives in <code>shared/chat/</code>.</li>
+<li>IM channels are now started via <code>EndpointService.start_channel(...)</code> (<code>server/endpoint/im/</code>); direct use of <code>gateway_starter</code> / <code>agent_worker</code> no longer applies.</li>
+</ul>
+<hr>
+<h2>What&#39;s New in v0.2.0</h2>
+<blockquote>
+<p><strong>v0.2.0</strong> is a major architectural upgrade. The core agent, skill system, configuration layer, and deployment surfaces have all been redesigned or significantly extended compared to v0.1.0.</p>
+</blockquote>
+<h3>Core Architecture</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Bounded Context redesign</strong></td>
+<td>The agent and skill modules have been restructured using a Bounded Context architecture, improving modularity and long-term maintainability.</td>
+</tr>
+<tr>
+<td><strong>Execution phase refactoring</strong></td>
+<td>The monolithic execution phase has been split into dedicated sub-modules (<code>runner</code>, <code>tool_handler</code>, <code>step_boundary</code>, <code>helpers</code>), enabling finer-grained control over multi-step reasoning.</td>
+</tr>
+<tr>
+<td><strong>New Finalize phase</strong></td>
+<td>A dedicated <code>finalize</code> phase has been added to the 4-stage pipeline for structured result summarisation.</td>
+</tr>
+<tr>
+<td><strong>Protocol layer</strong></td>
+<td>A new <code>core/protocol/</code> module defines communication protocols between system components.</td>
+</tr>
+<tr>
+<td><strong>Tool Bridge system</strong></td>
+<td>A new <code>tool_bridge/</code> layer (<code>runner</code>, <code>bridge</code>, <code>context</code>, <code>args_processor</code>, <code>result_processor</code>) provides cleaner tool invocation and result handling.</td>
+</tr>
+<tr>
+<td><strong>Execution policies</strong></td>
+<td>New policy modules (<code>tool_gate</code>, <code>path_validator</code>, <code>pre_execute</code>, <code>recovery</code>) add fine-grained safety and execution control.</td>
+</tr>
+<tr>
+<td><strong>Error recovery and loop detection</strong></td>
+<td>New <code>error_recovery.py</code> and <code>loop_detector.py</code> modules handle agent self-repair and infinite loop prevention during skill execution.</td>
+</tr>
+</tbody></table>
+<h3>Configuration System v2</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Three-layer isolation</strong></td>
+<td>System Config (read-only defaults) / User Config (persistent customisation) / Runtime Config (merged at startup).</td>
+</tr>
+<tr>
+<td><strong>Automatic migration</strong></td>
+<td>When the config template updates, the system auto-merges new fields while preserving user-modified values via <code>x-managed-by: user</code> markers.</td>
+</tr>
+<tr>
+<td><strong>Schema validation</strong></td>
+<td>Pydantic-based config models with JSON Schema for IDE auto-completion and validation.</td>
+</tr>
+</tbody></table>
+<h3>Skill Ecosystem</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Skill Market</strong></td>
+<td>A built-in marketplace for searching, downloading, and auto-installing skills from the cloud catalogue.</td>
+</tr>
+<tr>
+<td><strong>Skill Builder</strong></td>
+<td>New <code>core/skill/builder/</code> module for programmatic skill creation and generation.</td>
+</tr>
+<tr>
+<td><strong>Skill Loader</strong></td>
+<td>New <code>core/skill/loader/</code> replaces the old importer system with a cleaner discovery and loading pipeline.</td>
+</tr>
+<tr>
+<td><strong>Enhanced retrieval</strong></td>
+<td>Retrieval has been refactored into <code>local_db_recall</code>, <code>local_file_recall</code>, and <code>remote_recall</code>, with BM25 + semantic vector hybrid search for improved routing accuracy.</td>
+</tr>
+<tr>
+<td><strong>Pluggable storage</strong></td>
+<td>Skill store now supports <code>db_storage</code>, <code>file_storage</code>, and <code>vector_storage</code> backends.</td>
+</tr>
+<tr>
+<td><strong>Content analyser</strong></td>
+<td>New <code>content_analyzer.py</code> for inspecting and validating skill outputs.</td>
+</tr>
+</tbody></table>
+<h3>IM Platform Integration (New)</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Mode</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Feishu</strong></td>
+<td>Bridge + Gateway</td>
+<td>WebSocket long-connection with per-user persistent sessions</td>
+</tr>
+<tr>
+<td><strong>DingTalk</strong></td>
+<td>Gateway</td>
+<td>Webhook + event subscription</td>
+</tr>
+<tr>
+<td><strong>WeCom</strong></td>
+<td>Gateway</td>
+<td>Enterprise WeChat integration</td>
+</tr>
+</tbody></table>
+</div><p class="abstract">… (truncated for length) — <a href="https://github.com/Memento-Teams/Memento-Skills" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="letta-code.html">Letta Code<small>repo</small></a><a href="reef.html">Reef<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

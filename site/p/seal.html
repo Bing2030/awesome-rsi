@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>SEAL — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="hyperagents.html">← HyperAgents</a> · <a href="sia.html">SIA →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>SEAL</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/Continual-Intelligence/SEAL" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>SEAL (Self-Adapting LLMs) trains models via RL to generate *self-edits* — their own finetuning data and update directives — in response to new inputs.</p></section><section class="block"><h2>How it works</h2><ul><li>RL loop where the model proposes edits (finetuning data + update directives) to itself.</li><li>Two domains: general-knowledge (absorb new facts) and few-shot (adapt to new tasks).</li><li>MIT CSAIL; code + data for both domains in the repo.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; `git clone`, set up a conda/venv (README §Setup), then run the domain scripts.</pre></section><section class="block"><h2>Learning note</h2><p>A model-level self-improvement substrate: the model writes the *data and update instructions* for its own adaptation — a concrete bridge between weight-space and data-space RSI.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>Self-Adapting Language Models</h1>
+<p><a href="https://arxiv.org/abs/2506.10943">Paper</a>, <a href="https://jyopari.github.io/posts/seal">Website</a></p>
+<p><a href="https://adamzweiger.github.io/">Adam Zweiger</a>,
+<a href="https://jyopari.github.io">Jyothish Pari</a>,
+<a href="https://han-guo.info/">Han Guo</a>,
+<a href="https://ekinakyurek.github.io/">Ekin Akyürek</a>,
+<a href="https://people.csail.mit.edu/yoonkim/">Yoon Kim</a>,
+<a href="https://people.csail.mit.edu/pulkitag/">Pulkit Agrawal</a></p>
+<p>MIT CSAIL</p>
+<img src="few-shot/assets/SEAL.png" alt="SEAL" width="400"/>
+
+<p>SEAL (<strong>Se</strong>lf-<strong>A</strong>dapting <strong>L</strong>LMs) is a framework for training language models via RL to generate self-edits (finetuning data and other update directives for themselves) in response to new inputs. </p>
+<p>We explore SEAL in two domains:</p>
+<ul>
+<li><a href="general-knowledge">general-knowledge</a>: Incorporating new factual knowledge</li>
+<li><a href="few-shot">few-shot</a>: Adapting to new tasks from few-shot examples</li>
+</ul>
+<p>Both folders include code, data, and documentation.</p>
+<h2>🔧 Setup</h2>
+<h3>1. Clone the repository</h3>
+<pre><code class="language-bash">git clone https://github.com/Continual-Intelligence/SEAL.git
+cd SEAL
+</code></pre>
+<h3>2. Set up a virtual environment</h3>
+<p>Using <strong>conda</strong>:</p>
+<pre><code class="language-bash">conda create -n seal_env python=3.12
+conda activate seal_env
+</code></pre>
+<p>Using <strong>venv</strong>:</p>
+<pre><code class="language-bash">python3.12 -m venv seal_env
+source seal_env/bin/activate
+</code></pre>
+<h3>3. Install dependencies</h3>
+<pre><code class="language-bash">pip install -r requirements.txt
+</code></pre>
+<h3>4. Configure environment</h3>
+<p>Create a <code>.env</code> file in the project root and add your OpenAI API key:</p>
+<pre><code class="language-env">OPENAI_API_KEY=your_openai_api_key_here
+</code></pre>
+<h3>5. SLURM users</h3>
+<p>Before running any shell scripts, make sure to update the SLURM directives at the top of each <code>.sh</code> file to match your system configuration. All experiments can be run with 2 A100/H100 GPUs. Other setups may require refactoring and/or changing model sizes.</p>
+<h2>📄 Citation</h2>
+<p>If you found this work useful, please cite:</p>
+<pre><code>@misc{zweiger2025selfadaptinglanguagemodels,
+      title={Self-Adapting Language Models}, 
+      author={Adam Zweiger and Jyothish Pari and Han Guo and Ekin Akyürek and Yoon Kim and Pulkit Agrawal},
+      year={2025},
+      eprint={2506.10943},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2506.10943}, 
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="hyperagents.html">HyperAgents<small>repo</small></a><a href="sia.html">SIA<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

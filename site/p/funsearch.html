@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FunSearch — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="evolutionary-model-merge.html">← Evolutionary Model Merge</a> · <a href="mlevolve.html">MLEvolve →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>FunSearch</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/google-deepmind/funsearch" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>FunSearch — LLM + evaluator + evolution that discovered new mathematics (cap sets).</p></section><section class="block"><h2>How it works</h2><ul><li>A frozen LLM proposes candidate functions in a problem skeleton; an evaluator scores them.</li><li>The best functions are fed back as few-shot examples (an evolutionary loop).</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="nature-funsearch-2024.html">Mathematical Discoveries from Program Search with Large Language Models</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python (Jupyter); provides the evaluator + program-sampler framework.</pre></section><section class="block"><h2>Learning note</h2><p>The cleanest 'LLM + evaluator' loop — study the evaluate → select → prompt cycle, then run a toy problem.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>FunSearch</h1>
+<p>This repository accompanies the publication</p>
+<blockquote>
+<p>Romera-Paredes, B. et al. <a href="https://www.nature.com/articles/s41586-023-06924-6">Mathematical discoveries from program search with large language models</a>. <em>Nature</em> (2023)</p>
+</blockquote>
+<p>There are 6 independent directories:</p>
+<ul>
+<li><p><code>cap_set</code> contains functions discovered by FunSearch that construct large cap
+sets, and we also provide those cap sets in a numerical format for convenience.</p>
+</li>
+<li><p><code>admissible_set</code> contains functions discovered by FunSearch that construct
+large admissible sets, and we also provide those admissible sets in a numerical
+format for convenience.</p>
+</li>
+<li><p><code>bin_packing</code> contains heuristics discovered by FunSearch for online 1D bin
+packing problems, and an evaluation suite to reproduce the results reported in
+the paper.</p>
+</li>
+<li><p><code>cyclic_graphs</code> contains functions discovered by FunSearch that construct
+large independent sets in strong products of cyclic graphs, and we also provide
+those sets in a numerical format for convenience.</p>
+</li>
+<li><p><code>corner_free_sets</code> contains the discovered sets of indices, in numerical
+format, satisfying the combinatorial degeneration constraints described for the
+corners-free problem in the Supplementary Information.</p>
+</li>
+<li><p><code>implementation</code> contains an implementation of the evolutionary algorithm,
+code manipulation routines, and a single-threaded implementation of the
+FunSearch pipeline. It does not contain language models for generating new
+programs, the sandbox for executing untrusted code, nor the infrastructure for
+running FunSearch on our distributed system. This directory is intended to be
+useful for understanding the details of our method, and for adapting it for use
+with any available language models, sandboxes, and distributed systems.</p>
+</li>
+</ul>
+<h2>Installation</h2>
+<p>No installation is required. All notebooks can be opened and run in Google
+Colab.</p>
+<h2>Usage</h2>
+<ul>
+<li><p><code>cap_set</code>: The notebook <code>cap_set.ipynb</code> can be opened via
+<a href="https://colab.research.google.com/github/google-deepmind/funsearch/blob/master/cap_set/cap_set.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>.</p>
+</li>
+<li><p><code>admissible_set</code>: The notebook <code>admissible_set.ipynb</code> can be opened
+via
+<a href="https://colab.research.google.com/github/google-deepmind/funsearch/blob/master/admissible_set/admissible_set.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>.</p>
+</li>
+<li><p><code>bin_packing</code>: The notebook <code>bin_packing.ipynb</code> can be opened via
+<a href="https://colab.research.google.com/github/google-deepmind/funsearch/blob/master/bin_packing/bin_packing.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>.</p>
+</li>
+<li><p><code>cyclic_graphs</code>: The notebook <code>cyclic_graphs.ipynb</code> can be opened via
+<a href="https://colab.research.google.com/github/google-deepmind/funsearch/blob/master/cyclic_graphs/cyclic_graphs.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>.</p>
+</li>
+</ul>
+<h2>Citing this work</h2>
+<p>If you use the code or data in this package, please cite:</p>
+<pre><code class="language-bibtex">@Article{FunSearch2023,
+  author  = {Romera-Paredes, Bernardino and Barekatain, Mohammadamin and Novikov, Alexander and Balog, Matej and Kumar, M. Pawan and Dupont, Emilien and Ruiz, Francisco J. R. and Ellenberg, Jordan and Wang, Pengming and Fawzi, Omar and Kohli, Pushmeet and Fawzi, Alhussein},
+  journal = {Nature},
+  title   = {Mathematical discoveries from program search with large language models},
+  year    = {2023},
+  doi     = {10.1038/s41586-023-06924-6}
+}
+</code></pre>
+<h2>License and disclaimer</h2>
+<p>Copyright 2023 DeepMind Technologies Limited</p>
+<p>All software is licensed under the Apache License, Version 2.0 (Apache 2.0);
+you may not use this file except in compliance with the Apache 2.0 license.
+You may obtain a copy of the Apache 2.0 license at:
+<a href="https://www.apache.org/licenses/LICENSE-2.0">https://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>All other materials are licensed under the Creative Commons Attribution 4.0
+International License (CC-BY). You may obtain a copy of the CC-BY license at:
+<a href="https://creativecommons.org/licenses/by/4.0/legalcode">https://creativecommons.org/licenses/by/4.0/legalcode</a></p>
+<p>Unless required by applicable law or agreed to in writing, all software and
+materials distributed here under the Apache 2.0 or CC-BY licenses are
+distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied. See the licenses for the specific language governing
+permissions and limitations under those licenses.</p>
+<p>This is not an official Google product.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="evolutionary-model-merge.html">Evolutionary Model Merge<small>repo</small></a><a href="mlevolve.html">MLEvolve<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

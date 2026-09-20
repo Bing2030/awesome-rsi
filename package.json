@@ -1,0 +1,8 @@
+{
+  "name": "awesome-rsi-study",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static study site generated from the awesome-rsi list",
+  "scripts": { "build": "node site/generate.mjs" },
+  "dependencies": { "marked": "^15.0.0" }
+}

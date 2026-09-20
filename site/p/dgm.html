@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Darwin Gödel Machine — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="agentfactory.html">← AgentFactory</a> · <a href="godel-agent.html">Gödel Agent →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Darwin Gödel Machine</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/jennyzzt/dgm" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>The Darwin Gödel Machine — the self-modifying coding agent with archive-based evolution.</p></section><section class="block"><h2>How it works</h2><ul><li>The agent edits its own source code; only empirically-validated edits are kept.</li><li>A MAP-Elites-style archive stores and evolves past improvements open-endedly.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2505.22954.html">Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; provide an LLM API key; the agent runs its edit → evaluate → keep loop on a task (see README).</pre></section><section class="block"><h2>Learning note</h2><p>The flagship self-modifier — run it to watch the improver-improves-the-improver loop on real code.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1 align="center">
+    Darwin Gödel Machine:<br/>Open-Ended Evolution of Self-Improving Agents
+</h1>
+
+<p align="center">
+  <a href="https://github.com/jennyzzt/dgm/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge"></a>
+  <a href="https://arxiv.org/abs/2505.22954"><img src="https://img.shields.io/badge/arXiv-2505.22954-b31b1b.svg?logo=arxiv&style=for-the-badge"></a>
+  <a href="https://sakana.ai/dgm/"><img src="https://img.shields.io/badge/-Blog-%238D6748?style=for-the-badge&logo=Website&logoColor=white"></a>
+  <a href="https://x.com/SakanaAILabs/status/1928272612431646943"><img src="https://img.shields.io/badge/twitter-%230077B5.svg?&style=for-the-badge&logo=twitter&logoColor=white&color=00acee"></a>
+  <a href="https://drive.google.com/drive/folders/1Kcu9TbIa9Z50pJ7S6hH9omzzD1pxIYZC?usp=sharing"><img src="https://img.shields.io/badge/Experiment%20Logs-4285F4?style=for-the-badge&logo=googledrive&logoColor=white"></a>
+</p>
+
+
+<p>Repository for <strong>Darwin Gödel Machine (DGM)</strong>, a novel self-improving system that iteratively modifies its own code (thereby also improving its ability to modify its own codebase) and empirically validates each change using coding benchmarks.</p>
+<p align="center">
+  <img src="./misc/overview.gif" width="100%" height="auto" />
+</p>
+<!-- <p align="center">
+<img src="./misc/conceptual.svg"/></a><br>
+</p> -->
+
+
+<h2>Setup</h2>
+<pre><code class="language-bash"># API keys, add to ~/.bashrc
+export OPENAI_API_KEY=&#39;...&#39;
+export ANTHROPIC_API_KEY=&#39;...&#39;
+</code></pre>
+<pre><code class="language-bash"># Verify that Docker is properly configured in your environment.
+docker run hello-world
+ 
+# If a permission error occurs, add the user to the Docker group
+sudo usermod -aG docker $USER
+newgrp docker
+</code></pre>
+<pre><code class="language-bash"># Install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Optional: for running analysis
+sudo apt-get install graphviz graphviz-dev
+pip install -r requirements_dev.txt
+</code></pre>
+<pre><code class="language-bash"># Clone SWE-bench
+cd swe_bench
+git clone https://github.com/princeton-nlp/SWE-bench.git
+cd SWE-bench
+git checkout dc4c087c2b9e4cefebf2e3d201d27e36
+pip install -e .
+cd ../../
+
+# Prepare Polyglot
+# Make sure git is properly configured in your environment with username and email
+python -m polyglot.prepare_polyglot_dataset
+</code></pre>
+<h2>Running the DGM</h2>
+<pre><code class="language-bash">python DGM_outer.py
+</code></pre>
+<p>By default, outputs will be saved in the <code>output_dgm/</code> directory.</p>
+<h2>File Structure</h2>
+<ul>
+<li><code>analysis/</code> scripts used for plotting and analysis</li>
+<li><code>initial/</code> SWE-bench logs and performance of the initial agent</li>
+<li><code>initial_polyglot/</code> Polyglot logs and performance of the initial agent</li>
+<li><code>swe_bench/</code> code needed for SWE-bench evaluation</li>
+<li><code>polyglot/</code> code needed for Polyglot evaluation</li>
+<li><code>prompts/</code> prompts used for foundation models</li>
+<li><code>tests/</code> tests for the DGM system</li>
+<li><code>tools/</code> tools available to the foundation models</li>
+<li><code>coding_agent.py</code> main implementation of the initial coding agent</li>
+<li><code>DGM_outer.py</code> entry point for running the DGM algorithm</li>
+</ul>
+<h2>Logs from Experiments</h2>
+<p>This <a href="https://drive.google.com/drive/folders/1Kcu9TbIa9Z50pJ7S6hH9omzzD1pxIYZC?usp=sharing">google drive folder</a> contains all the foundation model output logs from the experiments shown in the paper.</p>
+<h2>Safety Consideration</h2>
+<blockquote>
+<p>[!WARNING]<br>This repository involves executing untrusted, model-generated code. We strongly advise users to be aware of the associated safety risks. While it is highly unlikely that such code will perform overtly malicious actions under our current settings and with the models we use, it may still behave destructively due to limitations in model capability or alignment. By using this repository, you acknowledge and accept these risks.</p>
+</blockquote>
+<h2>Acknowledgement</h2>
+<p>The evaluation framework implementations are based on the <a href="https://github.com/swe-bench/SWE-bench">SWE-bench</a> and <a href="https://github.com/Aider-AI/polyglot-benchmark">polyglot-benchmark</a> repositories.</p>
+<h2>Citing</h2>
+<p>If you find this project useful, please consider citing:</p>
+<pre><code class="language-bibtex">@article{zhang2025darwin,
+  title={Darwin Godel Machine: Open-Ended Evolution of Self-Improving Agents},
+  author={Zhang, Jenny and Hu, Shengran and Lu, Cong and Lange, Robert and Clune, Jeff},
+  journal={arXiv preprint arXiv:2505.22954},
+  year={2025}
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a><a href="hyperagents.html">HyperAgents<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

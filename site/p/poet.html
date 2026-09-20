@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>POET — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="openevolve.html">← OpenEvolve</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>POET</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/uber-research/poet" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>POET (Paired Open-Ended Trailblazer) — co-evolves environments and their solutions.</p></section><section class="block"><h2>How it works</h2><ul><li>Co-evolves a population of environments and their specialized solutions; transfers between niches.</li><li>Endlessly generates harder, more diverse environments.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="1901.01753.html">Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python (legacy TensorFlow era); entry point `es/poet_distributed.py`.</pre></section><section class="block"><h2>Learning note</h2><p>The canonical 'generate your own problems' system — run the classic to see open-ended curricula in miniature.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>POET and Enhanced POET</h1>
+<p>This repo contains implementation of the POET and Enhanced POET algorithms described in:</p>
+<p><a href="https://arxiv.org/abs/1901.01753">Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions</a></p>
+<p><a href="https://arxiv.org/abs/2003.08536">Enhanced POET: Open-Ended Reinforcement Learning through Unbounded Invention of Learning Challenges and their Solutions</a></p>
+<p>An article on Uber Engineering Blog describing POET can be found <a href="https://eng.uber.com/poet-open-ended-deep-learning/">here</a>.</p>
+<h2>Requirements</h2>
+<ul>
+<li><a href="https://uber.github.io/fiber/">Fiber</a></li>
+<li><a href="https://neat-python.readthedocs.io/en/latest/installation.html">NEAT-Python</a></li>
+<li><a href="https://github.com/openai/gym">OpenAI Gym</a></li>
+</ul>
+<h2>Run Enhanced POET locally</h2>
+<p>To run locally on a multicore machine</p>
+<p><code>./run_poet_local.sh final_test</code></p>
+<h2>Run Enhanced POET on a Kubernetes cluster</h2>
+<p>Follow instructions <a href="https://uber.github.io/fiber/advanced/#working-with-persistent-storage">here</a> to create a persistent volume.</p>
+<p>Then run the following command:</p>
+<p><code>./run_poet_remote.sh final_test</code></p>
+<p>To get the training logs:</p>
+<p><code>fiber cp nfs:/persistent/logs/final_test .</code>
+<code>fiber cp nfs:/persistent/logs/poet_final_test poet_final_test</code></p>
+<h2>Run Enhanced POET on a computer cluster</h2>
+<p>To containerize and run the code on a computer cluster (e.g., Google Kubernetes Engine on Google Cloud), please refer to <a href="https://uber.github.io/fiber/getting-started/#containerize-your-program">Fiber Documentation</a>.</p>
+<h2>Run original POET</h2>
+<p>Use this <a href="https://github.com/uber-research/poet/tree/original_poet">legacy branch</a></p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="openevolve.html">OpenEvolve<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

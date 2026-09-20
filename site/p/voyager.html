@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Voyager — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="reef.html">← Reef</a> · <a href="adas.html">ADAS →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Voyager</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/MineDojo/Voyager" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Voyager — an open-ended embodied agent that builds a growing skill library in Minecraft.</p></section><section class="block"><h2>How it works</h2><ul><li>An automatic curriculum proposes tasks; execution-verified code skills accumulate in a library.</li><li>Environment feedback refines skills; later tasks reuse earlier skills.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2305.16291.html">Voyager: An Open-Ended Embodied Agent with Large Language Models</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; needs Minecraft + MineDojo and an OpenAI API key; entry point `voyage.py`.</pre></section><section class="block"><h2>Learning note</h2><p>The canonical skill-library agent — run it (if you have Minecraft) to watch skills compound.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>Voyager: An Open-Ended Embodied Agent with Large Language Models</h1>
+<div align="center">
+
+<p><a href="https://voyager.minedojo.org/">[Website]</a>
+<a href="https://arxiv.org/abs/2305.16291">[Arxiv]</a>
+<a href="https://voyager.minedojo.org/assets/documents/voyager.pdf">[PDF]</a>
+<a href="https://twitter.com/DrJimFan/status/1662115266933972993?s=20">[Tweet]</a></p>
+<p><a href="https://github.com/MineDojo/Voyager"><img src="https://img.shields.io/badge/Python-3.9-blue.svg" alt="Python Version"></a>
+<a href="https://github.com/MineDojo/Voyager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/MineDojo/Voyager" alt="GitHub license"></a></p>
+<hr>
+<p><a href="https://github.com/MineDojo/Voyager/assets/25460983/ce29f45b-43a5-4399-8fd8-5dd105fd64f2">https://github.com/MineDojo/Voyager/assets/25460983/ce29f45b-43a5-4399-8fd8-5dd105fd64f2</a></p>
+<p><img src="images/pull.png" alt=""></p>
+</div>
+
+<p>We introduce Voyager, the first LLM-powered embodied lifelong learning agent
+in Minecraft that continuously explores the world, acquires diverse skills, and
+makes novel discoveries without human intervention. Voyager consists of three
+key components: 1) an automatic curriculum that maximizes exploration, 2) an
+ever-growing skill library of executable code for storing and retrieving complex
+behaviors, and 3) a new iterative prompting mechanism that incorporates environment
+feedback, execution errors, and self-verification for program improvement.
+Voyager interacts with GPT-4 via blackbox queries, which bypasses the need for
+model parameter fine-tuning. The skills developed by Voyager are temporally
+extended, interpretable, and compositional, which compounds the agent’s abilities
+rapidly and alleviates catastrophic forgetting. Empirically, Voyager shows
+strong in-context lifelong learning capability and exhibits exceptional proficiency
+in playing Minecraft. It obtains 3.3× more unique items, travels 2.3× longer
+distances, and unlocks key tech tree milestones up to 15.3× faster than prior SOTA.
+Voyager is able to utilize the learned skill library in a new Minecraft world to
+solve novel tasks from scratch, while other techniques struggle to generalize.</p>
+<p>In this repo, we provide Voyager code. This codebase is under <a href="LICENSE">MIT License</a>.</p>
+<h1>Installation</h1>
+<p>Voyager requires Python ≥ 3.9 and Node.js ≥ 16.13.0. We have tested on Ubuntu 20.04, Windows 11, and macOS. You need to follow the instructions below to install Voyager.</p>
+<h2>Python Install</h2>
+<pre><code>git clone https://github.com/MineDojo/Voyager
+cd Voyager
+pip install -e .
+</code></pre>
+<h2>Node.js Install</h2>
+<p>In addition to the Python dependencies, you need to install the following Node.js packages:</p>
+<pre><code>cd voyager/env/mineflayer
+npm install -g npx
+npm install
+cd mineflayer-collectblock
+npx tsc
+cd ..
+npm install
+</code></pre>
+<h2>Minecraft Instance Install</h2>
+<p>Voyager depends on Minecraft game. You need to install Minecraft game and set up a Minecraft instance.</p>
+<p>Follow the instructions in <a href="installation/minecraft_instance_install.md">Minecraft Login Tutorial</a> to set up your Minecraft Instance.</p>
+<h2>Fabric Mods Install</h2>
+<p>You need to install fabric mods to support all the features in Voyager. Remember to use the correct Fabric version of all the mods. </p>
+<p>Follow the instructions in <a href="installation/fabric_mods_install.md">Fabric Mods Install</a> to install the mods.</p>
+<h1>Getting Started</h1>
+<p>Voyager uses OpenAI&#39;s GPT-4 as the language model. You need to have an OpenAI API key to use Voyager. You can get one from <a href="https://platform.openai.com/account/api-keys">here</a>.</p>
+<p>After the installation process, you can run Voyager by:</p>
+<pre><code class="language-python">from voyager import Voyager
+
+# You can also use mc_port instead of azure_login, but azure_login is highly recommended
+azure_login = {
+    &quot;client_id&quot;: &quot;YOUR_CLIENT_ID&quot;,
+    &quot;redirect_url&quot;: &quot;https://127.0.0.1/auth-response&quot;,
+    &quot;secret_value&quot;: &quot;[OPTIONAL] YOUR_SECRET_VALUE&quot;,
+    &quot;version&quot;: &quot;fabric-loader-0.14.18-1.19&quot;, # the version Voyager is tested on
+}
+openai_api_key = &quot;YOUR_API_KEY&quot;
+
+voyager = Voyager(
+    azure_login=azure_login,
+    openai_api_key=openai_api_key,
+)
+
+# start lifelong learning
+voyager.learn()
+</code></pre>
+<ul>
+<li>If you are running with <code>Azure Login</code> for the first time, it will ask you to follow the command line instruction to generate a config file.</li>
+<li>For <code>Azure Login</code>, you also need to select the world and open the world to LAN by yourself. After you run <code>voyager.learn()</code> the game will pop up soon, you need to:<ol>
+<li>Select <code>Singleplayer</code> and press <code>Create New World</code>.</li>
+<li>Set Game Mode to <code>Creative</code> and Difficulty to <code>Peaceful</code>.</li>
+<li>After the world is created, press <code>Esc</code> key and press <code>Open to LAN</code>.</li>
+<li>Select <code>Allow cheats: ON</code> and press <code>Start LAN World</code>. You will see the bot join the world soon.</li>
+</ol>
+</li>
+</ul>
+<h1>Resume from a checkpoint during learning</h1>
+<p>If you stop the learning process and want to resume from a checkpoint later, you can instantiate Voyager by:</p>
+<pre><code class="language-python">from voyager import Voyager
+
+voyager = Voyager(
+    azure_login=azure_login,
+    openai_api_key=openai_api_key,
+    ckpt_dir=&quot;YOUR_CKPT_DIR&quot;,
+    resume=True,
+)
+</code></pre>
+<h1>Run Voyager for a specific task with a learned skill library</h1>
+<p>If you want to run Voyager for a specific task with a learned skill library, you should first pass the skill library directory to Voyager:</p>
+<pre><code class="language-python">from voyager import Voyager
+
+# First instantiate Voyager with skill_library_dir.
+voyager = Voyager(
+    azure_login=azure_login,
+    openai_api_key=openai_api_key,
+    skill_library_dir=&quot;./skill_library/trial1&quot;, # Load a learned skill library.
+    ckpt_dir=&quot;YOUR_CKPT_DIR&quot;, # Feel free to use a new dir. Do not use the same dir as skill library because new events will still be recorded to ckpt_dir. 
+    resume=False, # Do not resume from a skill library because this is not learning.
+)
+</code></pre>
+<p>Then, you can run task decomposition. Notice: Occasionally, the task decomposition may not be logical. If you notice the printed sub-goals are flawed, you can rerun the decomposition.</p>
+<pre><code class="language-python"># Run task decomposition
+task = &quot;YOUR TASK&quot; # e.g. &quot;Craft a diamond pickaxe&quot;
+sub_goals = voyager.decompose_task(task=task)
+</code></pre>
+<p>Finally, you can run the sub-goals with the learned skill library:</p>
+<pre><code class="language-python">voyager.inference(sub_goals=sub_goals)
+</code></pre>
+<p>For all valid skill libraries, see <a href="skill_library/README.md">Learned Skill Libraries</a>.</p>
+<h1>FAQ</h1>
+<p>If you have any questions, please check our <a href="FAQ.md">FAQ</a> first before opening an issue.</p>
+<h1>Paper and Citation</h1>
+<p>If you find our work useful, please consider citing us! </p>
+<pre><code class="language-bibtex">@article{wang2023voyager,
+  title   = {Voyager: An Open-Ended Embodied Agent with Large Language Models},
+  author  = {Guanzhi Wang and Yuqi Xie and Yunfan Jiang and Ajay Mandlekar and Chaowei Xiao and Yuke Zhu and Linxi Fan and Anima Anandkumar},
+  year    = {2023},
+  journal = {arXiv preprint arXiv: Arxiv-2305.16291}
+}
+</code></pre>
+<p>Disclaimer: This project is strictly for research purposes, and not an official product from NVIDIA.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="reef.html">Reef<small>repo</small></a><a href="adas.html">ADAS<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

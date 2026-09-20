@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Pi — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="openclaw.html">← OpenClaw</a> · <a href="agentfactory.html">AgentFactory →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Harness-level RSI</div>
+    <h1>Pi</h1>
+    
+    <p class="meta">repo · substrate</p>
+    <div class="links"><a class="" href="https://github.com/earendil-works/pi" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Pi's agent harness — a monorepo whose centerpiece is a self-extensible coding agent.</p></section><section class="block"><h2>How it works</h2><ul><li>Monorepo packages: `pi-coding-agent` (interactive CLI), `pi-agent-core` (agent runtime with tool calling + state), `pi-ai` (unified multi-provider LLM API).</li><li>The self-extensible coding agent builds on the runtime to extend its own capabilities.</li></ul></section><section class="block"><h2>Install & run</h2><pre class="readme">npm packages; `npx @earendil-works/pi-coding-agent` for the CLI.</pre></section><section class="block"><h2>Learning note</h2><p>A clean split of runtime / LLM-API / coding-agent — the layered design makes 'self-extension' concrete (the agent modifies its own tool set).</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><p align="center">
+  <a href="https://pi.dev">
+    <img alt="pi logo" src="https://pi.dev/logo-auto.svg" width="128">
+  </a>
+</p>
+<p align="center">
+  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
+  <a href="https://www.npmjs.com/package/@earendil-works/pi-coding-agent"><img alt="npm" src="https://img.shields.io/npm/v/@earendil-works/pi-coding-agent?style=flat-square" /></a>
+</p>
+
+<blockquote>
+<p>New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+</blockquote>
+<h1>Pi Agent Harness</h1>
+<p>This is the home of the Pi agent harness project including our self extensible coding agent.</p>
+<ul>
+<li><strong><a href="packages/coding-agent">@earendil-works/pi-coding-agent</a></strong>: Interactive coding agent CLI</li>
+<li><strong><a href="packages/agent">@earendil-works/pi-agent-core</a></strong>: Agent runtime with tool calling and state management</li>
+<li><strong><a href="packages/ai">@earendil-works/pi-ai</a></strong>: Unified multi-provider LLM API (OpenAI, Anthropic, Google, …)</li>
+</ul>
+<p>To learn more about Pi:</p>
+<ul>
+<li><a href="https://pi.dev">Visit pi.dev</a>, the project website with demos</li>
+<li><a href="https://pi.dev/docs/latest">Read the documentation</a>, but you can also ask the agent to explain itself</li>
+</ul>
+<h2>All Packages</h2>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a href="packages/chord">@earendil-works/chord</a></strong></td>
+<td>Standalone application-composition runtime for services, replicated state, RPC, and plugins</td>
+</tr>
+<tr>
+<td><strong><a href="packages/telemetry">@earendil-works/pi-telemetry</a></strong></td>
+<td>Vendor-neutral telemetry contracts, reference adapter, conformance tests, and typed schemas</td>
+</tr>
+<tr>
+<td><strong><a href="packages/ai">@earendil-works/pi-ai</a></strong></td>
+<td>Unified multi-provider LLM API (OpenAI, Anthropic, Google, etc.)</td>
+</tr>
+<tr>
+<td><strong><a href="packages/durable">@earendil-works/pi-durable</a></strong></td>
+<td>Durable conversation, task, and document runtime</td>
+</tr>
+<tr>
+<td><strong><a href="packages/agent">@earendil-works/pi-agent-core</a></strong></td>
+<td>Agent runtime with tool calling and state management</td>
+</tr>
+<tr>
+<td><strong><a href="packages/coding-agent">@earendil-works/pi-coding-agent</a></strong></td>
+<td>Interactive coding agent CLI</td>
+</tr>
+<tr>
+<td><strong><a href="packages/tui">@earendil-works/pi-tui</a></strong></td>
+<td>Terminal UI library with differential rendering</td>
+</tr>
+</tbody></table>
+<p>For Slack/chat automation and workflows see <a href="https://github.com/earendil-works/pi-chat">earendil-works/pi-chat</a>.</p>
+<h2>Permissions &amp; Containerization</h2>
+<p>Pi does not include a built-in permission system for restricting filesystem, process, network, or credential access. By default, it runs with the permissions of the user and process that launched it.</p>
+<p>If you need stronger boundaries, containerize or sandbox Pi. See <a href="packages/coding-agent/docs/containerization.md">packages/coding-agent/docs/containerization.md</a> for three patterns:</p>
+<ul>
+<li><strong>Gondolin extension</strong>: keep <code>pi</code> and provider auth on the host while routing built-in tools and <code>!</code> commands into a local Linux micro-VM.</li>
+<li><strong>Plain Docker</strong>: run the whole <code>pi</code> process in a local container for simple isolation.</li>
+<li><strong>OpenShell</strong>: run the whole <code>pi</code> process in a policy-controlled sandbox.</li>
+</ul>
+<h2>Contributing</h2>
+<p>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for contribution guidelines and <a href="AGENTS.md">AGENTS.md</a> for project-specific rules (for both humans and agents).  Longer term plans for Pi can also be found in <a href="https://rfc.earendil.com/keyword/pi/">RFCs</a>.</p>
+<h2>Development</h2>
+<pre><code class="language-bash">npm install --ignore-scripts  # Install all dependencies without running lifecycle scripts
+npm run build         # Refresh model data, then build all packages
+npm run build:offline # Rebuild using existing model data without network access
+npm run check         # Lint, format, and type check
+./test.sh            # Run tests (skips LLM-dependent tests without API keys)
+./pi-test.sh         # Run pi from sources (can be run from any directory)
+</code></pre>
+<h2>Building standalone binaries from release source</h2>
+<p>GitHub releases include a versioned source archive covered by the release&#39;s <code>SHA256SUMS</code> file. Extract it and run the same build script used for the official standalone binaries:</p>
+<pre><code class="language-bash">VERSION=&quot;&lt;release-version&gt;&quot;
+tar -xzf &quot;pi-${VERSION}-source.tar.gz&quot;
+cd &quot;pi-${VERSION}&quot;
+./scripts/build-binaries.sh --offline-model-data --platform linux-x64 --out &quot;$PWD/out&quot;
+</code></pre>
+<p>The archive includes release model data and native prebuilds. <code>--offline-model-data</code> uses that model data without refreshing provider catalogs. The script installs dependencies and builds the executable with its runtime assets; pass <code>--skip-install</code> if dependencies are already provided.</p>
+<h2>Supply-chain hardening</h2>
+<p>We treat npm dependency changes as reviewed code changes.</p>
+<ul>
+<li>Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.</li>
+<li><code>.npmrc</code> sets <code>save-exact=true</code> and <code>min-release-age=2</code> to avoid same-day dependency releases during npm resolution.</li>
+<li><code>package-lock.json</code> is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless <code>PI_ALLOW_LOCKFILE_CHANGE=1</code> is set.</li>
+<li><code>npm run check</code> verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap.</li>
+<li>The published CLI package includes <code>packages/coding-agent/npm-shrinkwrap.json</code>, generated from the root lockfile, to pin transitive deps for npm users.</li>
+<li>Release smoke tests use <code>npm run release:local</code> to build, pack, and create isolated npm and Bun installs outside the repo before tagging a release.</li>
+<li>Local release installs, documented npm installs, and <code>pi update --self</code> use <code>--ignore-scripts</code> where supported.</li>
+<li>CI installs with <code>npm ci --ignore-scripts</code>, and a scheduled GitHub workflow runs <code>npm audit --omit=dev</code> plus <code>npm audit signatures --omit=dev</code>.</li>
+<li>Shrinkwrap generation has an explicit allowlist for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.</li>
+</ul>
+<h2>Share your OSS coding agent sessions</h2>
+<p>If you use Pi or other coding agents for open source work, please share your sessions.</p>
+<p>Public OSS session data helps improve coding agents with real-world tasks, tool use, failures, and fixes instead of toy benchmarks.</p>
+<p>For the full explanation, see <a href="https://x.com/badlogicgames/status/2037811643774652911">this post on X</a>.</p>
+<p>To publish sessions, use <a href="https://github.com/badlogic/pi-share-hf"><code>badlogic/pi-share-hf</code></a>. Read its README.md for setup instructions. All you need is a Hugging Face account, the Hugging Face CLI, and <code>pi-share-hf</code>.</p>
+<p>You can also watch <a href="https://x.com/badlogicgames/status/2041151967695634619">this video</a>, where I show how I publish my <code>pi-mono</code> sessions.</p>
+<p>I regularly publish my own <code>pi-mono</code> work sessions here:</p>
+<ul>
+<li><a href="https://huggingface.co/datasets/badlogicgames/pi-mono">badlogicgames/pi-mono on Hugging Face</a></li>
+</ul>
+<h2>License</h2>
+<p>MIT</p>
+<p align="center">
+  <a href="https://pi.dev">pi.dev</a> domain graciously donated by
+  <br /><br />
+  <a href="https://exe.dev"><img src="packages/coding-agent/docs/images/exy.png" alt="Exy mascot" width="48" /><br />exe.dev</a>
+</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="openclaw.html">OpenClaw<small>repo · substrate</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="2410.04444.html">Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement<small>ACL 2025</small></a><a href="2310.03714.html">DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines<small>NeurIPS 2023 (R0-FoMo)</small></a><a href="2406.07496.html">TextGrad: Automatic &quot;Differentiation&quot; via Text<small>Nature 2025</small></a><a href="2309.03409.html">Large Language Models as Optimizers<small>ICLR 2024</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ACE — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="sia.html">← SIA</a> · <a href="alma.html">ALMA →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>ACE</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/ace-agent/ace" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>ACE — Agentic Context Engineering; evolves the whole context as a playbook.</p></section><section class="block"><h2>How it works</h2><ul><li>Context as an evolving playbook: generation, reflection, curation.</li><li>Structured incremental edits avoid context collapse.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2510.04618.html">Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; LLM API key; run the context-evolution loop per README.</pre></section><section class="block"><h2>Learning note</h2><p>Watch how the *whole context* evolves (vs. Voyager's code skills) — prompt-space self-improvement.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models</h1>
+<div align="left">
+
+<p align="left" style="display:flex; gap:18px;">
+  <a href="https://arxiv.org/abs/2510.04618" target="_blank" style="margin-right:0;">
+    <img alt="arXiv" src="https://img.shields.io/badge/arXiv-2510.04618-b31b1b.svg">
+  </a>
+  <a href="https://join.slack.com/t/ace-agent/shared_invite/zt-3np7gusuf-DCUJaBshNjuAz5ECDx702w" target="_blank" style="margin-right:0;">
+    <img alt="Slack" src="https://img.shields.io/badge/Join Slack-4A154B?logo=slack&logoColor=white">
+  </a>
+  <a href="https://discord.gg/NW2W4xYt" target="_blank" style="margin-right:0;">
+    <img alt="Discord" src="https://img.shields.io/badge/Discord-7289DA?logo=discord&logoColor=white">
+  </a>
+  <a href="https://deepwiki.com/ace-agent/ace" target="_blank" style="margin-right:0;">
+    <img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg">
+  </a>
+  <a href="https://forms.gle/ZNJpqVBRa8QoPjzM7" target="_blank" style="margin-right:0;">
+    <img alt="Feedback & Interest Form" src="https://img.shields.io/badge/Feedback & Interest Form-4285F4?logo=googleforms&logoColor=white">
+  </a>
+</p>
+
+
+<img src="assets/images/ace_framework.png" alt="ACE Framework" width="800"/>
+
+</div>
+
+<hr>
+<h2>🎯 Overview</h2>
+<p>ACE (Agentic Context Engineering) is a framework that enables large language models to self-improve by treating contexts as evolving playbooks that accumulate, refine, and organize strategies through a modular process of generation, reflection, and curation. Unlike traditional approaches that suffer from <strong>brevity bias</strong> and <strong>context collapse</strong>, ACE introduces structured, incremental updates guided by a grow-and-refine principle, preserving detailed, domain-specific knowledge while remaining comprehensive and scalable throughout adaptation.</p>
+<h2>Latest News</h2>
+<ul>
+<li><strong>2025 Nov</strong>: ACE <a href="https://arxiv.org/abs/2510.04618">Paper</a> and Repo says &quot;Hello World&quot;!</li>
+</ul>
+<h3>Key Features</h3>
+<ul>
+<li>🔄 <strong>Three-Role Agentic Architecture</strong>: Generator, Reflector, and Curator work together to continuously improve contexts</li>
+<li>📈 <strong>Incremental Delta Updates</strong>: Localized edits that preserve prior knowledge while accumulating new insights</li>
+<li>🎓 <strong>Self-Supervised Learning</strong>: Adapts effectively without labeled supervision by leveraging natural execution feedback</li>
+<li>🚀 <strong>High Efficiency</strong>: 86.9% lower adaptation latency on average compared to existing adaptive methods</li>
+<li>💰 <strong>Cost Effective</strong>: Significantly fewer rollouts and lower dollar costs while achieving higher accuracy</li>
+</ul>
+<h3>Tutorials</h3>
+<ul>
+<li>📚 <strong>Adding Dataset for Evaluation</strong> <a href="tutorials/ExtendingDatasets.md">Link</a></li>
+<li>✨ <strong>Extending ACE for Tool Calling</strong> (Coming Soon)</li>
+</ul>
+<h3>📊 Performance</h3>
+<p>ACE consistently outperforms strong baselines, achieving average gains of <strong>+10.6%</strong> on agent tasks and <strong>+8.6%</strong> on domain-specific benchmarks, across both offline and online adaptation settings.</p>
+<h4>Benchmarks</h4>
+<table>
+<thead>
+<tr>
+<th>Task Category</th>
+<th>Dataset</th>
+<th>Improvement</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Agent Tasks</strong></td>
+<td>AppWorld</td>
+<td>+10.6%</td>
+<td>Matches top-ranked production-level agent (GPT-4.1) on average and surpasses it on harder test-challenge split, using smaller open-source model</td>
+</tr>
+<tr>
+<td><strong>Finance</strong></td>
+<td>FiNER + XBRL Formula</td>
+<td>+8.6%</td>
+<td>Domain-specific reasoning with structured information extraction</td>
+</tr>
+</tbody></table>
+<h4>Efficiency Improvements</h4>
+<ul>
+<li><strong>Offline (AppWorld)</strong>: -82.3% latency and -75.1% rollouts vs GEPA</li>
+<li><strong>Online (FiNER)</strong>: -91.5% latency and -83.6% token cost vs Dynamic Cheatsheet</li>
+</ul>
+<h4>How It Works</h4>
+<ol>
+<li><strong>Generator</strong> produces reasoning trajectories for new queries, surfacing both effective strategies and recurring pitfalls</li>
+<li><strong>Reflector</strong> separates evaluation and insight extraction from curation, improving context quality</li>
+<li><strong>Curator</strong> converts lessons into structured delta updates with helpful/harmful counters, using deterministic merging with de-duplication and pruning</li>
+</ol>
+<p>This design prevents the <strong>context collapse</strong> problem where iterative rewriting erodes details over time.</p>
+<h2>🚀 Quick Start</h2>
+<h3>Installation</h3>
+<pre><code class="language-bash"># Clone the repository
+git clone https://github.com/ace-agent/ace.git
+cd ace
+
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install ACE and core dependencies
+uv sync
+
+# Set up API keys
+cp .env.example .env
+# Edit .env and set the API key(s) you need
+</code></pre>
+<h3>Basic Usage</h3>
+<pre><code class="language-python">from ace import ACE
+from utils import initialize_clients
+
+# Initialize API clients
+api_provider = &quot;sambanova&quot; # or &quot;together&quot;, &quot;openai&quot;, &quot;commonstack&quot;
+
+# Initialize ACE system
+ace_system = ACE(
+    api_provider=api_provider,
+    generator_model=&quot;DeepSeek-V3.1&quot;,
+    reflector_model=&quot;DeepSeek-V3.1&quot;,
+    curator_model=&quot;DeepSeek-V3.1&quot;,
+    max_tokens=4096
+)
+
+# Prepare configuration
+config = {
+    &#39;num_epochs&#39;: 1,
+    &#39;max_num_rounds&#39;: 3,
+    &#39;curator_frequency&#39;: 1,
+    &#39;eval_steps&#39;: 100,
+    &#39;online_eval_frequency&#39;: 15,
+    &#39;save_steps&#39;: 50,
+    &#39;playbook_token_budget&#39;: 80000,
+    &#39;task_name&#39;: &#39;your_task&#39;,
+    &#39;json_mode&#39;: False,
+    &#39;no_ground_truth&#39;: False,
+    &#39;save_dir&#39;: &#39;./results&#39;,
+    &#39;test_workers&#39;: 20,
+    &#39;use_bulletpoint_analyzer&#39;: false,
+    &#39;api_provider&#39;: api_provider
+
+}
+
+# Offline adaptation
+results = ace_system.run(
+    mode=&#39;offline&#39;,
+    train_samples=train_data,
+    val_samples=val_data,
+    test_samples=test_data,  # Optional
+    data_processor=processor,
+    config=config
+)
+
+# Online adaptation
+results = ace_system.run(
+    mode=&#39;online&#39;,
+    test_samples=test_data,
+    data_processor=processor,
+    config=config
+)
+
+# Evaluation only
+results = ace_system.run(
+    mode=&#39;eval_only&#39;,
+    test_samples=test_data,
+    data_processor=processor,
+    config=config
+)
+</code></pre>
+<h2>💼 Finance Domain Example</h2>
+<h3>Training Script Usage</h3>
+<p>The <code>finance/run.py</code> script provides a unified interface for training and evaluation on financial analysis tasks.</p>
+<pre><code class="language-bash"># Offline training (with automatic initial and final testing)
+uv run python -m eval.finance.run \
+    --task_name finer \
+    --mode offline \
+    --save_path results
+
+# Online training and testing
+uv run python -m eval.finance.run \
+    --task_name finer \
+    --mode online \
+    --save_path results
+
+# Run evaluation on the test split only. Provide a pre-trained playbook or leave initial_playbook_path empty to evaluate an uninitialized playbook.
+uv run python -m eval.finance.run \
+    --task_name finer \
+    --mode eval_only \
+    --initial_playbook_path results/ace_run_TIMESTAMP_finer_offline/best_playbook.txt \
+    --save_path test_results
+
+# Training with custom configuration
+uv run python -m eval.finance.run \
+    --task_name finer \
+    --mode offline \
+    --save_path results \
+    --num_epochs 3 \
+    --eval_steps 100 \
+    --max_tokens 4096
+</code></pre>
+<h4>Available Arguments</h4>
+<details>
+<summary>Click here to see available arguments</summary>
+
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--task_name</code></td>
+<td>Task to train on (e.g., <code>finer</code>, <code>formula</code>)</td>
+<td>Required</td>
+</tr>
+<tr>
+<td><code>--save_path</code></td>
+<td>Directory to save results</td>
+<td>Required</td>
+</tr>
+<tr>
+<td><code>--initial_playbook_path</code></td>
+<td>Path to initial playbook</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td><code>--mode</code></td>
+<td>Run mode: &#39;offline&#39; for offline training with validation, &#39;online&#39; for online training and testing on test split, &#39;eval_only&#39; for evaluation only</td>
+<td><code>offline</code></td>
+</tr>
+<tr>
+<td><code>--api_provider</code></td>
+<td>API provider for LLM calls. Choose from [&#39;sambanova&#39;, &#39;together&#39;, &#39;openai&#39;, &#39;commonstack&#39;]</td>
+<td><code>sambanova</code></td>
+</tr>
+<tr>
+<td><code>--num_epochs</code></td>
+<td>Number of training epochs</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>--max_num_rounds</code></td>
+<td>Max reflection rounds for incorrect answers</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>--curator_frequency</code></td>
+<td>Run curator every N steps</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>--eval_steps</code></td>
+<td>Evaluate every N steps</td>
+<td>100</td>
+</tr>
+<tr>
+<td><code>--online_eval_frequency</code></td>
+<td>Update playbook every N samples for evaluation in online mode</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>--save_steps</code></td>
+<td>Save intermediate playbooks every N steps</td>
+<td>50</td>
+</tr>
+<tr>
+<td><code>--max_tokens</code></td>
+<td>Maximum tokens for LLM responses</td>
+<td>4096</td>
+</tr>
+<tr>
+<td><code>--playbook_token_budget</code></td>
+<td>Total token budget for playbook</td>
+<td>80000</td>
+</tr>
+<tr>
+<td><code>--test_workers</code></td>
+<td>Number of parallel workers for testing</td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>--generator_model</code></td>
+<td>Model for generator</td>
+<td><code>DeepSeek-V3.1</code></td>
+</tr>
+<tr>
+<td><code>--reflector_model</code></td>
+<td>Model for reflector</td>
+<td><code>DeepSeek-V3.1</code></td>
+</tr>
+<tr>
+<td><code>--curator_model</code></td>
+<td>Model for curator</td>
+<td><code>DeepSeek-V3.1</code></td>
+</tr>
+<tr>
+<td><code>--json_mode</code></td>
+<td>Enable JSON mode for structured output</td>
+<td>False</td>
+</tr>
+<tr>
+<td><code>--no_ground_truth</code></td>
+<td>Don&#39;t use ground truth in reflection</td>
+<td>False</td>
+</tr>
+<tr>
+<td><code>--use_bulletpoint_analyzer</code></td>
+<td>Enable bulletpoint analyzer for playbook deduplication and merging</td>
+<td>False</td>
+</tr>
+<tr>
+<td><code>--bulletpoint_analyzer_threshold</code></td>
+<td>Similarity threshold for bulletpoint analyzer (0-1)</td>
+<td>0.9</td>
+</tr>
+</tbody></table>
+</details>
+
+<h2>📈 Results and Outputs</h2>
+<p>Using offline training as an example, after training, ACE generates:</p>
+<pre><code>results/
+└── ace_run_TIMESTAMP_finer_offline/
+    ├── run_config.json                # Training configuration
+    ├── final_results.json             # Consolidated results from all stages
+    ├── initial_test_results.json      # Initial test results with empty playbook (baseline)
+    ├── final_test_results.json        # Final test results with best playbook
+    ├── train_results.json             # Training results
+    ├── val_results.json               # Validation results and error logs
+    ├── pre_train_post_train_results.json     # Detailed pre-train and post-train generator output for each training sample
+    ├── final_playbook.txt             # Final evolved context
+    ├── best_playbook.txt              # Best performing context (only for offline training)
+    ├── bullet_usage_log.jsonl         # Bullet usage tracking
+    ├── curator_operations_diff.jsonl  # Curator operation tracking
+    ├── detailed_llm_logs/             # Detailed LLM call logs
+    └── intermediate_playbooks/        # Intermediate playbooks 
+</code></pre>
+<h3>Understanding Playbook Format</h3>
+<p>The evolved context (playbook) follows this structure:</p>
+<pre><code>## STRATEGIES &amp; INSIGHTS
+[str-00001] helpful=5 harmful=0 :: Always verify data types before processing
+[str-00002] helpful=3 harmful=1 :: Consider edge cases in financial data
+
+## FORMULAS &amp; CALCULATIONS
+[cal-00003] helpful=8 harmful=0 :: NPV = Σ(Cash Flow / (1+r)^t)
+
+## COMMON MISTAKES TO AVOID
+[mis-00004] helpful=6 harmful=0 :: Don&#39;t forget timezone conversions
+</code></pre>
+<p>Each bullet has:</p>
+<ul>
+<li><strong>ID</strong>: <code>[section_slug-00000]</code> for tracking</li>
+<li><strong>Counts</strong>: <code>helpful=X harmful=Y</code> updated by Reflector</li>
+<li><strong>Content</strong>: <code>:: actual advice or strategy</code></li>
+</ul>
+<!-- ## 🎓 Key Innovations
+
+### 1. Incremental Delta Updates
+
+Instead of rewriting full prompts, ACE performs delta updates—localized edits that accumulate new insights while preserving prior knowledge.
+
+### 2. Grow-and-Refine Mechanism
+
+A mechanism that balances steady context expansion with redundancy management by merging or pruning context items based on semantic similarity.
+
+### 3. Dedicated Reflector
+
+A specialized Reflector that separates evaluation and insight extraction from curation, improving context quality and downstream performance. -->
+
+<h3>📬 Supported Tasks</h3>
+<h4>Agent Tasks</h4>
+<ul>
+<li><strong>AppWorld</strong>: Simulated digital environment with app interactions</li>
+</ul>
+<h4>Domain-Specific Tasks</h4>
+<ul>
+<li><strong>FiNER</strong>: Financial information extraction</li>
+<li><strong>XBRL Formula</strong>: Structured financial data processing</li>
+</ul>
+<h2>🛠️ Extending ACE</h2>
+<p>ACE is designed to be easily extended to new tasks and domains. To add your own task:</p>
+<ol>
+<li><strong>Prepare your data</strong>: Create JSONL files with train/val/test splits</li>
+<li><strong>Implement DataProcessor</strong>: Only 3 methods needed - <code>process_task_data()</code>, <code>answer_is_correct()</code>, <code>evaluate_accuracy()</code></li>
+<li><strong>Create training script</strong>: Initialize ACE and run training using the <code>run()</code> method</li>
+<li><strong>Customize prompts</strong> (optional): Adapt prompts to your domain</li>
+</ol>
+<p>The evaluation orchestration (parallel test execution, result aggregation) is handled by reusable utilities in <code>utils.py</code>, so you only need to focus on task-specific logic.</p>
+<h3>Quick Example</h3>
+<pre><code class="language-python">class DataProcessor:
+    def process_task_data(self, raw_data):
+        # Convert your data format to standardized format
+        return [{&quot;context&quot;: ..., &quot;question&quot;: ..., &quot;target&quot;: ..., &quot;others&quot;: {...}}]
+    
+    def answer_is_correct(self, predicted, ground_truth):
+        # Your comparison logic
+        return predicted.strip() == ground_truth.strip()
+    
+    def evaluate_accuracy(self, predictions, ground_truths):
+        # Calculate accuracy
+        return sum(self.answer_is_correct(p, g) for p, g in zip(predictions, ground_truths)) / len(predictions)
+</code></pre>
+<p>📖 <strong><a href="EXTENDING_ACE.md">Read the full extension guide →</a></strong></p>
+<h2>🤝 Contributing</h2>
+<p>We welcome contributions! Please follow these steps:</p>
+<ol>
+<li>Fork the repository</li>
+<li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
+<li>Commit your changes (<code>git commit -m &#39;Add amazing feature&#39;</code>)</li>
+<li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
+<li>Open a Pull Request</li>
+</ol>
+<h2>📚 Additional Resources</h2>
+<ul>
+<li><strong>Blog Posts</strong>: <ul>
+<li><a href="https://medium.com/@bingqian/agentic-context-engineering-teaching-language-models-to-learn-from-experience-706c31a872ca">Medium: Agentic Context Engineering</a></li>
+<li><a href="https://www.marktechpost.com/2025/10/10/agentic-context-engineering-ace-self-improving-llms-via-evolving-contexts-not-fine-tuning/">MarkTechPost Coverage</a></li>
+<li><a href="https://www.infoq.com/news/2025/10/agentic-context-eng/">InfoQ Article</a></li>
+</ul>
+</li>
+</ul>
+<h3>🙏 Acknowledgments</h3>
+<p>This work builds upon insights from Dynamic Cheatsheet and incorporates ideas from the broader LLM agent and context optimization research community.</p>
+<h3>📧 Contact</h3>
+<p>For questions and feedback:</p>
+<ul>
+<li><strong>Paper Authors</strong>: See <a href="https://arxiv.org/abs/2510.04618">arXiv paper</a> for author contact information</li>
+<li><strong>Issues</strong>: Please open an issue on GitHub</li>
+<li><strong>Discussions</strong>: Join the <a href="../../discussions">GitHub Discussions</a></li>
+</ul>
+<hr>
+<h2>📝 Citation</h2>
+<p>If you use ACE in your research, please cite our paper:</p>
+<pre><code class="language-bibtex">@misc{zhang2025agenticcontextengineeringevolving,
+      title={Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models}, 
+      author={Qizheng Zhang and Changran Hu and Shubhangi Upasani and Boyuan Ma and Fenglu Hong and Vamsidhar Kamanuru and Jay Rainton and Chen Wu and Mengmeng Ji and Hanchen Li and Urmish Thakker and James Zou and Kunle Olukotun},
+      year={2025},
+      eprint={2510.04618},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2510.04618}, 
+}
+</code></pre>
+<div align="center">
+
+<p><strong>⭐ Star us on GitHub if ACE helps your research!</strong></p>
+<p>Made with ❤️ by the ACE team</p>
+</div>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="sia.html">SIA<small>repo</small></a><a href="alma.html">ALMA<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

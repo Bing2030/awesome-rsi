@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ADAS — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="voyager.html">← Voyager</a> · <a href="ai-scientist.html">AI Scientist →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>ADAS</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/ShengranHu/ADAS" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>ADAS (Automated Design of Agentic Systems) — a meta-agent that programs new agents.</p></section><section class="block"><h2>How it works</h2><ul><li>A meta-agent proposes agent designs as executable code and evaluates them.</li><li>A re-architect step improves the meta-agent's own prompt.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2408.08435.html">Automated Design of Agentic Systems</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python; LLM API key; run the meta-agent search per README.</pre></section><section class="block"><h2>Learning note</h2><p>The harness-level flagship — run to see an improver that *generates executable improvements*.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1 align="center">
+  <img src="misc/art_fig.png" width="200" /></a><br>
+  <b>Automated Design of Agentic Systems</b><br>
+</h1>
+
+<p align="center">
+  <a href="https://github.com/ShengranHu/ADAS/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge"></a>
+  <a href="https://arxiv.org/abs/2408.08435"><img src="https://img.shields.io/badge/arXiv-2408.08435-b31b1b.svg?logo=arxiv&style=for-the-badge"></a>
+  <a href="https://www.shengranhu.com/ADAS/"><img src="https://img.shields.io/badge/-Website-%238D6748?style=for-the-badge&logo=Website&logoColor=white"></a>
+  <a href="https://twitter.com/shengranhu/status/1825555341922480322"><img src="https://img.shields.io/badge/twitter-%230077B5.svg?&style=for-the-badge&logo=twitter&logoColor=white&color=00acee"></a>
+</p>
+
+<h3 align="center" style="display:inline-block; border:2px solid red; border-radius:4px; padding:4px; margin:4px 0;">
+ <strong> ICLR 2025</strong><br>
+</h3>
+<h3 align="center" style="display:inline-block; border:2px solid red; border-radius:4px; padding:4px; margin:4px 0;">
+  🏆 <strong>Outstanding Paper (NeurIPS 2024 Open-World Agent Workshop)</strong> 
+  <a href="https://x.com/shengranhu/status/1868475359060226191" target="_blank" style="margin-left:8px;">[Tweet]</a>
+</h3>
+
+<p>In this work, we describe a newly forming research area <strong>A</strong>utomated <strong>D</strong>esign of <strong>A</strong>gentic <strong>S</strong>ystems (<strong>ADAS</strong>), which aims to <em>automatically create powerful agentic system designs, including inventing novel building blocks and/or combining them in new ways.</em></p>
+<p>We present a simple yet effective ADAS algorithm named <strong>Meta Agent Search</strong> to demonstrate that <strong>agents can invent novel and powerful agent designs</strong>. In Meta Agent Search, a &quot;meta&quot; agent iteratively <em>programs</em> interesting new agents in code based on previous discoveries.</p>
+<p align="center">
+<img src="misc/algo.png"/></a><br>
+</p>
+
+<h2>Setup</h2>
+<pre><code class="language-bash">conda create -n adas python=3.11
+conda activate adas
+pip install -r requirements.txt
+
+# provide your OpenAI API key
+export OPENAI_API_KEY=&quot;YOUR KEY HERE&quot;
+</code></pre>
+<h2>Running Instructions</h2>
+<h3>Running Meta Agent Search</h3>
+<p>To run experiments for each domain, navigate to its respective folder. The code in each folder is self-contained. Launch experiments using the <code>search.py</code> script located in each domain&#39;s folder.</p>
+<pre><code class="language-bash">python {DOMAIN}/search.py
+</code></pre>
+<p>Replace <code>{DOMAIN}</code> with the specific domain folder name {<code>_arc</code>, <code>_drop</code>, <code>_mgsm</code>, ...} to run the experiment for.</p>
+<h3>Customizing Meta Agent Search for New Domains</h3>
+<p>You can easily adapt the code to search for new domains. To do so, follow these steps:</p>
+<ol>
+<li><p>Modify the <code>evaluate_forward_fn()</code> function and adjust any necessary formatting prompts (e.g. <a href="https://github.com/ShengranHu/ADAS/blob/main/_mmlu/search.py#L89">this line</a>) in the <code>search.py</code> file. </p>
+</li>
+<li><p>Consider adding additional basic functions for the meta agent to utilize during the design process (similar to <a href="https://github.com/ShengranHu/ADAS/blob/main/_arc/search.py#L161">this line</a>).</p>
+</li>
+<li><p>Update the domain-specific information within the prompts to match the requirements of your new domain (e.g. <a href="https://github.com/ShengranHu/ADAS/blob/main/_mmlu/mmlu_prompt.py#L229">this line</a>).</p>
+</li>
+<li><p>Run the search and evaluation on your new domain.</p>
+</li>
+</ol>
+<h3>Safety Consideration</h3>
+<blockquote>
+<p>[!WARNING]<br>The code in this repository involves executing untrusted model-generated code. We strongly advise users to be aware of this safety concern. While it is highly unlikely that model-generated code will perform overtly malicious actions in our current settings and with the models we use, such code may still act destructively due to limitations in model capability or alignment. By using this repository, you acknowledge and accept these risks.</p>
+</blockquote>
+<h2>Citing</h2>
+<p>If you find this project useful, please consider citing:</p>
+<pre><code>@article{hu2024ADAS,
+title={Automated Design of Agentic Systems},
+author={Hu, Shengran and Lu, Cong and Clune, Jeff},
+journal={arXiv preprint arXiv:2408.08435},
+year={2024}
+}
+</code></pre>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="voyager.html">Voyager<small>repo</small></a><a href="ai-scientist.html">AI Scientist<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>
