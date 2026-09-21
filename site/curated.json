@@ -1105,5 +1105,21 @@
     ],
     "run": "Python (legacy TensorFlow era); entry point `es/poet_distributed.py`.",
     "note": "The canonical 'generate your own problems' system — run the classic to see open-ended curricula in miniature."
+  },
+  "2609.20519": {
+    "tldr": "Runs auto-research loops over the coding-agent harness itself under a token-efficiency objective: 152 proposed mechanisms, four survive — ~45% fewer tokens and ~1/3 lower cost while retaining ~94% of Pi's score.",
+    "method": "A 7-stage auto-research loop per candidate idea: Trajectory Rollouts -> Map-Reduce Analysis -> Proposal -> Implementation -> Reviewer -> In-Trajectory Validation -> Held-Out Validation on a frozen, isolated test set. A predeclared capability floor gates every mechanism (savings only count within a quality tolerance, so efficiency is bounded by non-regression), and the surviving mechanisms combine into the SoL-Pi harness.",
+    "results": [
+      "44.7-49% fewer recorded tokens and ~1/3 lower API cost vs Pi, retaining ~94% of Pi's EdgeBench score (and exceeding the native Codex harness on GPT-5.6 Sol).",
+      "Four reusable mechanisms: Action Fusion (fuse edit+run into one call), Online Context Compact (compact at subtask boundaries), ObservationPack (paged recall instead of full replay), Evidence-Preserving Reducer (delegate first reading to a cheaper agent, verify against the log).",
+      "In a 20-worker swarm, SoL-Pi workers reach 1,127 cycles at $60.11 — 17.5% fewer cycles and 26.8% lower cost than Pi workers."
+    ],
+    "limitations": [
+      "Efficiency measured against Pi and model-native harnesses on EdgeBench/Terminal-Bench; cross-harness transferability is claimed via held-out environments, not yet proven at scale.",
+      "Hybrid loop: human priors seeded and filtered the 152-idea pool, so it is not fully autonomous RSI.",
+      "The recursive-efficiency compounding ('REI') is explicitly a vision, not a demonstrated effect."
+    ],
+    "fits": "Harness-level RSI with an efficiency objective gated by a capability floor — the non-regression discipline rsif encodes as its val gate, now applied to token cost. Complements rsif (which evolves the agent's artifacts) by evolving the harness that runs the agent.",
+    "reading": "Read the 7-stage loop and the predeclared capability floor / gate; the four mechanism cards show how narrow harness edits transfer across tasks."
   }
 }
