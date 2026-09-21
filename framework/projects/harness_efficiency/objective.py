@@ -1,9 +1,12 @@
 """EfficiencyObjective — the fourth objective, and the first cost-aware one.
 
 A standalone project proving the harness-efficiency seam: correctness is the
-primary signal, but every token spent on a task folds into that task's score,
+primary signal, but every token the harness spends on a task — the injected
+context (system prompt + memory) *and* the output — folds into the task's
+score,
 
     score = correctness - LAMBDA * min(1, tokens / TOKEN_BUDGET)
+    tokens = input_chars / CHARS_PER_TOKEN + output_tokens
 
 so `fitness = mean(score)` is a *quality-first scalar floor*. This is rsif's
 grounding of SoL-Pi [2609.20519] (auto-research under a token-efficiency
@@ -15,10 +18,15 @@ tokens raises *every* task's score (clearing the paired floor on a pure
 efficiency gain); a candidate that spends fewer tokens but answers *wrong*
 still scores <= -LAMBDA*cost, below any correct answer, and is rejected.
 
+The same objective drives the context policy (3b): a POLICY artifact bounds
+the injected memory, so a smaller bound lowers `input_chars` and raises the
+score — the same scalar floor rewards context compaction as readily as output
+concision.
+
 The task pack is an echo task (output the target after an ``ANSWER:``
-marker). It is deliberately trivial so that correctness and output length
-(token cost) are the only things that vary — the exact isolated signal an
-efficiency objective needs.
+marker). It is deliberately trivial so that correctness and token cost are
+the only things that vary — the exact isolated signal an efficiency objective
+needs.
 """
 
 from __future__ import annotations
@@ -33,7 +41,8 @@ from rsif.objectives.base import (
 )
 
 _LAMBDA = 0.1
-_TOKEN_BUDGET = 100  # tokens; a correct answer costing >= this scores 1 - LAMBDA
+_TOKEN_BUDGET = 500  # tokens; a correct answer costing >= this scores 1 - LAMBDA
+_CHARS_PER_TOKEN = 4
 _MARKER = "ANSWER:"
 
 # (key, target). Each target is a short echo string the agent must reproduce.
@@ -111,7 +120,9 @@ class EfficiencyObjective(Objective):
     def evaluate(self, task: Task, attempt) -> TaskScore:
         answer = extract_answer(attempt.result or "")
         correct = answer == task.meta["target"]
-        cost = min(1.0, attempt.usage.total / _TOKEN_BUDGET)
+        input_tokens = getattr(attempt, "input_chars", 0) // _CHARS_PER_TOKEN
+        total = input_tokens + attempt.usage.out_tokens
+        cost = min(1.0, total / _TOKEN_BUDGET)
         score = (1.0 if correct else 0.0) - _LAMBDA * cost
         detail = "" if correct else f"expected {task.meta['target']!r}, got {answer!r}"
         return TaskScore(task.id, score, detail, attempt.wall_s)

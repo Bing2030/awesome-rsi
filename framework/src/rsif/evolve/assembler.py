@@ -21,6 +21,7 @@ def build_spec(store: ArtifactStore, mapping: dict[str, int],
                extra_memory: str = "") -> AgentSpec:
     spec = AgentSpec()
     memories: list[str] = []
+    memory_cap: int | None = None
 
     for aid in sorted(mapping):
         version = mapping[aid]
@@ -38,12 +39,30 @@ def build_spec(store: ArtifactStore, mapping: dict[str, int],
         elif atype == ArtifactType.MODULE:
             spec.module_source = _first_text(payload)
             spec.module_path = str(store.version_dir(aid, version))
+        elif atype == ArtifactType.POLICY:
+            memory_cap = _policy_cap(payload)
         # META artifacts are not part of the agent's runtime spec
 
     spec.memory = "\n\n".join(m for m in memories if m)
     if extra_memory:
         spec.memory = (spec.memory + "\n\n" + extra_memory).strip()
+    # context compaction [2609.20519]: the evolvable policy bounds how much
+    # memory is injected; a cap <= 0 means "inject everything".
+    if memory_cap is not None and memory_cap > 0 and len(spec.memory) > memory_cap:
+        spec.memory = spec.memory[:memory_cap]
     return spec
+
+
+def _policy_cap(payload: dict[str, str]) -> int | None:
+    """Read `max_memory_chars` from a POLICY payload; None if absent/malformed."""
+    for name in ("policy.json", "context.json"):
+        if name in payload:
+            try:
+                data = json.loads(payload[name])
+                return int(data.get("max_memory_chars", 0))
+            except (json.JSONDecodeError, TypeError, ValueError):
+                return None
+    return None
 
 
 def _first_text(payload: dict[str, str]) -> str:

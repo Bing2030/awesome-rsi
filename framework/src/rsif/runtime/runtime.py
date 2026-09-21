@@ -50,7 +50,11 @@ class AgentRuntime:
         max_steps = max_steps or self.default_max_steps
         start = time.monotonic()
 
-        session = Session(system=spec.compose_system())
+        system = spec.compose_system()
+        # input cost is the context actually injected (system + task); a
+        # cost-aware objective uses this to reward context compaction [2609.20519].
+        input_chars = len(system) + len(task_prompt)
+        session = Session(system=system)
         module_cls = self._load_module(spec)
         module = module_cls()
         ctx = ModuleContext(
@@ -70,6 +74,7 @@ class AgentRuntime:
                     trace.append(TraceStep("submit", result))
                     return Attempt(
                         task_id="", result=result, ok=True, usage=session.usage,
+                        input_chars=input_chars,
                         steps=ctx.steps_used, wall_s=time.monotonic() - start,
                         trace=trace,
                     )
@@ -91,7 +96,8 @@ class AgentRuntime:
             # budget exhausted without submission
             return Attempt(
                 task_id="", result=session.last_assistant_text(), ok=False,
-                usage=session.usage, steps=ctx.steps_used,
+                usage=session.usage, input_chars=input_chars,
+                steps=ctx.steps_used,
                 wall_s=time.monotonic() - start, trace=trace,
                 error="max_steps exhausted",
             )
@@ -103,7 +109,8 @@ class AgentRuntime:
         except Exception as e:  # noqa: BLE001 - capture, don't crash the loop
             return Attempt(
                 task_id="", result=session.last_assistant_text(), ok=False,
-                usage=session.usage, steps=ctx.steps_used,
+                usage=session.usage, input_chars=input_chars,
+                steps=ctx.steps_used,
                 wall_s=time.monotonic() - start, trace=trace, error=str(e),
             )
 

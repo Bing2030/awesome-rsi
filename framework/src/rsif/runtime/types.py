@@ -24,6 +24,7 @@ class Attempt:
     result: str  # the agent's submitted answer
     ok: bool = True
     usage: Usage = field(default_factory=Usage)
+    input_chars: int = 0  # length of the injected context (system prompt + task)
     steps: int = 0
     wall_s: float = 0.0
     trace: list[TraceStep] = field(default_factory=list)

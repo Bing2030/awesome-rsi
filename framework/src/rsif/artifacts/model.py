@@ -25,6 +25,7 @@ class ArtifactType(str, Enum):
     MEMORY = "memory"    # structured playbook sections [2510.04618]
     MODULE = "module"    # agent architecture code (module ABI) [2408.08435]
     META = "meta"        # the improver's own templates / operator catalog [2310.02304]
+    POLICY = "policy"    # runtime context-assembly bounds (context compaction) [2609.20519]
 
     @classmethod
     def parse(cls, value: str) -> "ArtifactType":

@@ -3,11 +3,12 @@
 A code-level walkthrough of what actually exists in `src/rsif/`, the design
 point each mechanism serves, and the evidence that it works. This is the
 investigation counterpart to `docs/design.md` (which carries the citation
-map): here every claim is anchored to a file and a test, and validated by a
-**third real project** (`projects/regex_agent/`) that was built through the
-public seams only and run against a live model.
+map): here every claim is anchored to a file and a test, and validated by
+**four real projects** built through the public seams only —
+`projects/regex_agent/` (run against a live model) and
+`projects/harness_efficiency/` (the cost-aware objective).
 
-Status: post-M13 (external review fixes). 119 offline tests + live runs.
+Status: post-M16 (harness-efficiency objective + evolvable context policy). 125 offline tests + live runs.
 
 ---
 
@@ -223,7 +224,7 @@ demo.
 
 ---
 
-## 10. The task-agnostic seam — three objectives, zero engine changes
+## 10. The task-agnostic seam — four objectives, zero engine changes
 
 **Implementation.** `objectives/base.py: Objective` protocol — `suites()`,
 `evaluate(task, attempt)`, `fitness(scorebook)`,
@@ -256,8 +257,23 @@ discipline make the model emit prose first, breaking the objective's
 first-line extraction contract — the gates kept that regression from ever
 deploying (details in `projects/README.md`).
 
+**Fourth real proof — `projects/harness_efficiency/`** (the first
+*cost-aware* objective): `EfficiencyObjective` folds token spend into
+correctness — `score = correctness − λ·min(1, (input_chars/4 + out_tokens)/500)`
+— a quality-first scalar floor that grounds SoL-Pi [2609.20519]'s
+"predeclared capability floor" *structurally*: cost can never promote a
+wrong answer (≤ −λ·cost) nor push a correct one below 0.9, so the existing
+val threshold + M13 paired net-gain floor enforce the floor unchanged. The
+deterministic test accepts a concise-correct candidate over a verbose-correct
+one (val 0.91→0.97) and screens a concise-wrong one. The same objective
+drives a new **POLICY** artifact (`policy/context`) that bounds injected
+memory — tightening it lowers `input_chars` and is accepted as context
+compaction (`test_context_policy_*`). `Attempt.input_chars` exposes the input
+side of token cost additively, so no other objective or golden byte changes.
+
 **Evidence.** `test_task_agnostic.py` (exact-match + arithmetic custom
-objective + structural guard), `test_regex_project.py` (this project).
+objective + structural guard), `test_regex_project.py` (this project),
+`test_harness_efficiency.py` (efficiency objective + policy bounds).
 
 ---
 
@@ -276,7 +292,7 @@ objective + structural guard), `test_regex_project.py` (this project).
 
 ## 12. Evidence index
 
-- Offline suite: `uv run pytest -q` — 119 passed (deterministic, no network).
+- Offline suite: `uv run pytest -q` — 125 passed (deterministic, no network).
 - Golden: `tests/golden/` — byte-identical reproduction across processes.
 - Live smoke (M10): glm-5.3-flash via the gateway; loop + budget + gate
   order verified on real completions.
@@ -284,3 +300,7 @@ objective + structural guard), `test_regex_project.py` (this project).
   improvement test (val 0.2 → 0.4 → 1.0) **and** a live gateway run
   (baseline val 0.6; two plausible regressions correctly rejected at the
   screen; 29 calls; no ratchet) — full record in `projects/README.md`.
+- Harness-efficiency project (M16): `projects/harness_efficiency/` — the
+  cost-aware objective (concise-correct accepted over verbose-correct,
+  concise-wrong screened) and the evolvable `policy/context` bound (context
+  compaction accepted), all offline and deterministic.
