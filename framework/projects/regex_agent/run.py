@@ -22,9 +22,11 @@ from rsif.artifacts.store import ArtifactStore
 from rsif.artifacts.workspace import RunWorkspace
 from rsif.config import RunConfig
 from rsif.evolve.engine import EvolutionEngine
+from rsif.llm.base import ProviderError
 from rsif.llm.factory import provider_from_config
 from rsif.observe import render
 from rsif.objectives.base import Split
+from rsif.safety.budget import BudgetExhausted
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -91,10 +93,21 @@ def main(argv: list[str] | None = None) -> int:
     # sealed test split: only looked at AFTER the run, for the report
     best = engine.archive.best()
     if best is not None:
-        book = engine.evaluate_snapshot(best.spec_snapshot,
-                                        _objective().suites()[Split.TEST],
-                                        label="final-test")
-        print(f"\nsealed test split on archive best: {book.mean():.2f}")
+        try:
+            book = engine.evaluate_snapshot(best.spec_snapshot,
+                                            _objective().suites()[Split.TEST],
+                                            label="final-test")
+            print(f"\nsealed test split on archive best: {book.mean():.2f}")
+        except (ProviderError, BudgetExhausted) as e:
+            # A provider error mid-run is already a *clean* engine abort (the
+            # summary above ends with stop_reason=error:<Type>). The sealed-test
+            # evaluation re-invokes the provider, so a rate limit / budget hit
+            # here must not turn a clean abort into a traceback (run #3 did,
+            # exit 1). Report it and exit 2, mirroring cmd_run/cmd_report.
+            tag = getattr(e, "origin", None) or getattr(e, "dimension", None)
+            print(f"\nsealed test split skipped: {type(e).__name__}"
+                  + (f" ({tag})" if tag else ""))
+            return 2
     return 0
 
 

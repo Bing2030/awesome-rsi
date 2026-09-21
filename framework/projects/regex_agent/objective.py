@@ -16,6 +16,7 @@ task-agnosticism the engine itself guarantees (recorded in the decision log).
 from __future__ import annotations
 
 import json
+import re
 
 from rsif.llm.base import extract_code_fence
 from rsif.objectives.base import (
@@ -75,20 +76,49 @@ def _prompt(key: str, positives: list[str], negatives: list[str]) -> str:
     return (
         f"Task {key}: produce ONE Python regular expression (a bare pattern\n"
         f"string, no flags, no delimiters) that matches ALL of {pos} and\n"
-        f"NONE of {neg}. Answer with the pattern alone."
+        f"NONE of {neg}.\n"
+        "You may reason step by step first, but the LAST line of your\n"
+        "answer must be the bare pattern alone (you may prefix it with\n"
+        "'FINAL ANSWER:')."
     )
 
 
+_FINAL_LINE_RE = re.compile(r"^\s*(?:final\s+answer|answer)\s*[:\-]\s*(.*)$",
+                            re.IGNORECASE)
+
+
 def extract_pattern(text: str) -> str:
-    """Pull the pattern out of the agent's answer: prefer a fenced block,
-    else the first non-empty line; strip wrapping quotes."""
-    candidate = extract_code_fence(text)
-    if candidate == text.strip():
-        # no fence: first non-empty line
-        for line in text.splitlines():
-            if line.strip():
-                candidate = line.strip()
-                break
+    """Pull the pattern out of the agent's answer.
+
+    Precedence (the M15 extraction-contract fix — two live runs showed that
+    verbosity-adding prompts make the model reason in prose first, and a
+    first-line-only extractor then scores a perfectly good answer 0):
+
+    1. the LAST 'FINAL ANSWER:' / 'Answer:' marked line (rest of the line,
+       or the next non-empty line if the marker stands alone);
+    2. a fenced code block;
+    3. the first non-empty line.
+
+    Wrapping quotes are stripped in every branch.
+    """
+    marker = ""
+    marker_idx = -1
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        m = _FINAL_LINE_RE.match(line)
+        if m:
+            marker, marker_idx = m.group(1).strip(), i
+    if marker_idx >= 0:
+        if marker:
+            candidate = marker
+        else:
+            candidate = next((l.strip() for l in lines[marker_idx + 1:]
+                              if l.strip()), "")
+    else:
+        candidate = extract_code_fence(text)
+        if candidate == text.strip():
+            # no fence: first non-empty line
+            candidate = next((l.strip() for l in lines if l.strip()), "")
     candidate = candidate.strip()
     if len(candidate) >= 2 and candidate[0] == candidate[-1] and candidate[0] in "'\"":
         candidate = candidate[1:-1]
