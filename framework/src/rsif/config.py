@@ -10,6 +10,10 @@ import json
 from dataclasses import asdict, dataclass, field, fields
 
 PROVIDERS = ("scripted", "anthropic", "openai", "litellm")
+# Built-in objective names (dispatched in objectives/objective_from_config).
+# The set is OPEN: any other non-empty name is allowed and identifies a
+# user-supplied Objective instance (tests, examples/, projects/) - the
+# engine never validates task names itself (task-agnostic seam).
 OBJECTIVES = ("code-tasks", "exact-match")
 
 
@@ -62,8 +66,8 @@ class RunConfig:
     def __post_init__(self) -> None:
         if self.provider not in PROVIDERS:
             raise ConfigError(f"provider must be one of {PROVIDERS}, got {self.provider!r}")
-        if self.objective not in OBJECTIVES:
-            raise ConfigError(f"objective must be one of {OBJECTIVES}, got {self.objective!r}")
+        if not self.objective:
+            raise ConfigError("objective must be a non-empty string")
         if not 0.0 <= self.temperature <= 2.0:
             raise ConfigError("temperature out of range")
         if self.acceptance_threshold < 0:

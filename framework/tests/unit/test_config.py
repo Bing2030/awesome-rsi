@@ -17,6 +17,16 @@ def test_invalid_provider_rejected():
         RunConfig(provider="nope")
 
 
+def test_objective_names_are_open():
+    """Task-agnostic seam: RunConfig accepts any objective name — built-in
+    dispatch happens in objective_from_config, and projects/tests hand the
+    engine a hand-constructed Objective (M14: the closed set contradicted
+    the engine's own structural guarantee)."""
+    assert RunConfig(objective="regex-tasks").objective == "regex-tasks"
+    with pytest.raises(ConfigError):
+        RunConfig(objective="")
+
+
 def test_roundtrip():
     cfg = RunConfig(model="claude-sonnet-5", acceptance_threshold=0.05)
     cfg.extra["custom_flag"] = 1
