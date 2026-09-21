@@ -8,6 +8,7 @@ PLAYBOOK_ID = "memory/playbook"
 IMPROVER_TEMPLATE_ID = "meta/improver-template"
 OPERATOR_CATALOG_ID = "meta/operator-catalog"
 DEFAULT_MODULE_ID = "module/default"
+CONTEXT_POLICY_ID = "policy/context"
 
 DEFAULT_SYSTEM_PROMPT = """\
 You are a careful Python-solving agent. Read the task, think, and answer with a
@@ -43,6 +44,12 @@ ONE bounded, testable change (a patch of at most {max_ops} operations).
   "rationale": "...",
   "ops": [ {op_schema} ]}}
 """
+
+# Default context-assembly policy: a generous bound on injected memory chars.
+# The runtime (assembler) truncates the assembled memory to this cap. A
+# cost-aware objective (see projects/harness_efficiency) rewards tightening it
+# when memory is not load-bearing, and rejects tightening it past usefulness.
+DEFAULT_CONTEXT_POLICY = '{\n  "max_memory_chars": 4000\n}'
 
 # Source of the default architecture module (implements the module ABI).
 DEFAULT_MODULE_CODE = '''\

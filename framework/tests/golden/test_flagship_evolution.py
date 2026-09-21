@@ -151,7 +151,7 @@ def test_flagship_loop(tmp_path):
     assert summary.accepted == 1 and summary.rejected == 1
     assert summary.best_fitness == 0.8
     assert summary.best_descriptor == ("prompt", 3, 0)
-    assert len(summary.best_snapshot) == 5  # all seed artifacts
+    assert len(summary.best_snapshot) == 6  # all seed artifacts (incl. policy)
 
     # checkout: A promoted (v2); B's v3 exists but stays dormant
     checkout = json.loads(ws.checkout_path.read_text())

@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — cost-aware evolution (SoL-Pi grounding) — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="artifacts.html">Component guide — the artifact store</a><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="memory.html">Component guide — memory</a><a href="objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="safety.html">Component guide — the safety stack</a><a href="observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — cost-aware evolution (SoL-Pi grounding)</h1>
+<p><em>The first objective that prices tokens — and the POLICY artifact that
+makes the harness&#39;s own context assembly evolvable.</em></p>
+<p>Files: <code>projects/harness_efficiency/{objective.py,run.py}</code>; engine-side
+support: <code>Attempt.input_chars</code> (<code>src/rsif/runtime/types.py</code>,
+<code>runtime.py</code>), <code>ArtifactType.POLICY</code> + the <code>policy/context</code> seed
+(<code>src/rsif/constants.py</code>, <code>store.seed_defaults</code>), the memory cap
+(<code>src/rsif/evolve/assembler.py</code>), the <code>policy/bound-context</code> operator
+(<code>src/rsif/operators_seed.py</code>), and <code>policy</code> in <code>FAST_SURFACES</code>
+(<code>src/rsif/evolve/scheduler.py</code>). Verified by
+<code>tests/integration/test_harness_efficiency.py</code> (5 tests).</p>
+<p>Grounding: SoL-Pi [2609.20519] — harness-layer auto-research under a
+token-efficiency objective gated by a <em>predeclared capability floor</em>.</p>
+<h2>The scalar quality-first floor</h2>
+<p><code>EfficiencyObjective.evaluate</code> folds cost into the per-task score:</p>
+<pre><code class="language-python">answer   = extract_answer(attempt.result)          # text after the last &quot;ANSWER:&quot;
+correct  = answer == task.meta[&quot;target&quot;]
+tokens   = attempt.input_chars // 4 + attempt.usage.out_tokens   # in + out
+cost     = min(1.0, tokens / 500)
+score    = (1.0 if correct else 0.0) - 0.1 * cost
+</code></pre>
+<p>with λ = 0.1 and a 500-token budget per task. This is a <strong>scalar floor,
+not a pareto gate</strong> (a deliberate design choice):</p>
+<ul>
+<li>Cost can never promote a wrong answer (wrong ≤ −λ·cost &lt; 0 &lt; any correct
+answer&#39;s ≥ 0.9).</li>
+<li>Cost can never push a correct answer below 1 − λ = 0.9.</li>
+<li>Therefore <strong>the existing gates enforce the capability floor unchanged</strong>:
+the val threshold (θ = 0.02) and the M13 paired net-gain floor still run
+exactly as before. No new gate was added anywhere.</li>
+</ul>
+<p>The task pack is a deliberately trivial echo task (&quot;output the exact string
+<code>&#39;42&#39;</code> after the marker <code>ANSWER:</code>&quot;) so that correctness and token cost are
+the only things that vary — the isolated signal an efficiency objective
+needs. <code>extract_answer</code> takes the text after the <strong>last</strong> <code>ANSWER:</code> marker
+(learning the M14 lesson: prefer a marked final line over the first line).</p>
+<h2>Input cost: <code>Attempt.input_chars</code></h2>
+<p>Cost-awareness needs both sides of the token bill. The runtime records
+<code>input_chars = len(compose_system()) + len(task_prompt)</code> — the context
+actually injected — on every attempt. The field is <strong>additive</strong> (default 0)
+and deliberately does <em>not</em> touch <code>session.usage</code> or budget accounting, so
+no other objective, no golden byte, and no budget behavior changes.</p>
+<h2>The POLICY artifact (<code>policy/context</code>)</h2>
+<p>The harness&#39;s context assembly becomes evolvable data:</p>
+<pre><code class="language-json">{ &quot;max_memory_chars&quot;: 4000 }
+</code></pre>
+<p><code>build_spec</code> truncates the <strong>total</strong> injected memory (playbook + retrieved
+insights/reflections) to this cap after assembly (cap ≤ 0 = inject
+everything). Tightening the cap lowers <code>input_chars</code> on every task — which
+raises the efficiency score if correctness holds. So:</p>
+<ul>
+<li>the <strong>output axis</strong>: prompt edits that make answers concise;</li>
+<li>the <strong>input axis</strong>: <code>policy/bound-context</code> edits that make contexts
+smaller.</li>
+</ul>
+<p>Both are ordinary operator proposals through the ordinary gates. <code>policy</code>
+is a <strong>fast surface</strong> — it rides the every-generation cadence like
+prompt/skill/memory/module (only META is slow).</p>
+<h2>The proofs (offline, deterministic)</h2>
+<ol>
+<li><strong>Concise beats verbose</strong> — baseline answers verbosely (~1170 chars of
+reasoning); candidate 1 answers concisely; candidate 2 answers
+concisely but <em>wrong</em>. Result: candidate 1 accepted and promoted (val
+0.91 → 0.97, clearing θ with a ~0.06 gap); candidate 2 rejected at the
+cascade screen (train score ≈ −0.01, nowhere near its parent).</li>
+<li><strong>Context compaction is accepted</strong> — baseline carries a large,
+non-load-bearing memory artifact; the proposal tightens
+<code>max_memory_chars</code> 4000 → 100 via <code>policy/bound-context</code>. Correctness
+is unchanged (both agents echo correctly), <code>input_chars</code> drops, the val
+gap clears θ, the edit is accepted and <code>policy/context</code> advances v1 →
+v2. A unit test separately pins that the cap really truncates the
+assembled spec&#39;s memory.</li>
+</ol>
+<h2>Live runner</h2>
+<p><code>projects/harness_efficiency/run.py</code> mirrors the regex_agent runner —
+gateway provider, hard budgets (USD/calls/wall), disk-cached responses,
+fail-closed META, val trace + spend printed, sealed test split evaluated
+after the run:</p>
+<pre><code class="language-bash">cd framework
+uv run python -m projects.harness_efficiency.run --run ../runs/eff \
+    --model glm-5.3-flash --generations 2 --proposals 1
+</code></pre>
+<p>No live run is committed for this project — the seam is proven
+deterministically offline; the runner exists for the real thing.</p>
+<h2>Design decisions worth remembering</h2>
+<ul>
+<li><strong>Scalar floor over pareto gate</strong> — chosen because the existing gate
+chain then <em>is</em> the capability floor; a pareto surface would have needed
+new archive semantics (cost as a second objective dimension) and new
+acceptance logic.</li>
+<li><strong>Fold cost into the task score, not the fitness only</strong> — so the paired
+net-gain floor sees per-task cost movements, and a candidate that saves
+tokens on <em>every</em> task (either axis) clears it on a pure efficiency gain.</li>
+<li><strong>Calibration</strong> — λ = 0.1, budget = 500 tokens: both proof scenarios
+clear θ = 0.02 with ~3× margin while correct scores stay ≥ 0.9. If you
+retune budgets or answer styles, re-check those margins.</li>
+<li><strong>What SoL-Pi&#39;s floor means here</strong> — &quot;predeclared capability floor&quot; is
+realized <em>structurally</em>: the objective&#39;s formula is fixed before the run,
+and no candidate can trade correctness for cost past the floor because
+the floor is inside the score, enforced by the unchanged acceptance
+gates.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="objectives.html">← Component guide — objectives: the task-agnostic seam</a><a class="pn next" href="safety.html">Component guide — the safety stack →</a></div></main></div></body></html>

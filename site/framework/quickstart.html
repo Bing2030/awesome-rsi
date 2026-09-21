@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif Quickstart — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif Quickstart</h1>
+<p>A complete offline walkthrough in under a minute — no API key, no network.
+(The scripted demo provider plays both the agent and the improver; see
+<code>src/rsif/llm/demo.py</code>. The story it tells: on a 10-task held-out val suite
+the agent&#39;s fitness goes 0.4 → 0.6 → 1.0 through two promoted prompt edits;
+a third, weaker edit is kept as an archive stepping stone but <strong>not</strong>
+deployed.)</p>
+<pre><code class="language-bash">cd framework
+uv sync
+
+# 1. scaffold a workspace (versioned artifacts + seed agent)
+uv run rsif init ../runs/demo --objective code-tasks --provider scripted
+
+# 2. run the self-improvement loop: 3 generations x 1 proposal
+uv run rsif evolve --run ../runs/demo --generations 3 --proposals 1
+#   generations: 3
+#   accepted:    3        (two promoted, one stepping stone)
+#   best:        fitness 1.0000  descriptor [prompt, 4, 0]
+
+# 3. inspect the run
+uv run rsif status --run ../runs/demo          # archive table, spend, alarms
+uv run rsif inspect --run ../runs/demo --events --tail 15
+uv run rsif inspect --run ../runs/demo --filter kind=accept
+uv run rsif inspect --run ../runs/demo --artifact prompt/system
+
+# 4. evaluate the active agent
+uv run rsif run --run ../runs/demo --split val          # 1.0000 (10/10)
+
+# 5. unseal the test split on the archive best (bootstrap CI included)
+uv run rsif report --run ../runs/demo
+
+# 6. time travel (history is append-only; v2+ files are kept)
+uv run rsif rollback --run ../runs/demo --artifact prompt/system --to 1
+uv run rsif run --run ../runs/demo --split val          # back to 0.4000
+uv run rsif rollback --run ../runs/demo --artifact prompt/system --to 3
+</code></pre>
+<h2>With a real model</h2>
+<pre><code class="language-bash">export ANTHROPIC_API_KEY=sk-...
+uv sync --extra anthropic
+uv run --extra anthropic rsif init ../runs/live --provider anthropic \
+    --model claude-sonnet-5
+uv run --extra anthropic rsif evolve --run ../runs/live \
+    --generations 2 --proposals 1 --budget-usd 1.0
+</code></pre>
+<p>META edits (the improver improving its own template) pause for an
+interactive y/N approval when stdin is a TTY; non-interactive runs deny
+them fail-closed. An approved META edit is accepted provisionally and then
+confirmed or reverted based on the improver&#39;s proposal success rate over
+the next <code>meta_eval_window</code> generations. Hard budgets (<code>--budget-usd</code>, plus
+call/wall-clock caps in <code>config.json</code>) stop the run cleanly at any boundary.</p>
+<h2>Where to look next</h2>
+<ul>
+<li><code>docs/index.md</code> — the documentation map and reading paths</li>
+<li><code>docs/architecture.md</code> — the system map, trust boundary, data flow</li>
+<li><code>docs/lifecycle.md</code> — one proposal through every gate and event</li>
+<li><code>docs/components/</code> — one guide per subsystem (engine, artifacts, runtime,
+memory, objectives, safety, observability, efficiency)</li>
+<li><code>docs/design.md</code> — every mechanism, its paper citation, code path, test</li>
+<li><code>tests/golden/test_flagship_evolution.py</code> — the byte-reproducible loop</li>
+<li><code>examples/custom_objective.py</code> — plug in your own objective (~30 lines)</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="index.html">← rsif documentation</a><a class="pn next" href="architecture.html">Architecture — the system map →</a></div></main></div></body></html>

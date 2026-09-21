@@ -175,7 +175,7 @@ def test_load_catalog_and_validate(ws, store):
     from rsif.evolve.operators import load_catalog, render_operators, validate_operator
 
     catalog = load_catalog(store)
-    assert len(catalog) == 8
+    assert len(catalog) == 9
     assert "prompt/refine" in render_operators(catalog)
     assert validate_operator(catalog, "prompt/refine", "prompt")
     assert not validate_operator(catalog, "prompt/refine", "skill")  # mismatch

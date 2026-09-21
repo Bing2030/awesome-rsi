@@ -20,6 +20,85 @@ const curated = JSON.parse(fs.readFileSync(path.join(SITE, 'curated.json'), 'utf
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// ---- rsif framework docs (framework/docs/*.md -> site/framework/*.html) ----
+// `node site/generate.mjs --docs-only` builds just these pages, fully offline
+// (no arxiv / repo-README fetching) - convenient while iterating on the docs.
+const DOCS_ONLY = process.argv.includes('--docs-only');
+const DOCS_ROOT = path.join(ROOT, 'framework', 'docs');
+const DOCS_MANIFEST = [
+  { group: 'Start', items: ['index.md', 'quickstart.md'] },
+  { group: 'Understand', items: ['architecture.md', 'concepts.md', 'lifecycle.md'] },
+  { group: 'Component guides', items: ['components/artifacts.md', 'components/engine.md', 'components/runtime.md', 'components/memory.md', 'components/objectives.md', 'components/efficiency.md', 'components/safety.md', 'components/observability.md'] },
+  { group: 'Reference & records', items: ['design.md', 'investigation.md', 'plan.md', 'decision-log.md'] },
+];
+
+function docTitle(md, fallback) {
+  const m = md.match(/^#\s+(.+)$/m);
+  return m ? m[1].trim() : fallback;
+}
+
+// relative href from one doc page's directory to another doc's slug
+function docHref(fromSlug, toSlug) {
+  const fromDir = path.posix.dirname(fromSlug);
+  const rel = fromDir === '.' ? toSlug : path.posix.relative(fromDir, toSlug);
+  return rel + '.html';
+}
+
+function rewriteDocLinks(html, slug) {
+  const known = new Set(DOCS_MANIFEST.flatMap((g) => g.items).map((i) => i.replace(/\.md$/, '')));
+  const fromDir = path.posix.dirname(slug);
+  return html.replace(/(<a\s[^>]*?href=")([^"]+?\.md(?:#[^"]*)?)(")/g, (m, pre, href, post) => {
+    const hashSplit = href.split('#');
+    const target = path.posix.normalize(path.posix.join(fromDir === '.' ? '' : fromDir, hashSplit[0])).replace(/\.md$/, '');
+    if (known.has(target)) {
+      const rel = fromDir === '.' ? target : path.posix.relative(fromDir, target);
+      return pre + rel + '.html' + (hashSplit[1] !== undefined ? '#' + hashSplit[1] : '') + post;
+    }
+    return m; // outside the docs tree: leave untouched (still valid on GitHub)
+  });
+}
+
+function buildFrameworkDocs() {
+  const flat = DOCS_MANIFEST.flatMap((g) => g.items);
+  const bySlug = new Map(flat.map((item) => [item.replace(/\.md$/, ''), item]));
+  const sidebarFor = (cur) => DOCS_MANIFEST.map((g) => {
+    const links = g.items.filter((i) => i !== cur).map((i) => {
+      const slug = i.replace(/\.md$/, '');
+      const md = fs.readFileSync(path.join(DOCS_ROOT, i), 'utf8');
+      return `<a href="${esc(docHref(cur.replace(/\.md$/, ''), slug))}">${esc(docTitle(md, slug))}</a>`;
+    }).join('');
+    return `<div class="dg">${esc(g.group)}</div>${links}`;
+  }).join('');
+
+  let n = 0;
+  for (const item of flat) {
+    const slug = item.replace(/\.md$/, '');
+    const md = fs.readFileSync(path.join(DOCS_ROOT, item), 'utf8');
+    const idx = flat.indexOf(item);
+    const prev = idx > 0 ? flat[idx - 1] : null;
+    const next = idx < flat.length - 1 ? flat[idx + 1] : null;
+    const prevSlug = prev && prev.replace(/\.md$/, '');
+    const nextSlug = next && next.replace(/\.md$/, '');
+    const prevHtml = prev ? `<a class="pn prev" href="${esc(docHref(slug, prevSlug))}">← ${esc(docTitle(fs.readFileSync(path.join(DOCS_ROOT, prev), 'utf8'), prevSlug))}</a>` : '';
+    const nextHtml = next ? `<a class="pn next" href="${esc(docHref(slug, nextSlug))}">${esc(docTitle(fs.readFileSync(path.join(DOCS_ROOT, next), 'utf8'), nextSlug))} →</a>` : '';
+
+    const body = rewriteDocLinks(sanitizeHtml(marked.parse(md)), slug);
+    const up = '../'.repeat(slug.split('/').length); // site/framework/<...>.html -> site/
+    const out = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${esc(docTitle(md, slug))} — rsif docs</title><link rel="stylesheet" href="${up}assets/style.css"></head><body><nav class="crumbs"><a href="${up}index.html">← All resources</a> · <a href="${esc(docHref(slug, 'index'))}">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="${esc(docHref(slug, 'index'))}">rsif docs</a></div>${sidebarFor(item)}</aside><main class="docs-main"><article class="readme-html">${body}</article><div class="docs-prevnext">${prevHtml}${nextHtml}</div></main></div></body></html>`;
+    const outPath = path.join(SITE, 'framework', slug + '.html');
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, out);
+    n++;
+  }
+  return n;
+}
+
+const DOCS_BUILT = buildFrameworkDocs();
+if (DOCS_ONLY) {
+  console.log(`framework docs: ${DOCS_BUILT} pages -> site/framework/`);
+  process.exit(0);
+}
+
 // ---- slugs ----
 const NON_ARXIV_SLUG = {
   'https://www.nature.com/articles/s41586-023-06924-6': 'nature-funsearch-2024',
@@ -276,7 +355,7 @@ function apply(){
 }
 q.addEventListener('input',apply); ft.addEventListener('change',apply); fd.addEventListener('change',apply); apply();
 </script>`;
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RSI Study — All Resources</title><link rel="stylesheet" href="assets/style.css"></head><body><div class="catalog-head"><h1>RSI Study</h1><p class="sub">${pages.length} resources, each with a dedicated distilled page. Filter by type and depth, or search keywords, authors, and concepts.</p></div><div class="search"><input id="q" type="search" placeholder="Search keywords, authors, concepts…"></div><div class="filters"><label>Type <select id="ftype"><option value="all">All</option><option value="paper">Papers</option><option value="repo">Repositories</option></select></label><label>Depth <select id="fdepth"><option value="all">All</option><option value="full">Read fully</option><option value="skim">Skim</option><option value="code">Hands-on</option></select></label><span id="count" class="count"></span></div><div class="wrap">${items}<div class="empty" id="none" style="display:none">No resources match.</div></div>${js}</body></html>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RSI Study — All Resources</title><link rel="stylesheet" href="assets/style.css"></head><body><div class="catalog-head"><h1>RSI Study</h1><p class="sub">${pages.length} resources, each with a dedicated distilled page. Filter by type and depth, or search keywords, authors, and concepts.</p><div class="fw-cta"><strong>rsif</strong> — the recursive self-improvement framework built from this list. <a href="framework/index.html">Design &amp; implementation docs →</a></div></div><div class="search"><input id="q" type="search" placeholder="Search keywords, authors, concepts…"></div><div class="filters"><label>Type <select id="ftype"><option value="all">All</option><option value="paper">Papers</option><option value="repo">Repositories</option></select></label><label>Depth <select id="fdepth"><option value="all">All</option><option value="full">Read fully</option><option value="skim">Skim</option><option value="code">Hands-on</option></select></label><span id="count" class="count"></span></div><div class="wrap">${items}<div class="empty" id="none" style="display:none">No resources match.</div></div>${js}</body></html>`;
 }
 
 // ---- write ----

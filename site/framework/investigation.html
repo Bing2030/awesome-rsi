@@ -1,0 +1,316 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif Implementation Investigation — Details &amp; Design Points — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif Implementation Investigation — Details &amp; Design Points</h1>
+<p>A code-level walkthrough of what actually exists in <code>src/rsif/</code>, the design
+point each mechanism serves, and the evidence that it works. This is the
+investigation counterpart to <code>docs/design.md</code> (which carries the citation
+map): here every claim is anchored to a file and a test, and validated by
+<strong>four real projects</strong> built through the public seams only —
+<code>projects/regex_agent/</code> (run against a live model) and
+<code>projects/harness_efficiency/</code> (the cost-aware objective).</p>
+<p>Status: post-M16 (harness-efficiency objective + evolvable context policy). 125 offline tests + live runs.</p>
+<hr>
+<h2>1. Trust boundary — the engine is frozen, the agent is data</h2>
+<p><strong>Implementation.</strong> <code>evolve/engine.py</code> (<code>EvolutionEngine</code>) and everything it
+imports directly (<code>artifacts/</code>, <code>safety/</code>, <code>evolve/selection|archive</code>) are
+trusted process code; the agent&#39;s entire configuration — module code,
+prompts, skills, memory, improver templates — lives in the <code>ArtifactStore</code>
+as versioned <em>data</em>. The runtime ABI (<code>runtime/module_api.py</code>) is the only
+surface evolved code touches: <code>ModuleContext</code> exposes task, session, tools,
+step counters — never the store, engine, or provider.</p>
+<p><strong>Design point.</strong> DGM/ADAS-style self-modification without the runaway risk:
+an evolved artifact cannot structurally break its own selection loop in v1
+[2505.22954, 2408.08435, 2410.04444]. The improver-improves-itself axis is
+not sacrificed — it runs through META artifacts under stricter gates (§5).</p>
+<p><strong>Honest boundary (post-M13).</strong> MODULE code is exec&#39;d in-process behind the
+import whitelist (<code>sandbox/guards.py</code>, <code>runtime/loader.py</code>); SKILL code runs
+in the subprocess sandbox. Network egress from the sandbox child is not
+blocked; the scrubbed environment removes the exfiltration prize.</p>
+<p><strong>Evidence.</strong> <code>test_meta_and_module.py</code> (module edits gated, <code>import os</code>
+rejected pre-execution), <code>test_sandbox.py</code> (whitelist incl. transitive
+escapes, env scrubbing).</p>
+<hr>
+<h2>2. Artifact store — everything improvable is versioned</h2>
+<p><strong>Implementation.</strong> <code>artifacts/store.py</code>: immutable <code>artifacts/&lt;id&gt;/vN/</code>
+dirs (rewriting raises), append-only <code>lineage.jsonl</code>
+(<code>create|update|delete|restore</code>), mutable checkout manifest
+(<code>checkout.json</code>). <code>apply_patch()</code> materializes candidate versions
+<strong>without activation</strong>; <code>promote()</code> activates only after acceptance;
+<code>restore()</code> appends — history is never rewritten.</p>
+<p><strong>Design point.</strong> The empirical validation gate is a <em>structural property
+of the store</em>, not a convention: there is no code path from &quot;candidate
+written&quot; to &quot;agent changed&quot; that bypasses acceptance [2505.22954, 2605.23904].</p>
+<p><strong>Evidence.</strong> <code>test_store.py</code> (immutability raises; rollback restores
+byte-identical; lineage append-only with parent refs); the flagship golden
+run (a rejected candidate&#39;s v3 exists on disk but never reaches checkout).</p>
+<hr>
+<h2>3. The five-phase loop</h2>
+<p><strong>Implementation.</strong> <code>engine._one_proposal</code> — every event is
+phase-attributed (<code>observe/events.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Code path</th>
+<th>Guard</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 proposal</td>
+<td><code>evolve/proposer.py</code> — Improver over the ACTIVE META template; prompt = checkout summary + archive frontier + superseded lineages + lessons</td>
+<td>scheduler (<code>evolve/scheduler.py</code>) closes surfaces; META needs approval</td>
+</tr>
+<tr>
+<td>2 design</td>
+<td>bounds (<code>max_patch_ops</code>) + operator-catalog validation + <code>apply_patch</code> + <strong>static scan / module-load gates before any execution</strong></td>
+<td><code>sandbox/guards.py</code>, <code>runtime/loader.py</code></td>
+</tr>
+<tr>
+<td>3 exploration</td>
+<td>cascade screen on sampled train tasks (<code>selection.pass_screen</code>, <code>child ≥ parent − ε</code>)</td>
+<td>cheap: a far-below-parent candidate never reaches expensive gates [2506.13131]</td>
+</tr>
+<tr>
+<td>4 verification</td>
+<td>canary (<code>child ≥ parent</code>) → train → <strong>val acceptance</strong> (§4)</td>
+<td>execution-grounded only [2310.01798]</td>
+</tr>
+<tr>
+<td>5 correction</td>
+<td>accept → promote/archive/insight; reject → reflection + discard (<code>rollback</code> event, checkout unchanged)</td>
+<td>Reflexion [2303.11366], ExpeL [2308.10144]</td>
+</tr>
+</tbody></table>
+<p><strong>Evidence.</strong> <code>tests/golden/test_flagship_evolution.py</code> asserts per-proposal
+phase monotonicity on a byte-identical golden log; the regex project&#39;s
+offline test asserts the same phases on a third objective.</p>
+<hr>
+<h2>4. Acceptance machinery — four layers</h2>
+<p><strong>Implementation.</strong> <code>evolve/selection.py</code> + engine:</p>
+<ol>
+<li><strong>Paired net-gain floor</strong> (M13): <code>accept_val</code> requires the child to beat
+the parent on ≥1 net val <em>task</em>, not just a mean threshold — on small
+suites a mean can move by threshold amounts through noise.</li>
+<li><strong>Canary gate</strong>: canaries never regress (hard reject).</li>
+<li><strong>Two-level acceptance</strong> (M8): <em>archive-acceptance</em> (beats its sampled
+parent → enters its MAP-Elites niche as a stepping stone) is separate
+from <em>promotion</em> (must also beat the ACTIVE agent). The deployed agent
+cannot ratchet down through weak sampled parents.</li>
+<li><strong>META eval window</strong> (M13): a META-only patch leaves the agent
+byte-identical, so it is accepted provisionally on non-regression and
+judged by its proposals&#39; success rate over <code>meta_eval_window</code> (default 3)
+generations → <code>meta_confirm</code> / <code>meta_revert</code> (append-only restore).
+One META experiment at a time (<code>meta_pending</code>).</li>
+</ol>
+<p><strong>Design point.</strong> Every accept/reject decision is execution-grounded and
+noise-aware; the one signal that <em>cannot</em> be measured immediately (improver
+quality) is measured on the timescale where it exists [2605.23904, 2310.01798,
+1504.04909, 2310.02304].</p>
+<p><strong>Evidence.</strong> <code>test_safety_loop.py</code> (ratchet test, budget, provider
+errors), <code>test_meta_and_module.py</code> (provisional→revert with the original
+template provably re-used; confirm-on-win; pending guard), <code>test_cli.py</code>
+(demo story 0.4 → 0.6 → 1.0 + non-promoted 0.9 stepping stone).</p>
+<hr>
+<h2>5. Archive — quality-diversity that actually pressures exploration</h2>
+<p><strong>Implementation.</strong> <code>evolve/archive.py</code>: niches keyed by
+objective-supplied behavior descriptors; one elite per cell (ties → lower
+cost); <strong>harmonic rank-biased</strong> parent sampling (<code>1/(rank+1)</code>, every elite
+selectable); <strong>ε-reseeding from superseded lineages</strong> — individuals
+displaced in their own niche re-enter parent sampling with probability 0.2.</p>
+<p><strong>Design point.</strong> Keep rare/older/weaker agents in play: stepping stones
+[1901.01753], DGM&#39;s greedy-best-parent ablation losing ~10 points on
+SWE-bench is the independent evidence for non-greedy parent choice
+[2505.22954].</p>
+<p><strong>Correction on the record (M13).</strong> The originally documented
+&quot;ε-underfilled-niche reseeding&quot; was provably inert (cells never shrink ⇒
+the underfilled set is always empty); <code>parent_ref</code>-based re-seeding was
+never wired. The current superseded-reseeding is real and tested; <code>parent_ref</code>
+remains lineage metadata only.</p>
+<p><strong>Evidence.</strong> <code>test_evolve.py</code> (elitism, tie-break, frontier order, rank
+bias, ε-reseed firing, persistence).</p>
+<hr>
+<h2>6. Memory — three layers, honestly thin</h2>
+<p><strong>Implementation.</strong> <code>memory/episodic.py</code> (Reflexion-style reflections on
+every rejection, retrieved by lexical TF-IDF), <code>memory/insights.py</code> (ExpeL
+distillation from verified successes only, provenance + usage-based
+retirement), <code>memory/playbook.py</code> (ACE-style bounded section ops on the
+assembled context), <code>memory/retrieve.py</code> (hand-rolled TF-IDF + stemmer
+behind a Retriever protocol).</p>
+<p><strong>Design point.</strong> Verified-trajectory-only distillation guards against
+insight collapse [2510.16657]; bounded playbook ops guard context bloat
+[2510.04618].</p>
+<p><strong>Known limitation (open, L2).</strong> Rejection reflections are built from ids +
+scores + gate reasons — not full task trajectories — so the <em>informational
+content</em> of memory is low even though the machinery is correct. Feeding
+real failing traces is the highest-value next improvement.</p>
+<p><strong>Evidence.</strong> <code>test_memory*.py</code> (retrieval ranks similar over dissimilar;
+distill/retire; playbook rejects unbounded rewrites).</p>
+<hr>
+<h2>7. Runtime &amp; the module ABI — architecture as evolvable code</h2>
+<p><strong>Implementation.</strong> <code>runtime/runtime.py</code> interprets an <code>AgentSpec</code>
+(assembled by <code>evolve/assembler.py</code> from a version mapping): system prompt,
+skills-as-tools, memory text, module code. <code>module_api.py</code> defines
+<code>AgentModule.step(ctx) → LLMAction | ToolAction | SubmitAction | ReflectAction</code>. Skills execute via <code>runtime._run_skill</code> in the sandbox with
+execution feedback appended to the session [2305.16291].</p>
+<p><strong>Design point.</strong> Architecture search happens inside a fixed envelope
+[2408.08435]; <code>ReflectAction</code> is advisory context only — self-critique is
+never the accept signal [2310.01798].</p>
+<p><strong>Known limitation (open, L3).</strong> The behavior descriptor&#39;s pass-band
+component partially encodes fitness (a QD anti-pattern); diversity pressure
+is weaker than the MAP-Elites framing suggests.</p>
+<p><strong>Evidence.</strong> <code>test_runtime.py</code>, <code>test_meta_and_module.py</code> (evolved
+retry-reflect module visibly changes the request stream: self-critique in
+retry calls).</p>
+<hr>
+<h2>8. Safety stack — misevolution as the expected case</h2>
+<p><strong>Implementation.</strong></p>
+<ul>
+<li><strong>Budget</strong> (<code>safety/budget.py</code>): hard caps on calls/USD/wall-clock,
+checked before each proposal <em>and after every recorded call</em> (M13:
+overshoot bounded to one call). <code>BudgetExhausted</code> propagates through the
+runtime (never scored as a 0-valued attempt).</li>
+<li><strong>Drift monitor</strong> (<code>safety/drift.py</code>): generation-end canary/active
+regression → auto-rollback to archive best (<code>safety/rollback.py</code>,
+restore-lineage, extras deactivated); stagnation → approval-or-stop.</li>
+<li><strong>Approvals</strong> (<code>safety/approvers.py</code>): <code>CLIApprover</code> for META edits and
+drift continuation; fail-closed without a TTY.</li>
+<li><strong>Provider errors</strong> (<code>llm/base.py:ProviderError</code> with <code>origin</code>): clean
+abort with <code>run_end.stop_reason=&quot;error:&lt;Origin&gt;&quot;</code>; engine bugs are
+distinguished as <code>engine:&lt;Type&gt;</code> (M13).</li>
+<li><strong>Static scan</strong> (<code>sandbox/guards.py</code>): import <strong>whitelist</strong> (pure stdlib<ul>
+<li><code>rsif.runtime.module_api</code>).</li>
+</ul>
+</li>
+<li><strong>Sandbox</strong> (<code>sandbox/exec.py</code>): <code>python -I</code>, temp cwd, CPU/wall
+timeouts, rlimits, PATH-only environment.</li>
+</ul>
+<p><strong>Design point.</strong> Guard layers before execution, rollback that never
+rewrites history, and budgets that cannot be argued with [2603.03329,
+2509.26354, 2603.06333, 2506.13131].</p>
+<p><strong>Independent corroboration.</strong> SoL-Pi [2609.20519] — harness-layer
+auto-research under a token-efficiency objective — independently lands on
+the same two commitments, applied one layer down: a <strong>predeclared capability
+floor</strong> (token savings only count within a quality tolerance — rsif&#39;s
+never-regress gate) and <strong>cheap-gates-first cost control</strong> (its
+per-mechanism low-cost admission gate is rsif&#39;s cascade screen). It also
+names the one thing rsif&#39;s budget treats as a <em>cap</em>, not an <em>objective</em>:
+optimizing efficiency itself under a quality floor.</p>
+<p><strong>Evidence.</strong> <code>test_safety.py</code>, <code>test_safety_loop.py</code> (all seven,
+including the one-call-overshoot abort), <code>test_sandbox.py</code>.</p>
+<hr>
+<h2>9. Determinism engineering</h2>
+<p><strong>Implementation.</strong> Explicit <code>random.Random</code> threading; scripted/demo
+providers (<code>llm/mock.py</code>, <code>llm/demo.py</code> — content-addressed by role +
+request text); eval memoization keyed on <code>(mapping, split, task-ids)</code>;
+disk-cached real providers (<code>llm/cache.py</code>); event payloads carry only
+ids/scores/decisions; timestamp-free rendering.</p>
+<p><strong>Design point.</strong> A self-improvement loop whose <em>acceptance decisions</em>
+cannot be replayed is unfalsifiable. Byte-identical goldens make every
+accept/reject auditable after the fact.</p>
+<p><strong>Evidence.</strong> The golden test reproduces <code>events.jsonl</code> /
+<code>archive.json</code> / <code>checkout.json</code> / <code>lineage.jsonl</code> byte-identically across
+processes; <code>test_cli.py</code> asserts cross-process event-stream equality on the
+demo.</p>
+<hr>
+<h2>10. The task-agnostic seam — four objectives, zero engine changes</h2>
+<p><strong>Implementation.</strong> <code>objectives/base.py: Objective</code> protocol — <code>suites()</code>,
+<code>evaluate(task, attempt)</code>, <code>fitness(scorebook)</code>,
+<code>behavior_descriptors(scorebook)</code>, <code>canaries()</code>. The engine imports no
+concrete objective (a structural guard test asserts this on the engine&#39;s
+source). Built-ins: <code>code-tasks</code> (sandboxed hidden tests), <code>exact-match</code>
+(plain-text equality).</p>
+<p><strong>Third real proof — <code>projects/regex_agent/</code></strong> (this investigation&#39;s
+validation project): a custom <code>RegexObjective</code> (produce a pattern matching
+given positives/negatives; graded by compiling and executing <code>re</code> in the
+sandbox), driven through the <code>EvolutionEngine</code> API against a live gateway
+model, plus a deterministic offline test (<code>tests/integration/ test_regex_project.py</code>) showing val 0.2 → 0.4 → 1.0 through two accepted
+prompt edits. Building it required <strong>one</strong> core change: <code>RunConfig</code>&#39;s
+closed objective-name set (a config-level contradiction of the
+task-agnostic claim) was relaxed to any non-empty name — recorded in the
+decision log. The project&#39;s solvability invariant caught one badly
+designed task before it could poison scoring (<code>colou?r</code> vs &quot;colorr&quot;),
+the same class of bug the M13 suite-growth caught.</p>
+<p><strong>Live gateway run (2026-09-21, glm-5.3-flash, 29 calls, exit 0):</strong>
+baseline train 1.0 / canary 1.0 / <strong>val 0.6</strong> (a real generalization gap);
+both real-improver proposals were <strong>correctly rejected at the cascade
+screen</strong> (train 0.5 and 0.0 vs parent 1.0), the g1 reflection visibly
+shaped the g2 proposal, no ratchet (active stayed at seed), sealed test
+0.5 on the archive best. The run also surfaced a genuine emergent
+interaction: prompt strategies that add &quot;verify before answering&quot;
+discipline make the model emit prose first, breaking the objective&#39;s
+first-line extraction contract — the gates kept that regression from ever
+deploying (details in <code>projects/README.md</code>).</p>
+<p><strong>Fourth real proof — <code>projects/harness_efficiency/</code></strong> (the first
+<em>cost-aware</em> objective): <code>EfficiencyObjective</code> folds token spend into
+correctness — <code>score = correctness − λ·min(1, (input_chars/4 + out_tokens)/500)</code>
+— a quality-first scalar floor that grounds SoL-Pi [2609.20519]&#39;s
+&quot;predeclared capability floor&quot; <em>structurally</em>: cost can never promote a
+wrong answer (≤ −λ·cost) nor push a correct one below 0.9, so the existing
+val threshold + M13 paired net-gain floor enforce the floor unchanged. The
+deterministic test accepts a concise-correct candidate over a verbose-correct
+one (val 0.91→0.97) and screens a concise-wrong one. The same objective
+drives a new <strong>POLICY</strong> artifact (<code>policy/context</code>) that bounds injected
+memory — tightening it lowers <code>input_chars</code> and is accepted as context
+compaction (<code>test_context_policy_*</code>). <code>Attempt.input_chars</code> exposes the input
+side of token cost additively, so no other objective or golden byte changes.</p>
+<p><strong>Evidence.</strong> <code>test_task_agnostic.py</code> (exact-match + arithmetic custom
+objective + structural guard), <code>test_regex_project.py</code> (this project),
+<code>test_harness_efficiency.py</code> (efficiency objective + policy bounds).</p>
+<hr>
+<h2>11. Known limitations (open, accepted)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Limitation</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M2</td>
+<td>Eval memo ignores memory-store content: children are scored with current memory, memo-hit parents with old memory (comparability vs staleness trade-off, undocumented at the gate)</td>
+<td><code>engine._evaluate</code></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>The improver sees the ACTIVE checkout summary but patches overlay the sampled PARENT snapshot — content-aware edits on non-active parents are composed blind</td>
+<td><code>proposer.py</code>, <code>engine._one_proposal</code></td>
+</tr>
+<tr>
+<td>M4</td>
+<td>&quot;Bounded edits&quot; bounds op count, not diff size — one replace can swap an entire prompt</td>
+<td><code>store.apply_patch</code></td>
+</tr>
+<tr>
+<td>L2</td>
+<td>Reflections carry ids/scores, not trajectories — memory content is thin</td>
+<td><code>engine._reject</code></td>
+</tr>
+<tr>
+<td>L3</td>
+<td>Behavior descriptor partially encodes fitness (pass band)</td>
+<td><code>objectives/base.py</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td>Sandbox network egress unblocked; module code in-process behind the whitelist</td>
+<td><code>sandbox/</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>12. Evidence index</h2>
+<ul>
+<li>Offline suite: <code>uv run pytest -q</code> — 125 passed (deterministic, no network).</li>
+<li>Independent corroboration: SoL-Pi [2609.20519] — full entry in the study
+site (<code>site/p/2609.20519.html</code>, <code>curated.json</code>, local PDF in <code>resources/</code>).</li>
+<li>Golden: <code>tests/golden/</code> — byte-identical reproduction across processes.</li>
+<li>Live smoke (M10): glm-5.3-flash via the gateway; loop + budget + gate
+order verified on real completions.</li>
+<li>Real project (M14): <code>projects/regex_agent/</code> — offline deterministic
+improvement test (val 0.2 → 0.4 → 1.0) <strong>and</strong> a live gateway run
+(baseline val 0.6; two plausible regressions correctly rejected at the
+screen; 29 calls; no ratchet) — full record in <code>projects/README.md</code>.</li>
+<li>Harness-efficiency project (M16): <code>projects/harness_efficiency/</code> — the
+cost-aware objective (concise-correct accepted over verbose-correct,
+concise-wrong screened) and the evolvable <code>policy/context</code> bound (context
+compaction accepted), all offline and deterministic.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="design.html">← rsif — Design Document</a><a class="pn next" href="plan.html">rsif Implementation Plan — Status Tracking →</a></div></main></div></body></html>

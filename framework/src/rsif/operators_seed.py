@@ -52,6 +52,13 @@ def seed_operator_catalog() -> list[dict]:
             "description": "Revise or delete a playbook rule that correlated with "
                            "failures; keep edits bounded.",
         },
+        # -- policy surface [2609.20519] -------------------------------------
+        {
+            "id": "policy/bound-context",
+            "surface": "policy",
+            "description": "Tighten or loosen the context-assembly bound (max injected "
+                           "memory characters), trading context cost against recall.",
+        },
         # -- architecture surface [2408.08435, 2410.04444, 2505.22954] -------
         {
             "id": "module/edit",

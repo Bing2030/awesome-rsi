@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-FAST_SURFACES = frozenset({"prompt", "skill", "memory", "module"})
+FAST_SURFACES = frozenset({"prompt", "skill", "memory", "module", "policy"})
 META_SURFACE = "meta"
 
 

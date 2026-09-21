@@ -217,6 +217,8 @@ class ArtifactStore:
     def seed_defaults(self, cfg) -> None:
         """Create the canonical seed artifacts and activate them."""
         from rsif.constants import (
+            CONTEXT_POLICY_ID,
+            DEFAULT_CONTEXT_POLICY,
             DEFAULT_IMPROVER_TEMPLATE,
             DEFAULT_SYSTEM_PROMPT,
             DEFAULT_MODULE_ID,
@@ -240,6 +242,8 @@ class ArtifactStore:
         self.create(OPERATOR_CATALOG_ID, ArtifactType.META,
                     {"operators.json": json.dumps(
                         seed_operator_catalog(), indent=2)}, proposal_id="seed")
+        self.create(CONTEXT_POLICY_ID, ArtifactType.POLICY,
+                    {"policy.json": DEFAULT_CONTEXT_POLICY}, proposal_id="seed")
 
         default_module = _default_module_source()
         self.create(DEFAULT_MODULE_ID, ArtifactType.MODULE,
@@ -247,7 +251,7 @@ class ArtifactStore:
 
         self.promote(ApplyResult({
             SYSTEM_PROMPT_ID: 1, PLAYBOOK_ID: 1, IMPROVER_TEMPLATE_ID: 1,
-            OPERATOR_CATALOG_ID: 1, DEFAULT_MODULE_ID: 1,
+            OPERATOR_CATALOG_ID: 1, DEFAULT_MODULE_ID: 1, CONTEXT_POLICY_ID: 1,
         }), proposal_id="seed")
 
     # -- internals --------------------------------------------------------------

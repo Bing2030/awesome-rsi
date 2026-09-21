@@ -60,4 +60,20 @@ Skills are first-class `SKILL` **artifacts** (code + manifest) — assembled by
 `evolve/assembler.py`, exposed as tools by the runtime, and executed through the
 sandbox — not a standalone `skills/` package.
 
+## Documentation
+
+Start at [`docs/index.md`](docs/index.md) — reading paths plus one guide per
+subsystem:
+
+| Doc | What it covers |
+|---|---|
+| [`docs/quickstart.md`](docs/quickstart.md) | 10-minute offline walkthrough |
+| [`docs/architecture.md`](docs/architecture.md) | trust boundary, component map, data flow, config knobs |
+| [`docs/concepts.md`](docs/concepts.md) | the glossary (artifact, checkout, niche, gates, …) |
+| [`docs/lifecycle.md`](docs/lifecycle.md) | one proposal through every gate, event, rejection reason |
+| [`docs/components/`](docs/components/) | deep dives: artifacts · engine · runtime · memory · objectives · efficiency · safety · observability |
+| [`docs/design.md`](docs/design.md) | mechanisms ↔ papers ↔ code ↔ tests (citation map) |
+| [`docs/investigation.md`](docs/investigation.md) | file-by-file implementation walkthrough |
+| [`docs/plan.md`](docs/plan.md), [`docs/decision-log.md`](docs/decision-log.md) | milestone status; decisions & corrections |
+
 See `docs/plan.md` for milestone status and `docs/design.md` for the referenced design.

@@ -1,0 +1,174 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — the artifact store — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="memory.html">Component guide — memory</a><a href="objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="safety.html">Component guide — the safety stack</a><a href="observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — the artifact store</h1>
+<p><em>What evolves is data: versioned, hashed, lineage-tracked, and activated
+only through an explicit promotion.</em></p>
+<p>Files: <code>src/rsif/artifacts/model.py</code> (types &amp; patches),
+<code>src/rsif/artifacts/store.py</code> (the store),
+<code>src/rsif/artifacts/workspace.py</code> (the run layout),
+<code>src/rsif/operators_seed.py</code> + <code>src/rsif/evolve/operators.py</code> (the operator
+catalog). Verified by <code>tests/unit/test_store.py</code>,
+<code>tests/unit/test_evolve.py</code>.</p>
+<h2>The six artifact types</h2>
+<p><code>ArtifactType</code> (model.py) — everything improvable is the same <code>Artifact</code>
+shape with a different payload convention:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Payload convention</th>
+<th>Read by</th>
+<th>Seeds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>skill</code></td>
+<td><code>module.py</code> (a <code>main(**args)</code> function) + <code>manifest.json</code> (<code>name</code>, <code>description</code>)</td>
+<td>assembler → <code>SkillSpec</code> → runtime tools</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>prompt</code></td>
+<td><code>system.md</code> (first text file wins)</td>
+<td>assembler → <code>system_prompt</code></td>
+<td><code>prompt/system</code></td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td><code>playbook.json</code> (list of sections) or free text</td>
+<td>assembler → memory text</td>
+<td><code>memory/playbook</code></td>
+</tr>
+<tr>
+<td><code>module</code></td>
+<td><code>module.py</code> implementing <code>AgentModule</code></td>
+<td>assembler → <code>module_source</code></td>
+<td><code>module/default</code></td>
+</tr>
+<tr>
+<td><code>meta</code></td>
+<td><code>template.md</code> / <code>operators.json</code> — the improver&#39;s own machinery</td>
+<td>proposer &amp; operators readers</td>
+<td><code>meta/improver-template</code>, <code>meta/operator-catalog</code></td>
+</tr>
+<tr>
+<td><code>policy</code></td>
+<td><code>policy.json</code> with <code>max_memory_chars</code></td>
+<td>assembler (memory cap)</td>
+<td><code>policy/context</code></td>
+</tr>
+</tbody></table>
+<p>IDs must be namespaced (<code>prompt/system</code>, not <code>system</code>) — the store rejects
+anything without a <code>/</code>.</p>
+<h2>Versions, hashing, and immutability</h2>
+<p>Each write creates <code>artifacts/&lt;id&gt;/vN/</code> with the payload files plus
+<code>meta.json</code>:</p>
+<pre><code class="language-json">{&quot;artifact_id&quot;: &quot;prompt/system&quot;, &quot;version&quot;: 2, &quot;type&quot;: &quot;prompt&quot;,
+ &quot;content_hash&quot;: &quot;&lt;sha256 of canonical payload, 16 hex&gt;&quot;,
+ &quot;proposal_id&quot;: &quot;g1p1&quot;, &quot;generation&quot;: 1, &quot;accepted&quot;: false,
+ &quot;edit_kind&quot;: &quot;replace&quot;}
+</code></pre>
+<ul>
+<li><code>content_hash</code> is a deterministic SHA-256 of the canonical payload JSON —
+identical content is detectable across versions.</li>
+<li>Writing an existing version raises (<code>version immutable</code>). There is no
+in-place edit anywhere in the framework.</li>
+<li><code>accepted</code> flips to true only in <code>promote</code> — and mutating <code>meta.json</code>
+does not violate payload immutability (the hash covers payload only).</li>
+</ul>
+<h2>Lineage — append-only history</h2>
+<p><code>lineage.jsonl</code>, one JSON line per write:</p>
+<pre><code class="language-json">{&quot;seq&quot;: 7, &quot;artifact_id&quot;: &quot;prompt/system&quot;, &quot;op&quot;: &quot;update&quot;,
+ &quot;from_v&quot;: 1, &quot;to_v&quot;: 2, &quot;proposal_id&quot;: &quot;g1p1&quot;, &quot;generation&quot;: 1,
+ &quot;content_hash&quot;: &quot;…&quot;}
+</code></pre>
+<p>Ops: <code>create | update | delete | restore</code>. <strong>Rollback appends a <code>restore</code>
+entry</strong> (from the current version back to the target); <code>delete</code> marks
+deactivation (version 0 in the checkout) but never removes files. The full
+history of every artifact is reconstructible — <code>rsif inspect --artifact prompt/system</code> prints it.</p>
+<h2>The checkout — the active agent</h2>
+<p><code>checkout.json</code> is a plain mapping <code>artifact_id → version</code> (version 0 =
+deactivated). Three operations write it:</p>
+<table>
+<thead>
+<tr>
+<th>Op</th>
+<th>When</th>
+<th>Guarantee</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>promote(ApplyResult)</code></td>
+<td>engine acceptance (or seeding)</td>
+<td>Only post-gate activation path</td>
+</tr>
+<tr>
+<td><code>restore(aid, version)</code></td>
+<td><code>rsif rollback</code>, auto-rollback, META revert</td>
+<td>Appends <code>restore</code> lineage</td>
+</tr>
+<tr>
+<td>(never) apply</td>
+<td>—</td>
+<td><code>apply_patch</code> is structurally checkout-free</td>
+</tr>
+</tbody></table>
+<p>This is the core safety property of the store: <strong>materializing a candidate
+and activating it are different functions</strong>, and only the engine calls the
+second, after the gates. Tests assert byte-identical restoration on
+rollback.</p>
+<h2>Patches and ops</h2>
+<p>A <code>Patch</code> is a tuple of ops + <code>rationale</code> + <code>hypothesis</code> (falsifiable by
+design):</p>
+<ul>
+<li><code>CreateOp(artifact_id, type, payload)</code> — new artifact at v1</li>
+<li><code>UpdateOp(artifact_id, payload, edit_kind)</code> — vN+1; <code>edit_kind</code> is
+<code>replace | append_section | edit_section | refine</code> (recorded, not
+interpreted by the store)</li>
+<li><code>DeleteOp(artifact_id)</code> — deactivate</li>
+<li><code>RestoreOp(artifact_id, version)</code> — roll back inside a patch</li>
+</ul>
+<p><code>apply_patch</code> executes ops in order and returns <code>ApplyResult({artifact_id: candidate_version})</code> — the mapping the engine overlays onto the parent
+snapshot to form the candidate. Bounded-edits discipline (<code>max_patch_ops</code>,
+default 3) is enforced by the engine, not the store.</p>
+<h2>The operator catalog — a typed mutation vocabulary</h2>
+<p>The improver cannot send arbitrary prose ops; it must name an <strong>operator</strong>
+from the catalog, and the operator&#39;s declared surface must match the
+proposal&#39;s surface. The catalog lives in the <code>meta/operator-catalog</code>
+artifact (seeded by <code>operators_seed.seed_operator_catalog</code>, 9 operators):</p>
+<pre><code>prompt/refine          skill/add             skill/refine
+memory/add-rule        memory/revise-rule    policy/bound-context
+module/edit            meta/mutate-improver  meta/mutate-operators
+</code></pre>
+<p>Because the catalog is a META artifact, the vocabulary itself can evolve
+(two-level, Promptbreeder-style) — under the slow cadence, approval, and
+the META eval window. <code>evolve/operators.py</code> only <em>reads and validates
+against</em> it; <code>render_operators()</code> shows the improver only the operators
+whose surfaces are open this generation.</p>
+<h2>Seeding</h2>
+<p><code>store.seed_defaults(cfg)</code> creates and promotes the six seed artifacts (see
+the table above) — a complete minimal agent: a careful-Python-solver prompt,
+a one-section playbook, the improver template, the operator catalog, the
+default single-shot module, and a generous context policy
+(<code>max_memory_chars: 4000</code>). Everything the loop subsequently does is
+versioned edits on top of these.</p>
+<h2>Invariants (and where they&#39;re pinned)</h2>
+<ol>
+<li>Versions are immutable — writing vN twice raises (<code>test_store.py</code>).</li>
+<li>Rollback restores byte-identical content and appends lineage
+(<code>test_store.py</code>, <code>test_safety.py</code>).</li>
+<li>Lineage is append-only with parent refs — reconstructible per artifact
+(<code>test_store.py</code>).</li>
+<li><code>apply_patch</code> never touches the checkout — candidates are inert
+(<code>test_evolve.py::test_build_spec_overlays_candidate</code> asserts the
+active version is untouched while the candidate assembles differently).</li>
+<li>Operator-surface mismatch is rejected (<code>test_evolve.py</code>,
+<code>validate_operator</code>).</li>
+</ol>
+<h2>Pitfalls</h2>
+<ul>
+<li><code>read_version</code> skips <code>meta.json</code> — payload files only.</li>
+<li><code>type_of</code> reads the <em>latest</em> version&#39;s meta; a candidate&#39;s type is the
+artifact&#39;s type (types never change across versions).</li>
+<li>Deleting then re-creating an id raises (<code>artifact already exists</code>) —
+restore instead.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="../lifecycle.html">← The lifecycle of a proposal</a><a class="pn next" href="engine.html">Component guide — the evolution engine →</a></div></main></div></body></html>
