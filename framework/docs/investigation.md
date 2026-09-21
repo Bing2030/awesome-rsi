@@ -200,6 +200,15 @@ retry calls).
 rewrites history, and budgets that cannot be argued with [2603.03329,
 2509.26354, 2603.06333, 2506.13131].
 
+**Independent corroboration.** SoL-Pi [2609.20519] — harness-layer
+auto-research under a token-efficiency objective — independently lands on
+the same two commitments, applied one layer down: a **predeclared capability
+floor** (token savings only count within a quality tolerance — rsif's
+never-regress gate) and **cheap-gates-first cost control** (its
+per-mechanism low-cost admission gate is rsif's cascade screen). It also
+names the one thing rsif's budget treats as a *cap*, not an *objective*:
+optimizing efficiency itself under a quality floor.
+
 **Evidence.** `test_safety.py`, `test_safety_loop.py` (all seven,
 including the one-call-overshoot abort), `test_sandbox.py`.
 
@@ -293,6 +302,8 @@ objective + structural guard), `test_regex_project.py` (this project),
 ## 12. Evidence index
 
 - Offline suite: `uv run pytest -q` — 125 passed (deterministic, no network).
+- Independent corroboration: SoL-Pi [2609.20519] — full entry in the study
+  site (`site/p/2609.20519.html`, `curated.json`, local PDF in `resources/`).
 - Golden: `tests/golden/` — byte-identical reproduction across processes.
 - Live smoke (M10): glm-5.3-flash via the gateway; loop + budget + gate
   order verified on real completions.

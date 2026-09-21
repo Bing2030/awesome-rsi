@@ -52,6 +52,27 @@ def test_extract_pattern_accepts_fenced_bare_and_quoted():
     assert extract_pattern("") == ""
 
 
+def test_extract_pattern_prefers_marked_final_line():
+    """M15 fix: two live runs showed verbosity-adding prompts make the model
+    reason in prose first; the extractor must find the marked answer, not
+    score the first line (which turns a good answer into a 0)."""
+    reasoning = ("Let me enumerate: all positives are 3 digits, dash, 4 digits.\n"
+                 "The negatives lack the dash or the groups.\n")
+    assert extract_pattern(reasoning + "FINAL ANSWER: \\d{3}-\\d{4}") == \
+        r"\d{3}-\d{4}"
+    assert extract_pattern("Answer: colou?r") == "colou?r"
+    # last marked line wins when the model re-answers
+    two = "Answer: wrong\nFINAL ANSWER: right"
+    assert extract_pattern(two) == "right"
+    # a marker standing alone takes the next non-empty line
+    assert extract_pattern("reasoning here\nFINAL ANSWER:\na+") == "a+"
+    # quotes are stripped on the marked branch too
+    assert extract_pattern("FINAL ANSWER: 'a+'") == "a+"
+    # no marker -> old behavior (fence, then first non-empty line)
+    assert extract_pattern(reasoning + "```python\na+\n```") == "a+"
+    assert extract_pattern(reasoning + "a+") == "Let me enumerate: all positives are 3 digits, dash, 4 digits."
+
+
 def test_regex_project_improves_through_the_engine(tmp_path):
     cfg = RunConfig(generations=2, proposals_per_generation=1,
                     screen_tasks=6, seed=0)

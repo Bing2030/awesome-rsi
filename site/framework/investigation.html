@@ -185,6 +185,14 @@ timeouts, rlimits, PATH-only environment.</li>
 <p><strong>Design point.</strong> Guard layers before execution, rollback that never
 rewrites history, and budgets that cannot be argued with [2603.03329,
 2509.26354, 2603.06333, 2506.13131].</p>
+<p><strong>Independent corroboration.</strong> SoL-Pi [2609.20519] — harness-layer
+auto-research under a token-efficiency objective — independently lands on
+the same two commitments, applied one layer down: a <strong>predeclared capability
+floor</strong> (token savings only count within a quality tolerance — rsif&#39;s
+never-regress gate) and <strong>cheap-gates-first cost control</strong> (its
+per-mechanism low-cost admission gate is rsif&#39;s cascade screen). It also
+names the one thing rsif&#39;s budget treats as a <em>cap</em>, not an <em>objective</em>:
+optimizing efficiency itself under a quality floor.</p>
 <p><strong>Evidence.</strong> <code>test_safety.py</code>, <code>test_safety_loop.py</code> (all seven,
 including the one-call-overshoot abort), <code>test_sandbox.py</code>.</p>
 <hr>
@@ -291,6 +299,8 @@ objective + structural guard), <code>test_regex_project.py</code> (this project)
 <h2>12. Evidence index</h2>
 <ul>
 <li>Offline suite: <code>uv run pytest -q</code> — 125 passed (deterministic, no network).</li>
+<li>Independent corroboration: SoL-Pi [2609.20519] — full entry in the study
+site (<code>site/p/2609.20519.html</code>, <code>curated.json</code>, local PDF in <code>resources/</code>).</li>
 <li>Golden: <code>tests/golden/</code> — byte-identical reproduction across processes.</li>
 <li>Live smoke (M10): glm-5.3-flash via the gateway; loop + budget + gate
 order verified on real completions.</li>

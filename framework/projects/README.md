@@ -64,7 +64,58 @@ What this demonstrated on a real model:
    rejection of regressions is the machinery working; fitness improvement
    on this objective likely needs more generations or the extractor fix.
 
-See `docs/investigation.md` §10/§12 and the decision log (M14).
+## Live run record #2 (2026-09-21, glm-5.3-flash, second seed trajectory)
+
+3 generations × 1 proposal, ~35 calls (cap 120), exit 0 — and a richer gate
+story than run #1: **three different gates fired on live traffic**:
+
+```
+baseline:  train 4/6   canary 2/2   val 4/5 = 0.80
+g1p1: child train 0.0                       -> REJECT at screen
+g2p1: screen passed (0.5)                   -> REJECT at canary (0.5 < 1.0)
+g3p1: screen PERFECT (train probes 1.0!)    -> REJECT at canary (0.5 < 1.0)
+active stayed at seed (val 0.80); sealed test on archive best: 0.75
+```
+
+g3 is the diagnostic highlight: the improver found a prompt that aced the
+train probes yet still could not deploy, because it broke the trivial
+canary tasks — train-visible improvement + canary regression is exactly
+the misevolution the never-regress gate exists to block [2509.26354].
+
+## Live run record #3 (2026-09-21, glm-5.3-flash, first run with the M15 extractor fix)
+
+3 generations × 1 proposal, baseline val 0.80 — and the **first live
+candidate to clear the canary gate**:
+
+```
+baseline:  train 6/6   canary 2/2   val 4/5 = 0.80
+g1p1: child train 1.0 (screen passed)   -> REJECT at canary (0.5 < 1.0)
+g2p1: child train 1.0 (screen passed)   -> canary 1.0 (PASSED — first ever)
+    -> train 1.0 -> val acceptance eval -> gateway RateLimitError (5-hour limit)
+run aborted cleanly (stop_reason error:RateLimitError)
+```
+
+g2 is the payoff of the M15 fix: the task contract now *permits* step-by-step
+reasoning and demands a marked final line, and `extract_pattern` prefers that
+line — so a candidate that reasons in prose no longer scores 0 on the canaries.
+All five pre-M15 proposals died on this exact interaction (reasoning prose
+scored as the "pattern"); g2 is the first to survive it.
+
+The only blemish: `run.py`'s post-run sealed-test evaluation re-invoked the
+provider after the clean abort, and the uncaught `ProviderError` made the
+process exit 1. **Fixed in M15**: the sealed-test evaluation is now wrapped,
+a rate limit / budget hit there prints a "skipped" line and exits 2 instead of
+tracebacking (see the decision log). The engine's own clean abort was never in
+doubt — `run_end` was written before the crash.
+
+Cross-run conclusion (7 live proposals, 6 correctly rejected, 1 pending a
+rate limit, zero regressions deployed): the recurring failure mode is confirmed —
+verbosity-adding prompts break the first-line extraction contract, and the
+simplest tasks (canaries) detect it first. **Fixed in M15**: the task
+contract now permits reasoning and demands a marked final line, and the
+extractor prefers that marked line (see `objective.py`).
+
+See `docs/investigation.md` §10/§12 and the decision log (M14/M15).
 
 ## harness_efficiency — the first cost-aware objective (SoL-Pi)
 
