@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>The lifecycle of a proposal — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>The lifecycle of a proposal</h1>
+<p>The dynamic view: what actually happens when the improver speaks, in what
+order, which events land in the log, and every way a proposal can die.
+Static structure lives in <a href="architecture.html">architecture.md</a>; vocabulary in
+<a href="concepts.html">concepts.md</a>. The authoritative implementation is
+<code>EvolutionEngine._one_proposal</code> in <code>src/rsif/evolve/engine.py</code>.</p>
+<h2>The run loop</h2>
+<pre><code>EvolutionEngine.run()
+ │
+ ├─ run_start event
+ ├─ baseline: evaluate seed agent on train + canary + val
+ │    └─ archive_update(action=&quot;baseline&quot;)   # the root individual
+ │
+ ├─ for gen in 1..generations:
+ │    ├─ for slot in 1..proposals_per_generation:
+ │    │    ├─ budget.exhausted()? → budget event, stop_reason=&quot;budget:&lt;dim&gt;&quot;
+ │    │    └─ _one_proposal(gen, slot)       # five phases, below
+ │    ├─ every insights_distill_every gens: retire correlated insights
+ │    ├─ _settle_meta(gen)                   # close a META eval window
+ │    ├─ _drift_check(gen)                   # canary/active regression, stagnation
+ │    │    └─ rollback alarm → auto_rollback, run CONTINUES on the restored agent
+ │    └─ archive.save(gen)
+ │
+ ├─ (or an early stop: budget / drift / provider error / engine bug)
+ └─ run_end event  (accepted, rejected, best_fitness, stop_reason?)
+</code></pre>
+<p><code>RunSummary</code> returns generations, accepted, rejected, best fitness and
+descriptor, the best spec snapshot, and the stop reason (<code>budget:&lt;dim&gt;</code>,
+<code>drift</code>, <code>error:&lt;Origin&gt;</code> for provider failures, <code>engine:&lt;Type&gt;</code> for engine
+bugs — kept distinct on purpose).</p>
+<h2>The five phases of one proposal</h2>
+<p>Every event below is stamped with its phase; the flagship golden test
+asserts per-proposal phase monotonicity
+<code>proposal → design → exploration → verification → correction</code>.</p>
+<h3>Phase 1 — proposal</h3>
+<p>The scheduler (<code>evolve/scheduler.py</code>) decides which surfaces are open this
+generation: the <strong>fast surfaces</strong> (<code>prompt</code>, <code>skill</code>, <code>memory</code>, <code>module</code>,
+<code>policy</code>) every generation; the <strong>META surface</strong> only every <code>meta_every_k</code>-th
+generation (default 3). The improver&#39;s prompt is assembled from the active
+META template (itself evolvable), a checkout summary, the archive frontier +
+superseded lineages, recent lessons (reflections + insights), and the
+operator catalog filtered to open surfaces.</p>
+<pre><code>improver LLM call (role=&quot;improver&quot;)
+  → parse_proposal: {surface, operator, hypothesis, rationale, ops}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Failure → rejection <code>reason</code></th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JSON/schema parse</td>
+<td><code>parse</code></td>
+<td><code>reject</code></td>
+</tr>
+<tr>
+<td>Surface open this generation?</td>
+<td><code>surface</code></td>
+<td><code>reject</code></td>
+</tr>
+<tr>
+<td>META + <code>require_approval_for_meta</code></td>
+<td><code>approval</code> (fail-closed: no approver = deny)</td>
+<td><code>approval</code>, <code>reject</code></td>
+</tr>
+<tr>
+<td>A META edit while another&#39;s window is open</td>
+<td><code>meta_pending</code></td>
+<td><code>reject</code></td>
+</tr>
+</tbody></table>
+<p>On success: <strong><code>proposal</code></strong> event (surface, operator, hypothesis).</p>
+<h3>Phase 2 — design (validate + materialize, never activate)</h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Failure → <code>reason</code></th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>len(ops) ≤ max_patch_ops</code></td>
+<td><code>bounded</code></td>
+<td><code>reject</code></td>
+</tr>
+<tr>
+<td>Operator exists in catalog <strong>and</strong> matches the surface</td>
+<td><code>operator</code></td>
+<td><code>reject</code></td>
+</tr>
+<tr>
+<td><code>store.apply_patch</code> succeeds (ids exist, versions writable)</td>
+<td><code>apply</code></td>
+<td><code>reject</code></td>
+</tr>
+<tr>
+<td>Static scan of skill/module payloads (AST import whitelist)</td>
+<td><code>scan</code></td>
+<td><code>gate(gate=&quot;scan&quot;, passed=false)</code>, <code>reject</code></td>
+</tr>
+<tr>
+<td>Module patch loads and honors the ABI</td>
+<td><code>load</code></td>
+<td><code>gate(gate=&quot;load&quot;, …)</code>, <code>reject</code></td>
+</tr>
+</tbody></table>
+<p>On success: <strong><code>patch</code></strong> event (candidate versions), then the feasibility
+gates above. Note the ordering: static gates run <strong>before any execution</strong> —
+a candidate that would escape the sandbox or cannot load is never evaluated,
+not even on the cheap screen. The candidate mapping is
+<code>{**parent.spec_snapshot, **result.versions}</code> — the active checkout is
+untouched.</p>
+<h3>Phase 3 — exploration (cheap cascade screen)</h3>
+<p><code>screen_tasks</code> (default 2) train tasks are sampled with the run RNG; child
+and parent both run them (parents are usually memo hits).</p>
+<pre><code>pass_screen: child_mean ≥ parent_mean − screen_epsilon   (ε = 0.30)
+</code></pre>
+<p>Pass → <strong><code>screen</code></strong> event (<code>passed: true</code>). Fail → <code>screen</code> rejection —
+this is the cheapest exit and the workhorse of cost control: in the live
+regex_agent run, both real-improver regressions died here, before canary or
+val spent anything.</p>
+<h3>Phase 4 — verification (the gate chain proper)</h3>
+<p>In order:</p>
+<ol>
+<li><strong>Canary</strong> — <code>child_canary ≥ parent_canary</code>; any drop is a hard reject.
+Event: <code>gate(gate=&quot;canary&quot;)</code>.</li>
+<li><strong>Full train eval</strong> — memoized; the screen usually covered a subset.</li>
+<li><strong>Val acceptance</strong> — both child and parent run the full val split:<ul>
+<li>Agent patches: <code>accept_val</code> requires
+<code>val(child) &gt; val(parent) + θ</code> <strong>and</strong> paired net gain
+(<code>#tasks-better − #tasks-worse ≥ 1</code>). Event: <code>gate(gate=&quot;val&quot;, …)</code>
+with both scores, the threshold, and the net-gain note.</li>
+<li><strong>META-only patches</strong> (agent spec byte-identical by construction):
+accept on <em>non-regression</em> (<code>child ≥ parent</code>); the real test is
+deferred to the eval window (below).</li>
+</ul>
+</li>
+</ol>
+<h3>Phase 5 — correction</h3>
+<p><strong>On reject</strong> (<code>engine._reject</code>): a <code>reject</code> event (reason + detail), a
+<code>rollback</code> event (<code>action=&quot;discard_candidate&quot;</code> — the checkout never moved),
+and a Reflexion reflection written to episodic memory with a deterministic
+trace (&quot;proposal g1p2 [prompt/prompt/refine] rejected at val: … Try a
+different, smaller change.&quot;). Reflections are retrieved for later improver
+and agent contexts — rejection feeds forward.</p>
+<p><strong>On accept</strong> — two levels:</p>
+<ul>
+<li><strong>Archive-acceptance</strong>: the candidate beat its <em>sampled parent</em> → stored
+in its MAP-Elites niche (elitist replacement, ties by lower cost) as a
+stepping stone.</li>
+<li><strong>Promotion</strong>: additionally <code>val(child) &gt; val(active)</code> (always true for
+META-only) → <code>store.promote</code> writes the checkout; the deployed agent
+changes. A candidate can be accepted <em>without</em> promotion (the demo&#39;s
+third accept) — the archive grows, the agent doesn&#39;t regress.</li>
+</ul>
+<p>Events: <strong><code>accept</code></strong> (<code>promoted</code>, <code>meta_provisional</code>, val/train numbers),
+<strong><code>archive_update</code></strong> (descriptor, fitness, stored, active), and
+<strong><code>reflect(action=&quot;distill_insight&quot;)</code></strong> — ExpeL-style insight distilled
+from the verified success.</p>
+<h2>The META recursion state machine</h2>
+<p>A META-only edit changes the <em>improver</em>, not the agent, so it runs as a
+controlled experiment (<code>engine._settle_meta</code>):</p>
+<pre><code>proposal (META-only, approved, non-regressing agent)
+   │  provisional accept + deploy template          accept{meta_provisional}
+   ▼
+meta_eval_window generations (default 3) of normal proposals
+   │  the evolved template demonstrably formats the next improver calls
+   ▼
+window closes at generation-end:
+   success_rate vs pre-edit baseline ── better/equal ──► meta_confirm
+                    └── worse (or 0 wins, no baseline) ──► meta_revert
+                                                            (pre-edit versions
+                                                             restored append-only)
+</code></pre>
+<p>One META experiment at a time (<code>meta_pending</code> guard). Mixed META+agent
+patches skip this path entirely — the agent-visible part must pay for the
+whole patch through the strict val gate.</p>
+<h2>Interruptions and run-level correction</h2>
+<ul>
+<li><strong>Budget</strong>: checked before each proposal (<code>exhausted()</code> — fires at the
+limit) and after every recorded LLM call (<code>overshot()</code> — a call that
+pushes strictly past a limit raises <code>BudgetExhausted</code> immediately, so
+overshoot is bounded to one call). Both emit a <code>budget</code> event with the
+full snapshot and set <code>stop_reason=&quot;budget:&lt;dim&gt;&quot;</code>; there are never
+partial proposals.</li>
+<li><strong>Drift</strong> (every generation end, on the <em>active</em> agent): canary or active
+regression → <strong>auto-rollback</strong> to the archive best (<code>restore</code> lineage,
+extras deactivated) and the run <em>continues</em> on the restored agent;
+stagnation (≥ <code>stagnation_threshold</code> consecutive rejections) → an
+<code>approval</code> event; approved → continue, denied/unwired → stop with
+<code>stop_reason=&quot;drift&quot;</code>.</li>
+<li><strong>Provider errors</strong> propagate as <code>ProviderError</code> (with <code>origin</code>) and abort
+cleanly — <code>error</code> event + <code>stop_reason=&quot;error:&lt;Origin&gt;&quot;</code>; never a fake
+0-score, never a &quot;parse&quot; rejection.</li>
+</ul>
+<h2>Every event kind (18)</h2>
+<p><code>run_start · run_end · proposal · patch · screen · eval · gate · accept · reject · reflect · archive_update · rollback · budget · llm_call · approval · error · meta_confirm · meta_revert</code></p>
+<p><code>eval</code> events carry <code>suite</code>, <code>label</code> (baseline/child/parent/run/report-test),
+<code>n</code>, and the mean score — the same event stream serves <code>rsif status</code>,
+<code>rsif inspect</code>, and post-hoc analysis. Payloads carry only ids/scores/
+decisions (never wall-times or sandbox stderr), which is what makes the
+golden log byte-stable.</p>
+<h2>A concrete trace (from the golden test)</h2>
+<p><code>tests/golden/test_flagship_evolution.py</code> scripts a full 2-proposal run;
+this is the shape of what lands in <code>events.jsonl</code>:</p>
+<pre><code>run_start
+eval{baseline, train}  eval{baseline, canary}  eval{baseline, val}
+archive_update{action=baseline}
+  g1p1: proposal{prompt/refine}  patch{prompt/system v2}
+        gate{scan}  eval{child/parent × screen}
+        screen{passed}  gate{canary}  eval{train}  eval{val × 2}
+        gate{val, passed}  accept{promoted}  archive_update  reflect{distill}
+  g1p2: proposal{prompt/refine}  patch{prompt/system v3}
+        gate{scan}  eval{screen × 2}  screen{failed}
+        reject{reason=screen}  rollback{discard_candidate}  reflect
+run_end{best_fitness=0.8}
+</code></pre>
+<p>Determinism: rerunning the same seed into a fresh workspace reproduces
+<code>events.jsonl</code>, <code>archive.json</code>, <code>checkout.json</code>, and <code>lineage.jsonl</code>
+<strong>byte-identically</strong> — that assertion (against a committed golden log) runs
+in the offline suite on every test run.</p>
+</article><div class="docs-prevnext"><a class="pn prev" href="concepts.html">← Concepts — the rsif glossary</a><a class="pn next" href="components/artifacts.html">Component guide — the artifact store →</a></div></main></div></body></html>

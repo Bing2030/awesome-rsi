@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Architecture — the system map — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Architecture — the system map</h1>
+<p>How rsif is put together: the trust boundary, the components, the data flow
+of one evaluation, and the on-disk layout. Terms are defined in
+<a href="concepts.html">concepts.md</a>; the dynamic view (what happens, in what order)
+is <a href="lifecycle.html">lifecycle.md</a>.</p>
+<h2>The trust boundary (the one diagram that matters)</h2>
+<p>rsif targets <strong>harness-level recursive self-improvement</strong>: LLM weights are
+frozen; everything the agent <em>is</em> is evolvable <em>data</em> under a trusted,
+frozen outer process. The engine, gates, store semantics, and sandbox can
+never be edited by the thing being improved.</p>
+<pre><code>            ┌─────────────────────────────────────────────────────────┐
+            │              TRUSTED, FROZEN (code)                     │
+            │                                                         │
+            │   EvolutionEngine — run() drives the five phases        │
+            │   ├── Improver (reads META templates — data, evolvable) │
+            │   ├── selection gates: screen → canary → val            │
+            │   ├── Archive (MAP-Elites + superseded lineages)        │
+            │   ├── Budget · DriftMonitor · Approvers · Rollback      │
+            │   └── EventLog (phase-attributed, append-only)          │
+            │                                                         │
+            │   ArtifactStore — immutable versions + append-only      │
+            │   lineage + active checkout        ┌────────────────┐  │
+            │   Sandbox — subprocess python -I   │ MODIFIABLE     │  │
+            │   AgentRuntime — interprets specs  │ (artifacts)    │  │
+            │                                    │ skill/*        │  │
+            │   build_spec(store, mapping) ──────┤ prompt/*       │  │
+            │        resolves a mapping to a     │ memory/*       │  │
+            │        runnable AgentSpec           │ module/*       │  │
+            │                                    │ meta/* (slow)  │  │
+            │                                    │ policy/*       │  │
+            │                                    └────────────────┘  │
+            └─────────────────────────────────────────────────────────┘
+                          │                    │
+                 LLMProvider (protocol)   Objective (protocol)
+                 anthropic / openai /     code-tasks · exact-match ·
+                 litellm / scripted /     regex_agent · harness_efficiency
+                 demo (offline)
+</code></pre>
+<p>Two seams make the framework pluggable in both directions:</p>
+<ul>
+<li><strong><code>Objective</code></strong> — the fitness function. The engine never imports a
+concrete objective (a structural guard test asserts this on the engine&#39;s
+source). Four real objectives run through it unchanged.</li>
+<li><strong><code>LLMProvider</code></strong> — a one-method protocol (<code>complete(req)</code>). Adapters for
+Anthropic/OpenAI/LiteLLM, a <code>ScriptedProvider</code> for tests, a
+content-addressed <code>DemoProvider</code> for the offline CLI demo, and an optional
+disk cache for replay.</li>
+</ul>
+<h2>Components and their files</h2>
+<pre><code>framework/src/rsif/
+├── config.py            RunConfig — every knob (see below)
+├── spec.py              AgentSpec / SkillSpec — the resolved agent
+├── cli.py, commands.py  rsif init | run | evolve | status | inspect | rollback | report
+│
+├── artifacts/           WHAT evolves (versioned data)
+│   ├── model.py         ArtifactType, Patch ops, LineageEntry, content hashes
+│   ├── store.py         ArtifactStore: versions, lineage, checkout, seeding
+│   └── workspace.py     RunWorkspace: the on-disk run layout
+│
+├── evolve/              HOW it evolves (the trusted loop)
+│   ├── engine.py        EvolutionEngine — the five phases, gates, acceptance
+│   ├── proposer.py      Improver — assembles the improver prompt, parses output
+│   ├── proposal.py      Proposal schema + tolerant JSON parsing
+│   ├── operators.py     reads/validates the operator catalog (a META artifact)
+│   ├── scheduler.py     fast/slow surfaces per generation
+│   ├── selection.py     pass_screen / pass_canary / accept_val
+│   ├── archive.py       MAP-Elites grid, parent sampling, backtracking
+│   └── assembler.py     build_spec: mapping → AgentSpec (incl. policy cap)
+│
+├── runtime/             HOW an agent runs
+│   ├── runtime.py       AgentRuntime: dispatch loop, budget, traces
+│   ├── module_api.py    the module ABI: AgentModule, Actions, ModuleContext
+│   ├── loader.py        exec + ABI validation of module source
+│   └── types.py         Attempt, TraceStep
+│
+├── objectives/          WHAT &quot;better&quot; means
+│   ├── base.py          Objective protocol, Task/Suite/ScoreBook, splits
+│   ├── code_tasks.py    built-in: hidden-test-scored Python tasks
+│   └── exact_match.py   built-in: plain-text equality
+│
+├── memory/              WHAT the agent remembers
+│   ├── episodic.py      ReflectionStore (Reflexion)
+│   ├── insights.py      InsightStore (ExpeL) — distill / retire
+│   ├── playbook.py      bounded section edits (ACE)
+│   └── retrieve.py      TF-IDF retriever behind a Protocol
+│
+├── safety/              WHAT KEEPS IT SAFE
+│   ├── budget.py        hard caps, exhausted()/overshot()
+│   ├── drift.py         canary/active regression, stagnation
+│   ├── rollback.py      auto-rollback to archive best
+│   └── approvers.py     FakeApprover / CLIApprover (fail-closed)
+│
+├── sandbox/             WHERE untrusted code runs
+│   ├── guards.py        AST import whitelist (static scan)
+│   └── exec.py          subprocess python -I, rlimits, scrubbed env
+│
+├── llm/                 WHO answers
+│   ├── base.py          LLMProvider protocol, Message/Usage/requests
+│   ├── anthropic_provider.py · openai_provider.py · litellm_provider.py
+│   ├── mock.py          ScriptedProvider (FIFO role queues)
+│   ├── demo.py          DemoProvider (content-addressed offline demo)
+│   ├── cache.py         disk response cache (replay)
+│   └── factory.py       provider_from_config
+│
+└── observe/             WHAT YOU SEE
+    ├── events.py        EventLog, 18 kinds, phases
+    └── render.py        terminal rendering (timestamp-free)
+</code></pre>
+<p>Plus, outside <code>src/</code>:</p>
+<pre><code>framework/
+├── projects/            real objectives built through the public seams only
+│   ├── regex_agent/         third objective + live gateway runner
+│   └── harness_efficiency/  fourth objective: cost-aware fitness (SoL-Pi)
+├── examples/custom_objective.py   ~30-line custom objective
+└── tests/               unit / integration / golden / live (125 offline)
+</code></pre>
+<h2>Data flow of one evaluation</h2>
+<p>The same path scores baselines, candidates, <code>rsif run</code>, and <code>rsif report</code> —
+scores are always comparable because there is exactly one evaluation path:</p>
+<pre><code>mapping {artifact_id → version}            (active checkout, or a candidate)
+        │
+        ▼
+build_spec(store, mapping, extra_memory)   assembler
+        │  reads each artifact&#39;s checked-out-or-candidate version
+        │  PROMPT  → system_prompt
+        │  SKILL   → skills[] (code + manifest)
+        │  MEMORY  → memory text (playbook rendered)
+        │  MODULE  → module_source
+        │  POLICY  → memory cap (max_memory_chars)
+        │  META    → ignored (improver-side, not agent-side)
+        ▼
+AgentSpec ── compose_system() → system context (prompt + skills + memory)
+        │
+        ▼
+AgentRuntime.run(task_prompt, spec)        runtime
+        │  loads the module (exec behind the whitelist scan)
+        │  loop: module.step(ctx) → dispatch action
+        │     LLMAction   → provider.complete (through budget + event log)
+        │     ToolAction  → skill executed in the sandbox
+        │     ReflectAction → self-critique appended to the session
+        │     SubmitAction → done
+        ▼
+Attempt (result, ok, usage, input_chars, steps, trace)
+        │
+        ▼
+objective.evaluate(task, attempt) → TaskScore
+        ▼
+ScoreBook.mean() → fitness        (memoized per mapping+split+tasks)
+</code></pre>
+<p>The injected <code>extra_memory</code> (retrieved insights + reflections, TF-IDF-ranked
+per task) is appended to the spec&#39;s memory <em>after</em> playbook rendering and
+<em>before</em> the policy cap truncates it — so the policy bounds the total
+injected memory, not just the playbook.</p>
+<h2>The workspace (one run on disk)</h2>
+<pre><code>&lt;run&gt;/
+  config.json        RunConfig as JSON (the run is self-describing)
+  seed.json          RNG seed — with the LLM cache this replays the run
+  events.jsonl       append-only event log (the observability backbone)
+  lineage.jsonl      append-only artifact history
+  artifacts/&lt;id&gt;/vN/ immutable version dirs (+ meta.json each)
+  checkout.json      the ACTIVE agent: artifact_id → version
+  archive.json       MAP-Elites cells + history
+  evals/gen_NNNN/    per-candidate scorebooks (val_child.json, …)
+  cache/llm/         provider response cache (optional, for replay)
+  memory/            reflections.jsonl, insights.jsonl
+</code></pre>
+<p><code>RunWorkspace.init</code> creates the layout (and refuses a non-empty directory);
+<code>ArtifactStore</code> is the only writer of artifacts/lineage/checkout.</p>
+<h2>Configuration — every knob</h2>
+<p><code>RunConfig</code> (all fields in <code>src/rsif/config.py</code>; defaults shown). The same
+object configures engine, runtime, improver, and safety — one source of
+truth, serialized to <code>config.json</code> per run.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>objective</code></td>
+<td><code>code-tasks</code></td>
+<td>Objective name. <strong>Open set</strong>: any non-empty name identifies a user-supplied <code>Objective</code>; built-ins dispatch in <code>objective_from_config</code>.</td>
+</tr>
+<tr>
+<td><code>charter</code></td>
+<td><em>&quot;Improve task fitness… never regress safety canaries.&quot;</em></td>
+<td>Safety charter text.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>scripted</code></td>
+<td><code>anthropic</code> / <code>openai</code> / <code>litellm</code> / <code>scripted</code> (env <code>RSIF_PROVIDER</code> overrides).</td>
+</tr>
+<tr>
+<td><code>model</code> / <code>improver_model</code></td>
+<td><code>&quot;&quot;</code></td>
+<td>Model ids; empty improver model = same as agent model.</td>
+</tr>
+<tr>
+<td><code>temperature</code>, <code>seed</code></td>
+<td>0.7, 0</td>
+<td>Threaded to providers and to <code>random.Random(seed)</code>.</td>
+</tr>
+<tr>
+<td><code>max_steps_per_task</code></td>
+<td>8</td>
+<td>Runtime step budget per attempt.</td>
+</tr>
+<tr>
+<td><code>max_output_tokens</code></td>
+<td>4096</td>
+<td>Per-completion cap.</td>
+</tr>
+<tr>
+<td><code>generations</code></td>
+<td>3</td>
+<td>Outer loop iterations.</td>
+</tr>
+<tr>
+<td><code>proposals_per_generation</code></td>
+<td>2</td>
+<td>Candidates per generation.</td>
+</tr>
+<tr>
+<td><code>screen_tasks</code></td>
+<td>2</td>
+<td>Probe-task count for the cascade screen.</td>
+</tr>
+<tr>
+<td><code>screen_epsilon</code></td>
+<td>0.30</td>
+<td>Screen passes at <code>child ≥ parent − ε</code>.</td>
+</tr>
+<tr>
+<td><code>acceptance_threshold</code></td>
+<td>0.02</td>
+<td>Val gain required: <code>val(child) &gt; val(parent) + θ</code>.</td>
+</tr>
+<tr>
+<td><code>meta_every_k</code></td>
+<td>3</td>
+<td>META surface opens every k-th generation.</td>
+</tr>
+<tr>
+<td><code>meta_eval_window</code></td>
+<td>3</td>
+<td>Generations a provisional META edit runs before confirm/revert.</td>
+</tr>
+<tr>
+<td><code>max_patch_ops</code></td>
+<td>3</td>
+<td>Bounded edits: ops per patch.</td>
+</tr>
+<tr>
+<td><code>max_playbook_sections</code></td>
+<td>12</td>
+<td>Playbook size cap.</td>
+</tr>
+<tr>
+<td><code>budget_usd</code> / <code>budget_llm_calls</code> / <code>budget_wall_clock_s</code></td>
+<td>1.0 / 2000 / 3600</td>
+<td>Hard budget dimensions.</td>
+</tr>
+<tr>
+<td><code>require_approval_for_meta</code></td>
+<td>True</td>
+<td>META edits need an approver (fail-closed).</td>
+</tr>
+<tr>
+<td><code>sandbox_timeout_s</code> / <code>sandbox_mem_mb</code></td>
+<td>10 / 512</td>
+<td>Sandbox rlimits.</td>
+</tr>
+<tr>
+<td><code>reflections_max</code></td>
+<td>50</td>
+<td>Episodic buffer size.</td>
+</tr>
+<tr>
+<td><code>insights_distill_every</code></td>
+<td>3</td>
+<td>Generations between insight distillation/retirement passes.</td>
+</tr>
+</tbody></table>
+<h2>Extension points (and what is deliberately <em>not</em> one)</h2>
+<table>
+<thead>
+<tr>
+<th>You can plug in</th>
+<th>How</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>An objective</td>
+<td>Implement the <code>Objective</code> protocol; pass the instance to <code>EvolutionEngine</code> (or name it in <code>RunConfig</code> and dispatch yourself)</td>
+<td><code>projects/regex_agent/objective.py</code></td>
+</tr>
+<tr>
+<td>A provider</td>
+<td>Implement <code>LLMProvider.complete</code>; wrap with the disk cache if you want replay</td>
+<td><code>llm/anthropic_provider.py</code></td>
+</tr>
+<tr>
+<td>A retriever</td>
+<td>Implement the <code>Retriever</code> protocol (embeddings slot in here)</td>
+<td><code>memory/retrieve.py</code></td>
+</tr>
+<tr>
+<td>An approver</td>
+<td>Implement <code>Approver.approve(proposal_id, summary) → bool</code></td>
+<td><code>safety/approvers.py</code></td>
+</tr>
+</tbody></table>
+<p>Not extension points in v1: the engine, the gate chain, the store&#39;s
+immutability semantics, and the sandbox. The improver <em>does</em> improve itself
+— but only through META <em>artifacts</em> (its template and operator catalog),
+under cadence + approval + a deferred evaluation window. The evolution
+engine itself is not an editable artifact; that is the trust boundary.</p>
+<h2>Design invariants worth internalizing</h2>
+<ol>
+<li><strong>Activation requires empirical validation</strong> — <code>apply_patch</code> cannot
+activate; only <code>promote</code> (post-gates) writes the checkout. This is a
+structural property of the store, not a convention.</li>
+<li><strong>One evaluation path</strong> — baseline, candidates, CLI <code>run</code>, and <code>report</code>
+all score through the same memoized <code>_evaluate</code>; numbers are comparable.</li>
+<li><strong>History is append-only</strong> — rollback appends <code>restore</code>; nothing is ever
+rewritten or deleted (deactivation = version 0 in the checkout).</li>
+<li><strong>Verification is execution-grounded</strong> — acceptance signals come only
+from executed evaluation (sandbox tests, splits); LLM self-critique is
+advisory context, never a gate.</li>
+<li><strong>Determinism by construction</strong> — explicit seeded RNG, scripted/demo
+providers, timestamp-free event payloads, memoized evaluation; the
+golden test reproduces a full run byte-identically across processes.</li>
+</ol>
+</article><div class="docs-prevnext"><a class="pn prev" href="quickstart.html">← rsif Quickstart</a><a class="pn next" href="concepts.html">Concepts — the rsif glossary →</a></div></main></div></body></html>

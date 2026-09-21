@@ -58,7 +58,11 @@ call/wall-clock caps in `config.json`) stop the run cleanly at any boundary.
 
 ## Where to look next
 
+- `docs/index.md` — the documentation map and reading paths
+- `docs/architecture.md` — the system map, trust boundary, data flow
+- `docs/lifecycle.md` — one proposal through every gate and event
+- `docs/components/` — one guide per subsystem (engine, artifacts, runtime,
+  memory, objectives, safety, observability, efficiency)
 - `docs/design.md` — every mechanism, its paper citation, code path, test
-- `docs/plan.md` — milestone status table; `docs/decision-log.md` — decisions
 - `tests/golden/test_flagship_evolution.py` — the byte-reproducible loop
 - `examples/custom_objective.py` — plug in your own objective (~30 lines)

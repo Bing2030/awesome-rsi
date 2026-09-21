@@ -89,6 +89,26 @@ pre.readme { background: var(--panel); border: 1px solid var(--line); border-rad
 
 footer { color: var(--muted); font-size: 12px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
 
+/* ---- rsif framework docs ---- */
+.fw-cta { margin-top: 10px; padding: 10px 14px; background: var(--accent-soft); border-radius: 9px; font-size: 14px; }
+.fw-cta a { color: var(--accent); font-weight: 600; }
+.docs-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 0 32px; max-width: 1080px; margin: 0 auto; padding: 20px 20px 80px; }
+.docs-side { border-right: 1px solid var(--line); padding-right: 20px; font-size: 13.5px; position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
+.docs-brand { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.docs-brand a { color: var(--text); }
+.docs-side .dg { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 4px; }
+.docs-side a { display: block; padding: 3px 0; color: var(--text); }
+.docs-side a:hover { color: var(--accent); }
+.docs-main { min-width: 0; }
+.docs-prevnext { display: flex; justify-content: space-between; gap: 10px; margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line); }
+.docs-prevnext .pn { display: inline-block; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13.5px; }
+.docs-prevnext .pn:hover { border-color: var(--accent); text-decoration: none; }
+.docs-prevnext .pn.next { margin-left: auto; }
+@media (max-width: 800px) {
+  .docs-layout { grid-template-columns: 1fr; }
+  .docs-side { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--line); padding: 0 0 14px; }
+}
+
 @media print {
   body { background: #fff; color: #000; }
   .crumbs, .links, footer { display: none; }
