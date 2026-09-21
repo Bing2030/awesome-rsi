@@ -1,0 +1,414 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif — Design Document — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif — Design Document</h1>
+<blockquote>
+<p><strong>rsif</strong> is a framework for constructing agents that improve themselves
+through a verified loop: <em>idea proposal → idea exploration → idea design →
+idea verification &amp; validation → correction</em>, iterating until the best
+agent evolves. Every design mechanism below carries (a) the paper(s) it is
+grounded in, (b) the code path that implements it, and (c) the test that
+verifies it. Citations were cross-checked against this repo&#39;s hand-distilled
+entries in <code>site/curated.json</code>; §10 records spot-checks against the local
+PDFs in <code>resources/</code>.</p>
+</blockquote>
+<p>Implementation process and status: <code>docs/plan.md</code>. Key decisions and bugs
+caught along the way: <code>docs/decision-log.md</code>.</p>
+<p>Reader&#39;s guide: this document is the <em>rationale</em> layer (mechanism ↔ paper ↔
+code ↔ test). For the reference layer — system map, glossary, per-subsystem
+guides — see <code>docs/index.md</code> (start there as a newcomer:
+<code>docs/architecture.md</code>, <code>docs/concepts.md</code>, <code>docs/lifecycle.md</code>,
+<code>docs/components/</code>).</p>
+<hr>
+<h2>1. Scope and the trust boundary</h2>
+<p>rsif targets <strong>harness-level recursive self-improvement</strong>: the LLM weights are
+frozen; everything the agent <em>is</em> — module code, prompts, skills, memory,
+and the improver&#39;s own templates — is evolvable data under a trusted, frozen
+outer loop.</p>
+<pre><code>                ┌───────────────────────────────────────────────┐
+                │ EvolutionEngine (trusted, frozen process)     │
+                │ propose → explore → design → verify → correct │
+                └───┬─────────┬──────────┬──────────┬──────────┘
+                Improver   Objective   Archive    Safety
+              (templates  (fitness,   (MAP-Elites (gates, drift,
+               = META      suites:     + backtrack) budget, approve,
+               artifacts)  train/val/              rollback)
+                           test/canary)
+                ┌────┴─────────────────────────────────────────┐
+                │ ArtifactStore — immutable version dirs +      │
+                │ append-only lineage + active checkout         │
+                │ skills | prompts | memory | modules | meta    │
+                └────┬─────────────────────────────────────────┘
+                  AgentSpec (resolved checkout)
+                ┌────┴─────────────────────────────────────────┐
+                │ AgentRuntime: LLMProvider ↔ module ABI ↔     │
+                │ Sandbox (+ memory retrieval)                  │
+                └──────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Why this shape.</strong> DGM [2505.22954] and ADAS [2408.08435] show agents can
+rewrite themselves productively when an outer empirical selector enforces
+progress; Gödel Agent [2410.04444] shows the risks when self-modification is
+unguarded. rsif&#39;s split — <em>engine is trusted code, agent is modifiable
+data</em> — realizes the former while making it structurally impossible for an
+evolved artifact to break its own selection loop in v1. The
+improver-improves-improver axis [2310.02304, 2607.05297] is not sacrificed:
+it runs through <strong>META artifacts</strong> (§4.5) under stricter gates and human
+approval.</p>
+<p><strong>Four improvement surfaces</strong> (all first-class artifacts):</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Artifact</th>
+<th>Example evolution</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skills &amp; tools (code)</td>
+<td><code>skill/*</code></td>
+<td>new tool module + manifest, admitted after the static-scan gate</td>
+</tr>
+<tr>
+<td>Prompts &amp; strategies</td>
+<td><code>prompt/*</code></td>
+<td>refine the system prompt (the demo&#39;s main axis)</td>
+</tr>
+<tr>
+<td>Memory &amp; knowledge</td>
+<td><code>memory/*</code></td>
+<td>playbook sections, distilled insights</td>
+</tr>
+<tr>
+<td>Architecture (meta-agent)</td>
+<td><code>module/*</code></td>
+<td>rewrite the agent&#39;s control loop within the module ABI</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. The design loop, phase by phase</h2>
+<p>One proposal moves through five phases; <strong>every event in the log is
+phase-attributed</strong> (observability with edit attribution [2604.25850]).</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>What happens</th>
+<th>Code</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1 Proposal</strong></td>
+<td>Improver (a meta-agent running a META template) proposes one bounded change: surface, operator, hypothesis, ops. Prompt is assembled from checkout summary, archive frontier, recent lessons (reflections+insights)</td>
+<td><code>evolve/proposer.py</code></td>
+<td>STOP [2310.02304]; Promptbreeder [2309.16797]</td>
+</tr>
+<tr>
+<td><strong>2 Exploration</strong></td>
+<td>Cheap cascade screen: candidate runs <code>screen_tasks</code> probe tasks; continues only if <code>score ≥ parent − ε</code></td>
+<td><code>engine._one_proposal</code>, <code>evolve/selection.pass_screen</code></td>
+<td>AlphaEvolve cascade [2506.13131]</td>
+</tr>
+<tr>
+<td><strong>3 Design</strong></td>
+<td>Proposal → concrete patch: ≤ <code>max_patch_ops</code> ops (bounded edits), operator validated against the catalog, <code>apply_patch</code> materializes candidate versions <strong>without activation</strong>; then static feasibility gates (AST scan for forbidden constructs; module-ABI load check) <strong>before any execution</strong></td>
+<td><code>engine._one_proposal</code>, <code>artifacts/store.apply_patch</code></td>
+<td>ACE bounded ops [2510.04618]; SkillOpt [2605.23904]; guard layers [2603.03329]</td>
+</tr>
+<tr>
+<td><strong>4 Verification</strong></td>
+<td>Execution-grounded gate chain: canary suite (<code>child ≥ parent</code>) → full train eval → <strong>val acceptance</strong> (<code>val(child) &gt; val(parent) + θ</code> with a paired net-gain floor; META-only patches defer to an eval window, §4.5). LLM self-critique is advisory, never the accept signal</td>
+<td><code>evolve/selection.py</code>, engine gates</td>
+<td>DGM [2505.22954]; SkillOpt [2605.23904]; self-correction negative result [2310.01798]</td>
+</tr>
+<tr>
+<td><strong>5 Correction</strong></td>
+<td>On reject: Reflexion reflection → episodic memory; periodic ExpeL distillation; on regression alarms: auto-rollback. On accept: <strong>two-level acceptance</strong> (§4.3)</td>
+<td><code>engine._reject</code>, <code>memory/</code>, <code>safety/rollback.py</code></td>
+<td>Reflexion [2303.11366]; ExpeL [2308.10144]; DGM backtracking</td>
+</tr>
+</tbody></table>
+<p>The loop <em>is</em> the framework&#39;s public contract: <code>EvolutionEngine.run()</code> drives
+generations × proposals through exactly these phases, and
+<code>tests/golden/test_flagship_evolution.py</code> asserts per-proposal phase
+monotonicity <code>proposal → design → exploration → verification → correction</code>
+on a byte-identical golden event log.</p>
+<hr>
+<h2>3. Artifact store — everything improvable is versioned</h2>
+<p><code>artifacts/</code> implements git-like semantics without git plumbing:</p>
+<ul>
+<li><strong>Immutable version dirs</strong> <code>artifacts/&lt;id&gt;/vN/</code> — writing an existing
+version raises (<code>store._write_version</code>).</li>
+<li><strong>Append-only <code>lineage.jsonl</code></strong> — ops <code>create|update|delete|restore</code> with
+parent refs; rollback <em>appends</em> a <code>restore</code> entry, history is never
+rewritten (DGM backtracking semantics [2505.22954]).</li>
+<li><strong>Mutable checkout</strong> <code>checkout.json</code> — the active agent: artifact_id →
+version. <code>apply_patch</code> materializes candidates but never activates;
+<code>promote()</code> activates only after acceptance — the empirical validation gate
+is a <em>structural property of the store</em>, not a convention.</li>
+<li>Verified by <code>tests/unit/test_store.py</code> (immutability, byte-identical
+rollback, lineage append-only) and <code>tests/unit/test_safety.py</code>
+(restore + deactivation semantics).</li>
+</ul>
+<hr>
+<h2>4. Evolution mechanisms</h2>
+<h3>4.1 Archive — MAP-Elites + open-ended exploration</h3>
+<p><code>evolve/archive.py</code>. Niches keyed by objective-supplied behavior descriptors
+(coding objective: <code>(surface, pass_band, steps_band)</code>); one <strong>elite per
+cell</strong>, ties broken by lower cost; <strong>harmonic rank-biased</strong> parent sampling
+(weight <code>1/(rank+1)</code>, all elites selectable) plus <strong>ε-reseeding of superseded
+lineages</strong> — individuals displaced inside their own niche by a fitter
+sibling stay in history and re-enter parent sampling with probability ε
+[1504.04909, 2505.22954]. Every archived individual stays selectable —
+older or locally-weaker agents can seed later breakthroughs (stepping stones
+[2505.22954, 1901.01753]; DGM&#39;s greedy best-parent ablation scores far
+worse, §10). <code>parent_ref</code> pointers are recorded on every individual as
+lineage metadata (for <code>rsif inspect</code>); the <em>selection</em> pressure toward
+backtracking is the ε-reseed, not the pointers. Persisted to <code>archive.json</code>.
+Verified: <code>tests/unit/test_evolve.py</code> (elitism, tie-break, frontier, rank
+bias, ε-reseed from superseded, persistence).</p>
+<h3>4.2 Two-cadence scheduler — fast/slow loops</h3>
+<p><code>evolve/scheduler.py</code>. Task-surface artifacts (prompt/skill/memory/module)
+evolve every generation; the <strong>META surface opens only every k-th
+generation</strong> and requires approval — the fast/slow two-cadence loop of
+MetaSkill-Evolve [2607.05297]. Verified: META outside cadence → <code>surface</code>
+rejection with no approval requested (<code>test_meta_and_module.py</code>).</p>
+<h3>4.3 Two-level acceptance — no ratcheting down</h3>
+<p>A candidate may beat its <em>sampled</em> parent (a weak elite) while still being
+worse than the <em>active</em> agent. rsif separates:</p>
+<ul>
+<li><strong>Archive-acceptance</strong>: <code>val(child) &gt; val(parent) + θ</code> <strong>with a paired
+net-gain floor</strong> — across the val tasks, the child must beat the parent on
+at least one more task than it loses to it. On small suites a mean can
+move by threshold amounts through reshuffled noise; a sub-task improvement
+is not evidence (<code>selection.accept_val</code>). The final <code>rsif report</code> adds a
+bootstrap CI over the sealed test split.</li>
+<li><strong>Promotion</strong>: additionally <code>val(child) &gt; val(active)</code> → becomes the
+deployed agent.</li>
+</ul>
+<p>The deployed agent can therefore never regress through weak sampled
+parents. <code>accept</code> events carry <code>promoted</code>. Verified:
+<code>test_safety_loop.py::test_two_level_acceptance_prevents_ratchet</code> and the
+CLI demo (<code>g3</code> accepted, <code>promoted: false</code>, checkout unchanged).</p>
+<h3>4.4 Architecture surface — the module ABI</h3>
+<p><code>runtime/module_api.py</code>. An agent&#39;s control loop is a module implementing
+<code>AgentModule.step(ctx) → LLMAction|ToolAction|SubmitAction|ReflectAction</code>.
+Modules see only <code>ModuleContext</code> — never the store or engine (ADAS search
+space discipline [2408.08435]; Gödel Agent inspect/rewrite [2410.04444]).
+Evolved module code passes the static scan + a real <code>importlib</code> load/ABI
+check <em>before it is ever executed</em> (design-phase gates). Verified:
+<code>test_meta_and_module.py</code> — a reflect-then-retry module passes
+<code>scan → load → canary → val</code>, visibly changes execution (self-critique
+present in retry requests), and lands in its own niche; <code>import os</code> module
+rejected pre-execution.</p>
+<h3>4.5 META recursion — the improver improves itself, on a deferred gate</h3>
+<p>The improver&#39;s prompt template and operator catalog are themselves META
+artifacts [2310.02304, 2309.16797]. A <strong>META-only</strong> patch leaves the agent
+spec byte-identical, so gating it on the immediate agent-val comparison
+would measure only noise (the M7-era test that &quot;proved&quot; recursion was in
+fact accepting on unrelated scripted answers — corrected in the M13 review).
+rsif instead runs each META edit as a controlled experiment:</p>
+<ol>
+<li><strong>Provisional acceptance</strong> on agent <em>non-regression</em> (val + canary
+unchanged), after the normal scan/surface/approval gates. One META edit
+at a time — a second while a window is open is rejected (<code>meta_pending</code>).</li>
+<li><strong>Deferred evaluation</strong> over <code>meta_eval_window</code> generations: the evolved
+template really formats the next generations&#39; improver calls (asserted
+on captured requests). The window&#39;s proposal success rate is compared to
+the pre-edit baseline.</li>
+<li><strong>Confirm or revert</strong>: worse than baseline (or zero wins with no
+baseline) → the pre-edit META versions are restored (append-only
+<code>restore</code> lineage, <code>meta_revert</code> event); otherwise <code>meta_confirm</code>.</li>
+</ol>
+<p>Mixed patches (META + an agent surface) take the normal strict val gate —
+the agent-visible part must pay for the whole patch. Approval is
+<strong>fail-closed</strong>: no approver wired or denied → rejection. Verified:
+<code>test_meta_and_module.py</code> (provisional accept → revert-on-bad-window with
+the original template provably re-used afterwards; confirm-on-winning-window;
+<code>meta_pending</code>).</p>
+<h3>4.6 Memory — three layers</h3>
+<p><code>memory/</code>:</p>
+<ul>
+<li><strong>Episodic reflections</strong> (Reflexion [2303.11366]): every rejection
+produces a reflection; retrieved per-task by lexical TF-IDF.</li>
+<li><strong>Distilled insights</strong> (ExpeL [2308.10144]): distilled from <strong>verified
+successes only</strong>, with provenance and usage-based retirement — the
+hallucination guard of model-collapse findings [2510.16657].</li>
+<li><strong>Curated playbook</strong> (ACE [2510.04618]): the assembled context evolves
+only via bounded, acceptance-gated section ops.
+Verified: <code>tests/unit/test_memory*.py</code> (retrieval ranks similar over
+dissimilar; distill/retire; playbook rejects unbounded rewrites).</li>
+</ul>
+<hr>
+<h2>5. Safety</h2>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Code</th>
+<th>Reference</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hard budget (calls / USD / wall) checked before every proposal <strong>and after every recorded call</strong> — overshoot is bounded to one call, not one proposal; clean abort, no partial proposals</td>
+<td><code>safety/budget.py</code>, engine</td>
+<td>cost blowout risk [2506.13131]</td>
+<td><code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Drift monitor: canary/active regression → <strong>auto-rollback</strong> to archive best (<code>restore</code> lineage, extras deactivated); stagnation → approval-or-stop</td>
+<td><code>safety/drift.py</code>, <code>safety/rollback.py</code></td>
+<td>misevolution [2509.26354, 2603.06333]</td>
+<td><code>test_safety.py</code>, <code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Human approval for META edits and drift continuation (<code>CLIApprover</code>, fail-closed on EOF/non-tty)</td>
+<td><code>safety/approvers.py</code></td>
+<td>AutoHarness guard layers [2603.03329]</td>
+<td><code>test_meta_and_module.py</code></td>
+</tr>
+<tr>
+<td>Static scan: <strong>import whitelist</strong> for evolved code (curated pure stdlib + <code>rsif.runtime.module_api</code> only), before execution. Honest boundary: MODULE code is exec&#39;d in-process behind this scan; a blacklist would be bypassable via transitive imports (<code>from rsif.commands import os</code>)</td>
+<td><code>sandbox/guards.py</code>, engine design gates</td>
+<td>[2603.03329]</td>
+<td><code>test_sandbox.py</code>, loader tests</td>
+</tr>
+<tr>
+<td>Sandbox: subprocess <code>python -I</code>, temp cwd, wall/CPU timeouts, rlimits, <strong>minimal environment (PATH only — no secrets)</strong> — one code path for agent code, skill execution, and unit-test scoring. Residual limitation: network egress from the child is not blocked (no seccomp on macOS); the scrubbed env removes the exfiltration prize, not the socket</td>
+<td><code>sandbox/exec.py</code></td>
+<td>—</td>
+<td><code>tests/unit/test_sandbox*.py</code></td>
+</tr>
+</tbody></table>
+<p>Misevolution is treated as <em>expected</em>, not exceptional [2509.26354].</p>
+<hr>
+<h2>6. Determinism &amp; reproducibility</h2>
+<ul>
+<li>Explicit <code>random.Random(seed)</code> threading; no global RNG.</li>
+<li>Event payloads carry only ids/scores/decisions — never wall-times or
+sandbox stderr (temp paths would leak into goldens).</li>
+<li>Evaluation memoization by <code>(mapping, split, task-ids)</code>; a candidate suite
+is evaluated exactly once per run.</li>
+<li>Golden test: a full 2-proposal run reproduces <code>events.jsonl</code> /
+<code>archive.json</code> / <code>checkout.json</code> / <code>lineage.jsonl</code> <strong>byte-identically</strong>
+across processes (<code>tests/golden/</code>; regen deliberately with
+<code>RSIF_UPDATE_GOLDEN=1 pytest</code>).</li>
+<li>Offline guard: the test suite blocks <code>socket.socket</code> — accidental network
+calls fail loudly.</li>
+<li>With <code>seed.json</code> + the LLM disk cache (<code>llm/cache.py</code>), a real-provider
+run is replayable.</li>
+</ul>
+<hr>
+<h2>7. Objectives — the task-agnostic seam</h2>
+<p><code>Objective</code> protocol (<code>objectives/base.py</code>): <code>suites()</code>, <code>evaluate(task, attempt)</code>, <code>fitness(scorebook)</code>, <code>behavior_descriptors(scorebook)</code>,
+<code>canaries()</code>; splits <code>train|val|test|canary</code> — <strong>train selects, val
+accepts</strong> [2605.23904], test stays sealed until <code>rsif report</code> (bootstrap CI
+guards lucky-task claims [2510.16657]). The engine never imports a concrete
+objective (<code>objectives/objective_from_config</code> is the only instantiation
+site). Ships with <code>CodeTasksObjective</code> (hidden-test-scored function tasks in
+a sandbox); <code>examples/custom_objective.py</code> + the second built-in objective
+prove the seam (M11).</p>
+<p>Providers are equally pluggable: a 3-method <code>LLMProvider</code> protocol with
+capped Anthropic/OpenAI/LiteLLM adapters (<code>llm/</code>), a <code>ScriptedProvider</code>
+test seam, and a content-addressed offline <code>DemoProvider</code> (<code>llm/demo.py</code>)
+that runs the whole CLI lifecycle deterministically with no network.</p>
+<hr>
+<h2>8. Observability</h2>
+<p><code>events.jsonl</code> is the backbone: kinds
+<code>proposal|patch|screen|eval|gate|accept|reject|reflect|archive_update|rollback|budget|llm_call|approval|run_start|run_end|error|meta_confirm|meta_revert</code>,
+each phase-attributed. It is (a) what <code>rsif status/inspect</code> render,
+(b) what reflections/insights read, (c) the replay source. CLI:
+<code>init/run/evolve/status/inspect/rollback/report</code> (<code>rsif --help</code>); rendering
+is timestamp-free so outputs are diff-stable.</p>
+<hr>
+<h2>9. Non-goals (v1)</h2>
+<p>No weight training; no distributed eval pool; no Docker/VM sandbox (macOS
+process sandbox instead); no web UI; no embeddings/external retrieval
+services; the evolution engine itself is not an editable artifact (only
+improver templates/operators are, via the META surface).</p>
+<hr>
+<h2>10. Citation spot-checks against local PDFs</h2>
+<p>Six load-bearing mechanism claims were spot-checked against the PDFs in
+<code>resources/</code> on 2026-09-20 (each read from the local PDF; quotes shortened,
+page numbers as read). Verdicts: <strong>5 confirmed, 1 partial</strong> — and the
+partial one surfaced a real design distinction, recorded below.</p>
+<h3>10.1 DGM — Darwin Gödel Machine [2505.22954] — archive, empirical selection, fixed outer loop</h3>
+<ul>
+<li><strong>Archive + ancestor re-selection: CONFIRMED.</strong> &quot;the DGM maintains an
+archive of discovered solutions during the search, facilitating
+open-ended exploration rather than relying on evolving a single solution&quot;
+(p.4); archived solutions &quot;serve as stepping stones … much later than
+their original discovery&quot; (p.5). <em>Nuance:</em> the paper never frames this as
+&quot;backtracking when stuck&quot; — every agent gets non-zero selection
+probability as an always-on property of open-ended exploration. rsif&#39;s
+design doc was reworded accordingly (§4.1).</li>
+<li><strong>Empirical validation gate: PARTIAL — an important distinction.</strong> DGM
+empirically validates self-modification against benchmarks (&quot;Instead of
+requiring formal proofs, we empirically validate self-modifications
+against a benchmark&quot;, p.2), but <em>archive admission</em> only requires a valid,
+evaluated child (&quot;Only agents that compile successfully … are added&quot;,
+p.4) — the improvement gate lives at <strong>selection</strong>. rsif is deliberately
+stricter, following SkillOpt (§10.2): admission to a niche requires
+beating the sampled parent on held-out val, and <em>deployment</em> additionally
+requires beating the active agent (two-level acceptance, §4.3).
+Evaluation in DGM is staged (10 → 50 → 200 tasks, p.6) — rsif&#39;s screen →
+full train → val cascade is the same shape.</li>
+<li><strong>Agent rewrites its own code; outer loop fixed: CONFIRMED.</strong> &quot;modifying
+the design of an agent&#39;s own components (i.e., its own code, which does
+<em>not</em> include the open-ended exploration process…)&quot; and &quot;the open-ended
+exploration process (i.e., archive maintenance, parent selection) is
+fixed and not modifiable by the DGM&quot; (pp.4–5) — precisely rsif&#39;s trust
+boundary (§1). Bonus: DGM&#39;s greedy &quot;always pick best parent&quot; ablation
+scores 39.7% vs 50.0% SWE-bench (App.) — independent evidence for rsif&#39;s
+rank-biased roulette that keeps every elite selectable.</li>
+</ul>
+<h3>10.2 SkillOpt [2605.23904] — held-out acceptance: CONFIRMED</h3>
+<p>&quot;an edit is accepted only when it strictly improves a held-out validation
+score&quot; (abstract); &quot;The training split supplies experience, the selection
+split gates updates, and the test split is used only for final reporting&quot;
+(p.5); Figure 2 labels the test split &quot;locked until final report&quot;. This is
+exactly rsif&#39;s train-selects / val-accepts / test-sealed-until-report
+discipline (§7), including strict (<code>&gt;</code>, not <code>≥</code>) acceptance.</p>
+<h3>10.3 Reflexion [2303.11366] — reflect → episodic memory → better retries: CONFIRMED</h3>
+<p>&quot;Reflexion agents verbally reflect on task feedback signals, then maintain
+their own reflective text in an episodic memory buffer to induce better
+decision-making in subsequent trials&quot; (abstract); &quot;not by updating weights,
+but instead through linguistic feedback&quot; (p.1). <em>Adaptation, noted
+honestly:</em> Reflexion&#39;s retrieval is whole-buffer (capped at 1–3, most
+recent first) within one task&#39;s trial loop; rsif generalizes to multi-task
+evolution with TF-IDF retrieval across reflections, and its reflection
+input is the rejection verdict (external, execution-grounded feedback) —
+not pure self-reflection.</p>
+<h3>10.4 MAP-Elites [1504.04909] — descriptor cells, one elite each, elite-sampled parents: CONFIRMED</h3>
+<p>&quot;MAP-Elites will search for the highest performing solution for each cell
+in the N-dimensional feature space&quot; (p.3); &quot;we keep the best one found per
+cell&quot; (p.6); &quot;A cell in the map is randomly chosen and the genome at that
+cell produces an offspring&quot; (p.3); stepping stones &quot;provide … high-performing
+solutions … that may not have been discovered had search been trying to
+increase performance by searching only in that region&quot; (p.6).
+<em>Deliberate deviation:</em> MAP-Elites samples parents uniformly; rsif uses
+harmonic rank-biased sampling (weight 1/(rank+1)) — between uniform and
+greedy, informed by DGM&#39;s greedy-parent ablation (§10.1). Cell replacement
+is strictly-greater, matching rsif&#39;s elitist <code>add()</code>.</p>
+<h3>10.5 Promptbreeder [2309.16797] — two-level self-referential mutation: CONFIRMED</h3>
+<p>&quot;the mutation of these task-prompts is governed by mutation-prompts that
+the LLM generates and improves through evolution in a self-referential way
+… not just improving task-prompts, but it is also improving the
+mutation-prompts that improve these task-prompts&quot; (abstract); formalized as
+<code>P&#39; = LLM(M + P)</code> and <code>M&#39; = LLM(H + M)</code> (p.5). rsif&#39;s META surface
+(evolvable improver templates + operator catalogs) is exactly this second
+level, under approval gates (§4.5).</p>
+<h3>10.6 Self-correction negative result [2310.01798] — execution-grounded verification: CONFIRMED</h3>
+<p>&quot;LLMs struggle to self-correct responses without external feedback, and at
+times, their performance even degrades after self-correction&quot; (abstract;
+per-model tables show e.g. Llama-2 GSM8K 62.0 → 36.5); &quot;when valid external
+feedback is available, it is beneficial to leverage it properly&quot; (p.8), with
+unit tests / code executors named as verifiers. This is why rsif&#39;s
+acceptance signal is <strong>only</strong> sandbox-executed evaluation (hidden tests,
+canaries, val split); LLM self-critique (ReflectAction, reflections) is
+advisory context — never an acceptance gate (§2, phase 4).</p>
+<h3>10.7 Verification method note</h3>
+<p>Spot-checks were performed by reading the local PDFs (<code>resources/*.pdf</code>)
+with page-level reads; each verdict above carries its quote and page. The
+distinction surfaced in §10.1 (admission vs selection gating) is the only
+place a claim needed correction rather than confirmation — and rsif&#39;s
+behavior was already on the strict side of it.</p>
+</article><div class="docs-prevnext"><a class="pn prev" href="components/observability.html">← Component guide — observability, CLI, determinism</a><a class="pn next" href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points →</a></div></main></div></body></html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — memory — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="artifacts.html">Component guide — the artifact store</a><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="safety.html">Component guide — the safety stack</a><a href="observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — memory</h1>
+<p><em>Three layers with different lifecycles: what failed (episodic), what was
+verified to work (distilled), and what the agent currently knows (playbook).</em></p>
+<p>Files: <code>src/rsif/memory/{episodic,insights,playbook,retrieve}.py</code>. Verified
+by <code>tests/unit/test_memory.py</code>. Injection path: <code>engine._agent_memory</code> +
+<code>build_spec(extra_memory=…)</code> (see <a href="runtime.html">runtime.md</a>).</p>
+<h2>The three layers</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Store</th>
+<th>Written when</th>
+<th>Retrieved</th>
+<th>Grounding</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Reflections</strong> (episodic)</td>
+<td><code>memory/reflections.jsonl</code></td>
+<td>every rejection (<code>engine._reject</code>)</td>
+<td>per task / per improver call, TF-IDF top-3</td>
+<td>Reflexion [2303.11366]</td>
+</tr>
+<tr>
+<td><strong>Insights</strong> (distilled)</td>
+<td><code>memory/insights.jsonl</code></td>
+<td>every <em>verified acceptance</em> (<code>insights.distill</code>), retired periodically</td>
+<td>same</td>
+<td>ExpeL [2308.10144]</td>
+</tr>
+<tr>
+<td><strong>Playbook</strong> (curated context)</td>
+<td>the <code>memory/playbook</code> <strong>artifact</strong></td>
+<td>only through bounded, acceptance-gated patches</td>
+<td>always (it <em>is</em> the artifact)</td>
+<td>ACE [2510.04618]</td>
+</tr>
+</tbody></table>
+<p>The asymmetry is deliberate: failures produce reflections immediately and
+cheaply; successes must pass the full gate chain before anything is
+distilled. Nothing enters long-term memory on the model&#39;s say-so.</p>
+<h2>Reflections (<code>episodic.py</code>)</h2>
+<ul>
+<li><code>reflect(task_signature, trace_text, llm=None, source=…)</code> — if an LLM is
+available it generates the lesson from the trace; otherwise the
+deterministic trace text is stored (the golden path: ids + scores only).</li>
+<li>Every reflection has a <code>source</code> proposal id; the engine&#39;s traces are
+deterministic, so replays reproduce memory exactly.</li>
+<li><code>render_for_context(query, top_k=3)</code> — TF-IDF-ranked retrieval, rendered
+as bullet lines.</li>
+<li>Ring buffer, capped at <code>reflections_max</code> (default 50).</li>
+</ul>
+<p>In the flagship run, proposal B&#39;s val rejection produces the reflection
+that (retrieved into the next improver call) shapes subsequent proposals —
+the feed-forward loop is visible in the event log (<code>reflect</code> after each
+<code>reject</code>).</p>
+<h2>Insights (<code>insights.py</code>)</h2>
+<ul>
+<li><code>distill([(proposal_id, text)])</code> — called by the engine on acceptance
+with a one-line verified fact (&quot;adding an edge-case checklist (val 0.40 →
+0.80)&quot;). Carries <code>provenance</code> (proposal ids).</li>
+<li><code>record_failure(indices)</code> — an insight that was injected and the run
+still failed; failures accumulate per insight.</li>
+<li><code>retire_correlated(threshold=2)</code> — insights that co-occur with repeated
+failures are retired. Run by the engine every <code>insights_distill_every</code>
+(default 3) generations; emits <code>reflect(action=&quot;retire_insights&quot;)</code>.</li>
+<li><code>render_for_context(query, top_k=3)</code> — same retrieval as reflections.</li>
+</ul>
+<p>This is the hallucination guard: distillation is restricted to verified
+successes and usage is tracked, so bad lessons age out instead of
+compounding (model-collapse findings [2510.16657]).</p>
+<h2>Playbook (<code>playbook.py</code>)</h2>
+<p>The structured part of the agent&#39;s standing context, stored as the
+<code>memory/playbook</code> artifact — a JSON list of <code>{id, title, body}</code> sections:</p>
+<pre><code class="language-json">[{&quot;id&quot;: &quot;s1&quot;, &quot;title&quot;: &quot;General strategy&quot;,
+  &quot;body&quot;: &quot;Read the task carefully; implement exactly the requested
+           signature; keep code simple and stdlib-only.&quot;}]
+</code></pre>
+<ul>
+<li><code>PlaybookEditor</code> enforces bounded edits: ≤ <code>max_ops_per_patch</code> ops and ≤
+<code>max_sections</code> total (default 12). Unbounded rewrites raise — the
+anti-context-collapse discipline.</li>
+<li>Ops: <code>add</code> (a section), <code>update</code> (id + new body), <code>delete</code> (id).</li>
+<li>The assembler renders sections into the spec&#39;s memory text; free-text
+MEMORY artifacts (like the 2000-char memory in the efficiency tests) are
+joined as-is.</li>
+</ul>
+<h2>Retrieval (<code>retrieve.py</code>)</h2>
+<p>Hand-rolled TF-IDF, no numpy/sklearn — the core stays stdlib-only:</p>
+<ul>
+<li>tokenizer: lowercase <code>[a-z0-9]+</code> + a minimal suffix stemmer
+(<code>sorting→sort</code>, <code>sorted→sort</code>, <code>rules→rule</code>; long words only, to avoid
+mangling short ones),</li>
+<li>smoothed idf, length-normalized tf,</li>
+<li>behind a <code>Retriever</code> Protocol — an embeddings-backed retriever can slot
+in later as an optional extra without touching callers.</li>
+</ul>
+<h2>Injection: what the agent actually sees</h2>
+<p>For each task evaluation, the engine renders
+<code>insights.render_for_context(task.prompt)</code> +
+<code>reflections.render_for_context(task.prompt)</code> into <code>extra_memory</code>, which
+<code>build_spec</code> appends <strong>after</strong> the playbook and <strong>before</strong> the POLICY cap
+truncates the total to <code>max_memory_chars</code> (default 4000; see
+<a href="efficiency.html">efficiency.md</a>). The improver gets its own retrieval
+(<code>_lessons_text</code> over &quot;agent improvement lessons&quot;) — agent memory and
+improver memory are the same stores, different queries.</p>
+<p>Ordering consequence: under a tight policy, playbook text wins over
+retrieved lessons (it is injected first). A cost-aware run that tightens
+the cap is betting the playbook is load-bearing and the retrieved lessons
+are not — exactly the trade-off the <code>policy/bound-context</code> operator lets
+the loop explore empirically.</p>
+<h2>Known limitations (accepted, documented)</h2>
+<ul>
+<li>Reflection traces carry ids/scores, not full trajectories — memory
+content is thin (L2 in the investigation&#39;s table).</li>
+<li>Eval memoization keys on agent mapping, not memory-store content: a
+memo-hit parent is scored with the memory <em>as of its evaluation</em>
+(comparability vs staleness, M2).</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="runtime.html">← Component guide — the runtime, module ABI, and sandbox</a><a class="pn next" href="objectives.html">Component guide — objectives: the task-agnostic seam →</a></div></main></div></body></html>

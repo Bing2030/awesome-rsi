@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — the safety stack — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="artifacts.html">Component guide — the artifact store</a><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="memory.html">Component guide — memory</a><a href="objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — the safety stack</h1>
+<p><em>Misevolution is expected, not exceptional. Every mechanism here assumes
+the loop will misbehave and makes the misbehavior cheap, bounded, and
+reversible.</em></p>
+<p>Files: <code>src/rsif/safety/{budget,drift,rollback,approvers}.py</code>,
+<code>src/rsif/sandbox/{guards,exec}.py</code>, plus gate ordering in the engine.
+Verified by <code>tests/unit/test_safety.py</code>,
+<code>tests/integration/test_safety_loop.py</code>, <code>tests/unit/test_sandbox.py</code>.</p>
+<h2>The defense map</h2>
+<pre><code>before the loop        per proposal                    per generation         ever
+──────────────         ──────────────────────────     ─────────────────      ─────
+charter + config       static scan (whitelist)        drift monitor          append-only
+budget caps            load gate (module ABI)          ├ regression →        lineage;
+approver wiring        screen → canary → val           │  auto-rollback      immutable
+sandbox rlimits        bounded patches                 └ stagnation →        versions;
+                       META approval (fail-closed)       approve-or-stop      promotion-only
+                       paired net-gain floor                                  activation
+</code></pre>
+<h2>Hard budget (<code>safety/budget.py</code>)</h2>
+<p>Three dimensions — LLM calls, estimated USD, wall clock — checked at two
+points:</p>
+<ul>
+<li><strong><code>exhausted()</code></strong> — before starting new work; fires <em>at</em> the limit.</li>
+<li><strong><code>overshot()</code></strong> — after every recorded completion (the engine&#39;s
+<code>_EventfulProvider</code>); a call that pushes strictly <em>past</em> a limit raises
+<code>BudgetExhausted</code> immediately.</li>
+</ul>
+<p>The two-point check bounds overshoot to <strong>one call</strong>, not one proposal
+(~20–30 calls) — an M13 fix. On either path the run aborts cleanly: a
+<code>budget</code> event with the full snapshot, <code>stop_reason=&quot;budget:&lt;dim&gt;&quot;</code>, no
+partial proposals, and <code>run_end</code> still lands. Defaults: 2000 calls, $1,
+3600 s.</p>
+<h2>Drift monitor (<code>safety/drift.py</code>)</h2>
+<p>Runs at every generation end <strong>on the active agent</strong>, all signals
+execution-grounded (memoized scores, never self-judged):</p>
+<table>
+<thead>
+<tr>
+<th>Alarm</th>
+<th>Condition</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>canary_regression</code></td>
+<td>active canary &lt; baseline canary</td>
+<td>auto-rollback, run continues</td>
+</tr>
+<tr>
+<td><code>active_regression</code></td>
+<td>archive best &gt; active val</td>
+<td>auto-rollback, run continues</td>
+</tr>
+<tr>
+<td><code>stagnation</code></td>
+<td>≥ threshold consecutive rejections (default <code>max(4, 2×proposals)</code>)</td>
+<td>approval event; denied/unwired → stop (<code>drift</code>)</td>
+</tr>
+</tbody></table>
+<p>Auto-rollback is defense-in-depth: the promotion gate already makes
+regression of the deployed agent structurally very hard, and two-level
+acceptance blocks the weak-parent ratchet — the monitor catches anything
+that slips past (e.g. canary drift across many small accepted changes).</p>
+<h2>Rollback semantics (<code>safety/rollback.py</code> + the store)</h2>
+<ul>
+<li>Restoring an artifact <strong>appends</strong> a <code>restore</code> lineage entry — history is
+never rewritten (DGM backtracking semantics).</li>
+<li>Artifacts that did not exist in the target snapshot are <em>deactivated</em>
+(version 0 in the checkout), never deleted — files and lineage remain.</li>
+<li>Rollback targets: <code>rsif rollback --artifact X --to N</code> (manual,
+any version) or <code>auto_rollback</code> (engine, archive-best snapshot).</li>
+<li>META reverts use the same mechanism (<code>meta_revert</code> restores the pre-edit
+META versions mid-run).</li>
+</ul>
+<h2>Approvers (<code>safety/approvers.py</code>)</h2>
+<p><code>Approver.approve(proposal_id, summary) → bool</code> — the human/policy in the
+loop for:</p>
+<ul>
+<li><strong>META edits</strong> (the improver changing itself) — requested during phase 1;</li>
+<li><strong>drift continuation</strong> (stagnation) — requested at generation end.</li>
+</ul>
+<p><strong>Fail-closed everywhere</strong>: no approver wired, EOF, or non-tty stdin ⇒
+deny. <code>CLIApprover</code> prints a y/N prompt (attached only when stdin is a
+TTY); <code>FakeApprover</code> serves tests/demos.</p>
+<h2>Static scan (<code>sandbox/guards.py</code>) — see also <a href="runtime.html">runtime.md</a></h2>
+<p>An AST <strong>import whitelist</strong>: curated pure stdlib +
+<code>rsif.runtime.module_api</code>, nothing else. Runs in the design phase, on
+skill <em>and</em> module payloads, <strong>before any execution</strong> — including the cheap
+screen. Line-precise violations; syntax errors are violations too.</p>
+<p>Why whitelist: the M13 review showed the old blacklist was bypassable via
+transitive attribute imports (<code>from rsif.commands import os</code>). Honest
+boundary: MODULE code exec&#39;s in-process behind this scan (it must implement
+the ABI in the engine process) — the scan is the primary barrier for that
+surface. SKILL code runs in the subprocess sandbox where the scan is an
+early, explainable rejection.</p>
+<h2>Sandbox (<code>sandbox/exec.py</code>)</h2>
+<p>Subprocess <code>python -I</code>, temp cwd, wall+CPU timeouts, memory rlimits,
+<strong>PATH-only environment</strong> — API keys invisible to evolved code. One code
+path for skill execution and hidden-test scoring. Residual limitation
+(documented, accepted): network egress from the child is not blocked (no
+seccomp on macOS); the scrubbed env removes the exfiltration prize, not
+the socket.</p>
+<h2>Error paths (M13 hardening)</h2>
+<ul>
+<li><strong>Provider failures</strong> (<code>ProviderError</code>, with <code>origin</code>) propagate from
+the runtime → engine → CLI; abort cleanly with
+<code>stop_reason=&quot;error:&lt;Origin&gt;&quot;</code>. Never a 0-score, never a fake &quot;parse&quot;
+rejection (an earlier bug: flaky gateways burned proposals as rejections).</li>
+<li><strong>Engine bugs</strong> surface as <code>engine:&lt;Type&gt;</code> stop reasons — distinct from
+provider errors, so logs never misattribute framework bugs to
+infrastructure.</li>
+<li><code>cmd_run</code> / <code>cmd_report</code> exit 2 on provider errors; the improver&#39;s own
+provider errors re-raise rather than masquerade as bad proposals.</li>
+</ul>
+<h2>The trust boundary, restated</h2>
+<p>The engine, gates, store semantics, sandbox, and budget are <strong>frozen,
+trusted code</strong>. The improver, prompts, skills, memory, architecture
+modules, and policies are <strong>artifacts — data</strong>. The improver improving
+itself is possible (META surface) but only through versioned, bounded,
+approved, empirically-windowed edits. No artifact can reach the code that
+evaluates it. <code>ModuleContext</code> exposes no store/engine handles; the
+whitelist blocks importing them; the sandbox hides secrets; the budget
+caps spend; the lineage makes every change reversible.</p>
+<p>Where each guarantee is pinned:</p>
+<table>
+<thead>
+<tr>
+<th>Guarantee</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Budget aborts cleanly, zero partial proposals, overshoot ≤ 1 call</td>
+<td><code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Two-level acceptance blocks the weak-parent ratchet</td>
+<td><code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Auto-rollback restores best snapshot, extras deactivated, history append-only</td>
+<td><code>test_safety.py</code>, <code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Stagnation stops without approval, continues with it</td>
+<td><code>test_safety_loop.py</code></td>
+</tr>
+<tr>
+<td>Forbidden module rejected pre-execution</td>
+<td><code>test_meta_and_module.py</code></td>
+</tr>
+<tr>
+<td>Infinite loop / memory hog killed in the sandbox</td>
+<td><code>test_sandbox.py</code></td>
+</tr>
+<tr>
+<td>META approval fail-closed</td>
+<td><code>test_meta_and_module.py</code></td>
+</tr>
+<tr>
+<td>Provider error aborts cleanly (no fake scores)</td>
+<td><code>test_safety_loop.py</code></td>
+</tr>
+</tbody></table>
+</article><div class="docs-prevnext"><a class="pn prev" href="efficiency.html">← Component guide — cost-aware evolution (SoL-Pi grounding)</a><a class="pn next" href="observability.html">Component guide — observability, CLI, determinism →</a></div></main></div></body></html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif documentation — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif documentation</h1>
+<p><strong>rsif</strong> is a Python framework for building agents that improve themselves
+through a verified evolution loop:</p>
+<pre><code>proposal → exploration → design → verification → correction
+</code></pre>
+<p>Everything the agent <em>is</em> — prompts, skills, memory, architecture code, the
+improver&#39;s own templates, even the context-assembly policy — is a
+<strong>versioned artifact</strong>. An artifact is only activated after it
+<strong>empirically improves fitness on a held-out validation split</strong>, never on
+the model&#39;s judgment of itself. The engine that enforces this is trusted,
+frozen code; the agent is modifiable data.</p>
+<ul>
+<li><strong>Status:</strong> 16 milestones (M0–M16), 125 offline deterministic tests +
+live gateway runs; see <a href="plan.html">plan.md</a>.</li>
+<li><strong>Core:</strong> Python 3.11+, stdlib-only (providers are optional extras).</li>
+<li><strong>Where the mechanisms come from:</strong> every design decision is grounded in
+the RSI literature — <a href="design.html">design.md</a> carries the full citation map.</li>
+</ul>
+<h2>Reading paths</h2>
+<table>
+<thead>
+<tr>
+<th>You want to…</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Run it in the next 10 minutes</strong> (offline demo, no API key)</td>
+<td><a href="quickstart.html">quickstart.md</a></td>
+</tr>
+<tr>
+<td><strong>Understand the big picture</strong> — components, trust boundary, data flow</td>
+<td><a href="architecture.html">architecture.md</a></td>
+</tr>
+<tr>
+<td><strong>Decode the vocabulary</strong> — artifact, checkout, niche, canary, gate…</td>
+<td><a href="concepts.html">concepts.md</a> (the glossary)</td>
+</tr>
+<tr>
+<td><strong>Trace one proposal</strong> through every gate, event, and rejection reason</td>
+<td><a href="lifecycle.html">lifecycle.md</a></td>
+</tr>
+<tr>
+<td><strong>Read/modify a specific subsystem</strong></td>
+<td>the component guides below</td>
+</tr>
+<tr>
+<td><strong>Write your own objective</strong> and run the engine on your task</td>
+<td><a href="components/objectives.html">components/objectives.md</a></td>
+</tr>
+<tr>
+<td><strong>Understand why it is built this way</strong> (papers ↔ mechanisms)</td>
+<td><a href="design.html">design.md</a>, <a href="decision-log.html">decision-log.md</a></td>
+</tr>
+<tr>
+<td><strong>Audit the implementation</strong> file by file</td>
+<td><a href="investigation.html">investigation.md</a></td>
+</tr>
+</tbody></table>
+<h2>The component guides</h2>
+<p>Each guide covers one subsystem: what it does, the files and key classes,
+the exact semantics and invariants, the configuration knobs, the events it
+emits, and the tests that pin it down.</p>
+<table>
+<thead>
+<tr>
+<th>Guide</th>
+<th>Subsystem</th>
+<th>Key code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="components/artifacts.html">components/artifacts.md</a></td>
+<td>The artifact store: versioning, lineage, checkout, patches, operators</td>
+<td><code>src/rsif/artifacts/</code></td>
+</tr>
+<tr>
+<td><a href="components/engine.html">components/engine.md</a></td>
+<td>The evolution engine: phases, gates, archive, scheduler, improver, META recursion</td>
+<td><code>src/rsif/evolve/</code></td>
+</tr>
+<tr>
+<td><a href="components/runtime.html">components/runtime.md</a></td>
+<td>Agent runtime: spec assembly, the module ABI, skills, the sandbox</td>
+<td><code>src/rsif/runtime/</code>, <code>src/rsif/sandbox/</code>, <code>src/rsif/spec.py</code></td>
+</tr>
+<tr>
+<td><a href="components/memory.html">components/memory.md</a></td>
+<td>Memory: reflections, insights, playbook, retrieval, injection</td>
+<td><code>src/rsif/memory/</code></td>
+</tr>
+<tr>
+<td><a href="components/objectives.html">components/objectives.md</a></td>
+<td>The task-agnostic seam: the <code>Objective</code> protocol + four real objectives</td>
+<td><code>src/rsif/objectives/</code>, <code>projects/</code></td>
+</tr>
+<tr>
+<td><a href="components/efficiency.html">components/efficiency.md</a></td>
+<td>Cost-aware evolution: the efficiency objective and the POLICY artifact</td>
+<td><code>projects/harness_efficiency/</code></td>
+</tr>
+<tr>
+<td><a href="components/safety.html">components/safety.md</a></td>
+<td>Safety stack: budgets, drift, rollback, approvals, code scanning</td>
+<td><code>src/rsif/safety/</code>, <code>src/rsif/sandbox/guards.py</code></td>
+</tr>
+<tr>
+<td><a href="components/observability.html">components/observability.md</a></td>
+<td>Events, CLI, rendering, determinism &amp; replay</td>
+<td><code>src/rsif/observe/</code>, <code>src/rsif/cli.py</code></td>
+</tr>
+</tbody></table>
+<h2>Project records</h2>
+<p>These are historical/engineering records rather than reference docs:</p>
+<ul>
+<li><a href="plan.html">plan.md</a> — the milestone status table (M0–M16) and the original
+approved plan.</li>
+<li><a href="decision-log.html">decision-log.md</a> — per-milestone decisions, bugs caught,
+and corrections to earlier claims.</li>
+<li><a href="investigation.html">investigation.md</a> — the code-level implementation
+walkthrough (mechanism ↔ design point ↔ evidence).</li>
+</ul>
+<h2>The one-paragraph mental model</h2>
+<p>An <strong>Improver</strong> meta-agent proposes one <strong>bounded patch</strong> to the agent&#39;s
+artifacts (a prompt tweak, a new skill, a playbook rule, an architecture
+edit, or a mutation of its own template). The engine materializes the patch
+as <em>candidate</em> versions — the active agent is untouched — then scores the
+candidate on the objective&#39;s task suites behind a cascade of gates: a static
+code scan, a cheap train-split screen, a never-regress canary suite, and
+finally strict held-out <strong>val acceptance</strong> (<code>val(child) &gt; val(parent) + θ</code>
+plus a paired net-gain floor). Accepted candidates enter a MAP-Elites
+<strong>archive</strong> (one elite per behavior niche); only candidates that also beat
+the <em>active</em> agent are <strong>promoted</strong> into the checkout. Rejections become
+Reflexion-style reflections that shape future proposals. Hard budgets,
+drift monitors, and append-only lineage bound the whole process. Everything
+is recorded in a phase-attributed event log that is byte-reproducible from
+the seed.</p>
+<p>Once that paragraph feels obvious, you know rsif.</p>
+</article><div class="docs-prevnext"><a class="pn next" href="quickstart.html">rsif Quickstart →</a></div></main></div></body></html>

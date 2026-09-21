@@ -1,0 +1,345 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Concepts — the rsif glossary — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Concepts — the rsif glossary</h1>
+<p>Every term the framework uses, grouped by where it lives. File anchors point
+into <code>framework/</code>; see <a href="architecture.html">architecture.md</a> for how the pieces
+fit together and <a href="lifecycle.html">lifecycle.md</a> for the dynamic view.</p>
+<h2>The agent and what it is made of</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Agent</strong></td>
+<td>The thing being improved. Fully described by an <code>AgentSpec</code>: system prompt + skills + memory text + architecture module.</td>
+<td><code>src/rsif/spec.py</code></td>
+</tr>
+<tr>
+<td><strong>AgentSpec</strong></td>
+<td>The resolved, runnable form of one agent <em>version-mapping</em>: <code>system_prompt</code>, <code>skills</code>, <code>memory</code>, <code>module_source</code>. Assembled from a checkout by <code>build_spec</code>.</td>
+<td><code>src/rsif/spec.py</code>, <code>src/rsif/evolve/assembler.py</code></td>
+</tr>
+<tr>
+<td><strong>Artifact</strong></td>
+<td>Anything improvable, stored as versioned files. Six types: <code>skill</code>, <code>prompt</code>, <code>memory</code>, <code>module</code>, <code>meta</code>, <code>policy</code>. IDs are namespaced (<code>prompt/system</code>, <code>skill/strings</code>).</td>
+<td><code>src/rsif/artifacts/model.py</code></td>
+</tr>
+<tr>
+<td><strong>Surface</strong></td>
+<td>Which artifact type a proposal edits (&quot;the prompt surface&quot;, &quot;the META surface&quot;). Surfaces gate <em>when</em> and <em>whether</em> a proposal is even considered.</td>
+<td><code>src/rsif/evolve/scheduler.py</code></td>
+</tr>
+<tr>
+<td><strong>Skill</strong></td>
+<td>An executable tool: <code>module.py</code> (a <code>main(**args)</code> function) + <code>manifest.json</code> (name/description). Runs in the sandbox; advertised to the model as a tool.</td>
+<td>assembler <code>_skill()</code>, <code>runtime._run_skill</code></td>
+</tr>
+<tr>
+<td><strong>Module (architecture)</strong></td>
+<td>The agent&#39;s control loop as code: a class implementing <code>AgentModule.step(ctx) → Action</code>. Loaded/exec&#39;d in-process behind the static scan.</td>
+<td><code>src/rsif/runtime/module_api.py</code></td>
+</tr>
+<tr>
+<td><strong>META artifact</strong></td>
+<td>An artifact that changes the <em>improver</em> instead of the agent: the improver prompt template and the operator catalog. Evolves on a slow cadence under approval.</td>
+<td><code>meta/improver-template</code>, <code>meta/operator-catalog</code></td>
+</tr>
+<tr>
+<td><strong>POLICY artifact</strong></td>
+<td>A runtime tuning knob as an artifact — currently <code>policy/context</code>, bounding how much memory may be injected into the context (<code>max_memory_chars</code>).</td>
+<td><code>src/rsif/constants.py</code>, assembler <code>_policy_cap</code></td>
+</tr>
+<tr>
+<td><strong>Operator</strong></td>
+<td>A typed mutation in the improver&#39;s vocabulary, e.g. <code>prompt/refine</code>, <code>skill/add</code>, <code>policy/bound-context</code>. A proposal&#39;s operator must exist in the catalog <em>and</em> match its claimed surface.</td>
+<td><code>src/rsif/evolve/operators.py</code></td>
+</tr>
+</tbody></table>
+<h2>Versioning and state</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Version</strong></td>
+<td>One immutable snapshot of an artifact&#39;s files: <code>artifacts/&lt;id&gt;/vN/</code> plus a <code>meta.json</code> (type, content hash, proposal id, accepted flag). Writing an existing version raises.</td>
+<td><code>src/rsif/artifacts/store.py</code></td>
+</tr>
+<tr>
+<td><strong>Lineage</strong></td>
+<td>Append-only JSONL of every write: <code>create / update / delete / restore</code> with from/to versions and the responsible proposal. Rollback <em>appends</em>; history is never rewritten.</td>
+<td><code>lineage.jsonl</code>, <code>store._append_lineage</code></td>
+</tr>
+<tr>
+<td><strong>Checkout</strong></td>
+<td>The active agent: <code>checkout.json</code>, a mapping <code>artifact_id → version</code>. Reading an active artifact = reading its checked-out version.</td>
+<td><code>store.checkout()</code>, <code>store.promote()</code></td>
+</tr>
+<tr>
+<td><strong>Patch</strong></td>
+<td>A bounded set of operations (<code>CreateOp / UpdateOp / DeleteOp / RestoreOp</code>) plus a rationale and a falsifiable hypothesis. Max <code>max_patch_ops</code> (default 3) ops.</td>
+<td><code>src/rsif/artifacts/model.py</code></td>
+</tr>
+<tr>
+<td><strong>Candidate</strong></td>
+<td>A patch materialized as new versions + a <em>proposed</em> mapping (parent snapshot overlaid with the patch&#39;s versions). Never active until promoted.</td>
+<td><code>store.apply_patch</code>, <code>engine._one_proposal</code></td>
+</tr>
+<tr>
+<td><strong>Snapshot (spec)</strong></td>
+<td>A frozen <code>artifact_id → version</code> mapping; the archive stores one per individual so any archived agent can be reassembled.</td>
+<td><code>Archive.Individual.spec_snapshot</code></td>
+</tr>
+<tr>
+<td><strong>Workspace</strong></td>
+<td>One run&#39;s on-disk layout: config, seed, events, lineage, artifacts, checkout, evals, cache, memory.</td>
+<td><code>src/rsif/artifacts/workspace.py</code></td>
+</tr>
+<tr>
+<td><strong>Seed artifacts</strong></td>
+<td>The six created by <code>rsif init</code>: <code>prompt/system</code>, <code>memory/playbook</code>, <code>meta/improver-template</code>, <code>meta/operator-catalog</code>, <code>module/default</code>, <code>policy/context</code>.</td>
+<td><code>store.seed_defaults</code></td>
+</tr>
+</tbody></table>
+<h2>The loop and its actors</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Engine</strong></td>
+<td>The trusted, frozen process running the loop. <code>EvolutionEngine.run()</code> drives generations × proposals through five phases.</td>
+<td><code>src/rsif/evolve/engine.py</code></td>
+</tr>
+<tr>
+<td><strong>Generation</strong></td>
+<td>One outer iteration: <code>proposals_per_generation</code> candidate proposals, then insight distillation, META-window settlement, and a drift check.</td>
+<td><code>engine.run</code></td>
+</tr>
+<tr>
+<td><strong>Improver</strong></td>
+<td>The meta-agent that proposes one bounded change per call. Its prompt is assembled from the <em>evolvable</em> META template, checkout summary, archive frontier, and lessons.</td>
+<td><code>src/rsif/evolve/proposer.py</code></td>
+</tr>
+<tr>
+<td><strong>Proposal</strong></td>
+<td>Parsed improver output: surface, operator, hypothesis, rationale, ops. Invalid JSON/schema → a <code>parse</code> rejection.</td>
+<td><code>src/rsif/evolve/proposal.py</code></td>
+</tr>
+<tr>
+<td><strong>Runtime</strong></td>
+<td><code>AgentRuntime.run(task_prompt, spec)</code> — interprets the spec: loads the module, dispatches its actions (LLM/tool/reflect/submit), enforces step budget, records the <code>Attempt</code>.</td>
+<td><code>src/rsif/runtime/runtime.py</code></td>
+</tr>
+<tr>
+<td><strong>Attempt</strong></td>
+<td>One agent run on one task: <code>result</code>, <code>ok</code>, token <code>usage</code>, <code>input_chars</code> (context size), <code>steps</code>, <code>wall_s</code>, <code>trace</code>, <code>error</code>.</td>
+<td><code>src/rsif/runtime/types.py</code></td>
+</tr>
+<tr>
+<td><strong>Objective</strong></td>
+<td>The fitness function: supplies task suites, scores attempts, computes fitness and behavior descriptors. The single seam that makes the engine task-agnostic.</td>
+<td><code>src/rsif/objectives/base.py</code></td>
+</tr>
+</tbody></table>
+<h2>Evaluation and gates</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Split</strong></td>
+<td>A slice of the objective&#39;s tasks: <code>train</code> (selection), <code>val</code> (acceptance), <code>test</code> (sealed until <code>rsif report</code>), <code>canary</code> (never regress).</td>
+<td><code>objectives/base.Split</code></td>
+</tr>
+<tr>
+<td><strong>Screen (cascade)</strong></td>
+<td>Cheap first gate: candidate runs <code>screen_tasks</code> (default 2) sampled train tasks; must be within <code>screen_epsilon</code> (0.30) of the parent. Saves the expensive gates for plausible candidates.</td>
+<td><code>selection.pass_screen</code></td>
+</tr>
+<tr>
+<td><strong>Canary</strong></td>
+<td>Trivial tasks the deployed agent must never regress on. <code>child ≥ parent</code> — any drop is a hard reject, and a drop on the <em>active</em> agent triggers auto-rollback.</td>
+<td><code>selection.pass_canary</code>, <code>safety/drift.py</code></td>
+</tr>
+<tr>
+<td><strong>Val acceptance</strong></td>
+<td>The strict gate: <code>val(child) &gt; val(parent) + θ</code> (θ = <code>acceptance_threshold</code>, 0.02) <strong>and</strong> a paired net-gain floor — across the val tasks, the child must beat the parent on ≥ 1 more task than it loses.</td>
+<td><code>selection.accept_val</code></td>
+</tr>
+<tr>
+<td><strong>Two-level acceptance</strong></td>
+<td>Archive-acceptance (beats its <em>sampled parent</em> → stepping stone in the archive) vs <strong>promotion</strong> (also beats the <em>active</em> agent → becomes the deployed agent). Prevents ratcheting down via weak sampled parents.</td>
+<td><code>engine._one_proposal</code> phase 5</td>
+</tr>
+<tr>
+<td><strong>Gate chain</strong></td>
+<td>The exact ordered checks a proposal passes: surface → approval (META) → bounded → operator → apply → scan → load (module) → screen → canary → val.</td>
+<td><a href="lifecycle.html">lifecycle.md</a></td>
+</tr>
+<tr>
+<td><strong>Memoization (eval)</strong></td>
+<td>Suites are evaluated once per <code>(spec mapping, split, task ids)</code> per run; parents&#39; books are reused across proposals.</td>
+<td><code>engine._evaluate</code></td>
+</tr>
+</tbody></table>
+<h2>The archive and search</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Archive</strong></td>
+<td>MAP-Elites grid: one elite per niche cell + full history. Persisted to <code>archive.json</code>.</td>
+<td><code>src/rsif/evolve/archive.py</code></td>
+</tr>
+<tr>
+<td><strong>Individual</strong></td>
+<td>One archived agent: descriptor, fitness, val score, spec snapshot, generation, proposal id, parent ref, cost.</td>
+<td><code>archive.Individual</code></td>
+</tr>
+<tr>
+<td><strong>Behavior descriptor</strong></td>
+<td>The niche key, supplied by the objective (e.g. <code>(surface, pass_band)</code>). Defines the axes of diversity.</td>
+<td><code>Objective.behavior_descriptors</code></td>
+</tr>
+<tr>
+<td><strong>Niche / cell</strong></td>
+<td>One descriptor value; the best individual found there is kept (elitist replacement, ties broken by lower cost).</td>
+<td><code>Archive.add</code></td>
+</tr>
+<tr>
+<td><strong>Frontier</strong></td>
+<td>The archive&#39;s current elites sorted by fitness. Parents are sampled from here.</td>
+<td><code>Archive.frontier</code></td>
+</tr>
+<tr>
+<td><strong>Superseded lineage</strong></td>
+<td>Individuals once elite in their niche, later displaced by a fitter sibling. Kept in history; re-enter parent sampling with probability ε (backtracking pressure).</td>
+<td><code>Archive.superseded_individuals</code></td>
+</tr>
+<tr>
+<td><strong>Parent sampling</strong></td>
+<td>Harmonic rank-biased over the frontier (weight <code>1/(rank+1)</code>, every elite selectable), ε = 0.2 to superseded lineages.</td>
+<td><code>Archive.sample_parent</code></td>
+</tr>
+</tbody></table>
+<h2>Memory</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Reflection</strong></td>
+<td>Episodic entry created on every rejection (&quot;proposal g1p2 rejected at val: …&quot;). Retrieved per-task by TF-IDF.</td>
+<td><code>src/rsif/memory/episodic.py</code></td>
+</tr>
+<tr>
+<td><strong>Insight</strong></td>
+<td>Distilled lesson from <em>verified successes only</em>, with provenance and usage-based retirement (<code>retire_correlated</code>).</td>
+<td><code>src/rsif/memory/insights.py</code></td>
+</tr>
+<tr>
+<td><strong>Playbook</strong></td>
+<td>The structured, evolving context (sections with id/title/body) stored as the <code>memory/playbook</code> artifact; only bounded section edits allowed.</td>
+<td><code>src/rsif/memory/playbook.py</code></td>
+</tr>
+<tr>
+<td><strong>Injected memory</strong></td>
+<td>What the agent actually sees: assembled playbook + retrieved insights + reflections, capped by the POLICY artifact&#39;s <code>max_memory_chars</code>.</td>
+<td>assembler + <code>engine._agent_memory</code></td>
+</tr>
+</tbody></table>
+<h2>Safety</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Budget</strong></td>
+<td>Hard caps on three dimensions: LLM calls, USD, wall clock. Checked before each proposal (<code>exhausted</code>) and after every call (<code>overshot</code> — overshoot bounded to one call).</td>
+<td><code>src/rsif/safety/budget.py</code></td>
+</tr>
+<tr>
+<td><strong>Drift monitor</strong></td>
+<td>Generation-end check of the active agent: canary regression / active regression (→ auto-rollback) and stagnation (→ approval or stop).</td>
+<td><code>src/rsif/safety/drift.py</code></td>
+</tr>
+<tr>
+<td><strong>Auto-rollback</strong></td>
+<td>Restore the checkout to the archive-best snapshot; append-only <code>restore</code> lineage; extras deactivated (v0), never deleted.</td>
+<td><code>src/rsif/safety/rollback.py</code></td>
+</tr>
+<tr>
+<td><strong>Approver</strong></td>
+<td>Human-in-the-loop for high-stakes edits (META) and drift continuation. Fail-closed: no approver wired → deny.</td>
+<td><code>src/rsif/safety/approvers.py</code></td>
+</tr>
+<tr>
+<td><strong>Static scan</strong></td>
+<td>AST <strong>import whitelist</strong> for evolved code (curated pure stdlib + <code>rsif.runtime.module_api</code> only) — before any execution, even screening.</td>
+<td><code>src/rsif/sandbox/guards.py</code></td>
+</tr>
+<tr>
+<td><strong>Sandbox</strong></td>
+<td>Subprocess <code>python -I</code> with temp cwd, timeouts, rlimits, PATH-only env. Runs skill code and unit tests (hidden-test scoring).</td>
+<td><code>src/rsif/sandbox/exec.py</code></td>
+</tr>
+</tbody></table>
+<h2>Observability</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Event log</strong></td>
+<td>Append-only <code>events.jsonl</code>; 18 kinds, every entry phase-attributed. The backbone for <code>status</code>/<code>inspect</code>, reflection, and replay.</td>
+<td><code>src/rsif/observe/events.py</code></td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>One of <code>proposal / design / exploration / verification / correction</code> — the framework&#39;s loop vocabulary, stamped on every relevant event.</td>
+<td><code>events.py</code> constants</td>
+</tr>
+<tr>
+<td><strong>Golden test</strong></td>
+<td>Full-loop byte-identical reproduction across processes against a committed <code>golden_events.jsonl</code>.</td>
+<td><code>tests/golden/</code></td>
+</tr>
+<tr>
+<td><strong>Stop reason</strong></td>
+<td>How a run ended: <code>budget:&lt;dim&gt;</code>, <code>drift</code>, <code>error:&lt;Origin&gt;</code> (provider), <code>engine:&lt;Type&gt;</code> (bug), or <code>None</code> (completed).</td>
+<td><code>engine.run</code></td>
+</tr>
+</tbody></table>
+</article><div class="docs-prevnext"><a class="pn prev" href="architecture.html">← Architecture — the system map</a><a class="pn next" href="lifecycle.html">The lifecycle of a proposal →</a></div></main></div></body></html>

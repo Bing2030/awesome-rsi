@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — observability, CLI, determinism — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="artifacts.html">Component guide — the artifact store</a><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="memory.html">Component guide — memory</a><a href="objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="safety.html">Component guide — the safety stack</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — observability, CLI, determinism</h1>
+<p><em>One append-only event log is the backbone: what the CLI renders, what
+memory learns from, and what makes runs replayable.</em></p>
+<p>Files: <code>src/rsif/observe/{events,render}.py</code>, <code>src/rsif/cli.py</code>,
+<code>src/rsif/commands.py</code>, <code>src/rsif/llm/cache.py</code>. Verified by
+<code>tests/unit/test_events.py</code>, <code>tests/integration/test_cli.py</code>,
+<code>tests/golden/</code>.</p>
+<h2>The event log (<code>observe/events.py</code>)</h2>
+<p>Append-only JSONL at <code>&lt;run&gt;/events.jsonl</code>. Every engine action appends one
+event:</p>
+<pre><code class="language-json">{&quot;seq&quot;: 42, &quot;ts&quot;: 1758…, &quot;kind&quot;: &quot;gate&quot;, &quot;phase&quot;: &quot;verification&quot;,
+ &quot;generation&quot;: 1, &quot;payload&quot;: {&quot;proposal_id&quot;: &quot;g1p1&quot;, &quot;gate&quot;: &quot;val&quot;,
+ &quot;passed&quot;: true, &quot;child&quot;: 0.8, &quot;parent&quot;: 0.4, &quot;threshold&quot;: 0.02}}
+</code></pre>
+<p>The 18 kinds: <code>run_start · run_end · proposal · patch · screen · eval · gate · accept · reject · reflect · archive_update · rollback · budget · llm_call · approval · error · meta_confirm · meta_revert</code>. The five phases
+(<code>proposal / design / exploration / verification / correction</code>) stamp
+every phase-relevant event; <code>llm_call</code> events attribute every completion
+to a role and token counts (edit attribution [2604.25850]).</p>
+<p>Payload discipline — <strong>ids, scores, decisions only</strong>: never wall-times,
+never sandbox stderr, never request ids. That is what makes the golden log
+byte-stable and diffs meaningful. The clock is injectable; deterministic
+tests pin it to 0.</p>
+<p><code>EventLog</code> is a plain reader/writer (<code>read / tail / filter(kind, generation)</code>); everything else renders from it.</p>
+<h2>The CLI (<code>cli.py</code> + <code>commands.py</code>)</h2>
+<pre><code>rsif init &lt;dir&gt; [--objective …] [--provider …] [--model …] [--seed …]
+        scaffold the workspace + seed artifacts
+rsif evolve --run &lt;dir&gt; [--generations N] [--proposals N] [--budget-usd X]
+        run the loop; prints the summary (accepted/rejected/best/stop_reason)
+rsif run --run &lt;dir&gt; --split val|train|test [--tasks all|ids]
+        evaluate the ACTIVE agent through the evolve-time path
+rsif status --run &lt;dir&gt;
+        archive table (descriptor/fitness/gen), checkout, spend, alarms
+rsif inspect --run &lt;dir&gt; [--events] [--filter kind=accept] [--artifact &lt;id&gt;] [--tail N]
+        query events or an artifact&#39;s lineage
+rsif rollback --run &lt;dir&gt; --artifact &lt;id&gt; --to &lt;version&gt;
+        time travel (append-only restore)
+rsif report --run &lt;dir&gt;
+        unseal the test split on the archive best + bootstrap CI
+</code></pre>
+<ul>
+<li>Rendering is <strong>timestamp-free</strong> (seq/kind/phase/generation/payload), so
+outputs are diff-stable and snapshot-testable.</li>
+<li><code>run</code>/<code>report</code> call <code>engine.evaluate_active</code> / <code>evaluate_snapshot</code> — the
+<em>same</em> memoized, event-logged evaluation path as evolution; CLI scores
+are directly comparable to evolve-time scores.</li>
+<li><code>report</code> unseals the sealed test split <strong>only on the archive best</strong>, with
+a seeded bootstrap CI — the guard against lucky-task claims.</li>
+<li><code>status</code> reads archive + events + budget snapshot: one screen answers
+&quot;what is deployed, what is known, what did it cost&quot;.</li>
+</ul>
+<h2>Determinism &amp; replay</h2>
+<p>The reproducibility stack, layer by layer:</p>
+<ol>
+<li><strong>Explicit RNG threading</strong> — one <code>random.Random(cfg.seed)</code> in the
+engine; no global randomness. Seeded providers (temperature/seed passed
+through to APIs that accept them).</li>
+<li><strong>Scripted/demo providers</strong> — <code>ScriptedProvider</code> (strict FIFO per role)
+for tests; <code>DemoProvider</code> (content-addressed by role + request text) for
+the offline CLI demo — deterministic regardless of evaluation order.</li>
+<li><strong>Eval memoization</strong> — each (mapping, split, task-ids) evaluated exactly
+once per run; scorebooks persisted to <code>evals/gen_NNNN/</code>.</li>
+<li><strong>Timestamp-free payloads</strong> + injectable clock (tests pin 0).</li>
+<li><strong>Golden test</strong> — a full 2-proposal run reproduces <code>events.jsonl</code>,
+<code>archive.json</code>, <code>checkout.json</code>, <code>lineage.jsonl</code> <strong>byte-identically</strong>
+across processes and against the committed golden; regenerate
+deliberately with <code>RSIF_UPDATE_GOLDEN=1 pytest tests/golden</code>.</li>
+<li><strong>Offline guard</strong> — the test suite blocks <code>socket.socket</code> (except
+<code>live</code>-marked tests), so accidental network calls fail loudly.</li>
+<li><strong>Real-provider replay</strong> — <code>seed.json</code> + the disk response cache
+(<code>llm/cache.py</code>, content-addressed) lets a live run be re-executed with
+zero new spend; the regex_agent runner uses exactly this.</li>
+</ol>
+<h2>Reading a run like the maintainers do</h2>
+<pre><code class="language-bash">uv run rsif status --run ../runs/demo        # where is the agent now?
+uv run rsif inspect --run ../runs/demo --filter kind=accept
+uv run rsif inspect --run ../runs/demo --filter kind=reject   # every death + reason
+uv run rsif inspect --run ../runs/demo --artifact prompt/system  # its whole history
+uv run rsif report --run ../runs/demo        # the sealed verdict + CI
+</code></pre>
+<p>The rejection reasons you will see, and what they mean:</p>
+<table>
+<thead>
+<tr>
+<th><code>reason</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>parse</code></td>
+<td>improver output wasn&#39;t one valid JSON proposal</td>
+</tr>
+<tr>
+<td><code>surface</code></td>
+<td>surface closed this generation (META cadence)</td>
+</tr>
+<tr>
+<td><code>approval</code></td>
+<td>META edit denied / no approver (fail-closed)</td>
+</tr>
+<tr>
+<td><code>meta_pending</code></td>
+<td>another META window is open</td>
+</tr>
+<tr>
+<td><code>bounded</code> / <code>operator</code> / <code>apply</code></td>
+<td>patch failed validation/materialization</td>
+</tr>
+<tr>
+<td><code>scan</code> / <code>load</code></td>
+<td>code unsafe or unloadable (pre-execution)</td>
+</tr>
+<tr>
+<td><code>screen</code></td>
+<td>cascade screen: ≥ ε below parent on probe tasks</td>
+</tr>
+<tr>
+<td><code>canary</code></td>
+<td>canary regression — hard reject</td>
+</tr>
+<tr>
+<td><code>val</code></td>
+<td>no held-out gain past θ + paired net-gain floor</td>
+</tr>
+</tbody></table>
+</article><div class="docs-prevnext"><a class="pn prev" href="safety.html">← Component guide — the safety stack</a><a class="pn next" href="../design.html">rsif — Design Document →</a></div></main></div></body></html>

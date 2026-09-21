@@ -12,6 +12,12 @@
 Implementation process and status: `docs/plan.md`. Key decisions and bugs
 caught along the way: `docs/decision-log.md`.
 
+Reader's guide: this document is the *rationale* layer (mechanism ↔ paper ↔
+code ↔ test). For the reference layer — system map, glossary, per-subsystem
+guides — see `docs/index.md` (start there as a newcomer:
+`docs/architecture.md`, `docs/concepts.md`, `docs/lifecycle.md`,
+`docs/components/`).
+
 ---
 
 ## 1. Scope and the trust boundary

@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Component guide — objectives: the task-agnostic seam — rsif docs</title><link rel="stylesheet" href="../../assets/style.css"></head><body><nav class="crumbs"><a href="../../index.html">← All resources</a> · <a href="../index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="../index.html">rsif docs</a></div><div class="dg">Start</div><a href="../index.html">rsif documentation</a><a href="../quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="../architecture.html">Architecture — the system map</a><a href="../concepts.html">Concepts — the rsif glossary</a><a href="../lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="artifacts.html">Component guide — the artifact store</a><a href="engine.html">Component guide — the evolution engine</a><a href="runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="memory.html">Component guide — memory</a><a href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="safety.html">Component guide — the safety stack</a><a href="observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="../design.html">rsif — Design Document</a><a href="../investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="../plan.html">rsif Implementation Plan — Status Tracking</a><a href="../decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Component guide — objectives: the task-agnostic seam</h1>
+<p><em>The engine optimizes whatever you hand it. Four real objectives have run
+through it with zero engine changes.</em></p>
+<p>Files: <code>src/rsif/objectives/base.py</code> (the protocol),
+<code>code_tasks.py</code>, <code>exact_match.py</code> (built-ins); <code>examples/custom_objective.py</code>;
+<code>projects/regex_agent/</code>, <code>projects/harness_efficiency/</code> (real projects —
+see their <code>README.md</code>). Verified by <code>tests/integration/test_task_agnostic.py</code>,
+<code>test_regex_project.py</code>, <code>test_harness_efficiency.py</code>.</p>
+<h2>The protocol</h2>
+<pre><code class="language-python">class Objective(Protocol):
+    def suites(self) -&gt; dict[Split, TaskSuite]: ...          # the tasks
+    def evaluate(self, task: Task, attempt) -&gt; TaskScore: ... # the grader
+    def fitness(self, scorebook: ScoreBook) -&gt; float: ...     # aggregate
+    def behavior_descriptors(self, scorebook) -&gt; tuple: ...   # niche key
+    def canaries(self) -&gt; TaskSuite: ...                      # never-regress set
+</code></pre>
+<ul>
+<li><strong><code>Task</code></strong> — <code>id</code>, <code>split</code>, <code>prompt</code>, free-form <code>meta</code> (targets, expected
+code, anything your grader needs).</li>
+<li><strong><code>TaskSuite</code></strong> — split + tasks; <code>sample(n, rng)</code> powers the cascade
+screen.</li>
+<li><strong><code>TaskScore</code></strong> — <code>task_id</code>, <code>score</code> (0..1 convention), <code>detail</code>, <code>wall_s</code>.</li>
+<li><strong><code>ScoreBook</code></strong> — list of scores + <code>mean()</code>.</li>
+<li><strong><code>Split</code></strong> — <code>train | val | test | canary</code>. <strong>Train selects, val
+accepts, test is sealed until <code>rsif report</code>, canaries never regress.</strong></li>
+</ul>
+<p><code>evaluate</code> receives the runtime&#39;s <code>Attempt</code> — so an objective can grade on
+anything the attempt carries: result text (<code>exact-match</code>), executed code
+(<code>code-tasks</code> runs hidden tests in the sandbox), regex behavior
+(<code>regex_agent</code> compiles and executes the pattern), or <em>cost</em>
+(<code>harness_efficiency</code> reads <code>usage</code> and <code>input_chars</code>).</p>
+<p>The engine never imports a concrete objective — a structural guard test
+asserts the engine source names none. <code>objectives/objective_from_config</code>
+dispatches the built-ins; any other non-empty <code>RunConfig.objective</code> name is
+yours (the M14 change that made the config seam as open as the engine one).</p>
+<h2>The four objectives</h2>
+<table>
+<thead>
+<tr>
+<th>Objective</th>
+<th>Tasks</th>
+<th>Grading</th>
+<th>Proven by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>code-tasks</code> (built-in)</td>
+<td>21 generated Python function tasks</td>
+<td>extract ```python fence, exec hidden unit tests in the sandbox</td>
+<td>flagship golden: val 0.40 → 0.80</td>
+</tr>
+<tr>
+<td><code>exact-match</code> (built-in)</td>
+<td>Q&amp;A pairs</td>
+<td>plain-text equality — no fence, no sandbox</td>
+<td>1/3 → 1.0 through the identical engine</td>
+</tr>
+<tr>
+<td><code>RegexObjective</code> (<code>projects/regex_agent/</code>)</td>
+<td>pattern tasks (positives/negatives)</td>
+<td>compile &amp; execute <code>re</code> in the sandbox against examples</td>
+<td>offline: val 0.2 → 0.4 → 1.0; <strong>live gateway run</strong> (see below)</td>
+</tr>
+<tr>
+<td><code>EfficiencyObjective</code> (<code>projects/harness_efficiency/</code>)</td>
+<td>echo tasks</td>
+<td>correctness <strong>minus token cost</strong> — see <a href="efficiency.html">efficiency.md</a></td>
+<td>concise-correct accepted over verbose-correct; concise-wrong screened</td>
+</tr>
+</tbody></table>
+<p>Each objective also supplies <code>behavior_descriptors</code> — the MAP-Elites niche
+key. Keep it low-dimensional and <em>not</em> a copy of fitness (a documented
+limitation, L3: the default <code>(round(mean, 2),)</code> partially encodes fitness).
+<code>code-tasks</code> uses a pass-band; the projects use simple means.</p>
+<h2>Writing your own objective</h2>
+<p><code>examples/custom_objective.py</code> is a complete arithmetic objective in ~30
+lines. The recipe:</p>
+<ol>
+<li>Define tasks with prompts a model can actually answer, and put the
+grading data in <code>task.meta</code>.</li>
+<li>Implement <code>evaluate</code> — return a <code>TaskScore</code> in 0..1 (the gates&#39; θ and ε
+assume that scale).</li>
+<li>Keep the output contract trivial to satisfy: whatever your extractor
+expects (a fence, a marker line, bare text), make sure <em>correct behavior
+by a real model produces it</em> (see the live-run lesson below).</li>
+<li>Splits: enough val tasks for the paired net-gain floor to mean
+something (≥ 5–10), a couple of trivial canaries, a sealed test split.</li>
+<li>Write a <strong>solvability invariant</strong> test: your reference answers must pass
+your own grader. This has caught two real task-design bugs
+(<code>colou?r</code> matching inside &quot;colorr&quot;; a hidden test asserting 3 words).</li>
+</ol>
+<pre><code class="language-python">class MyObjective:
+    def suites(self): ...           # build TaskSuites per split once
+    def evaluate(self, task, attempt):
+        ok = attempt.result.strip() == task.meta[&quot;answer&quot;]
+        return TaskScore(task.id, 1.0 if ok else 0.0)
+    def fitness(self, book): return book.mean()
+    def behavior_descriptors(self, book): return (round(book.mean(), 2),)
+    def canaries(self): return self.suites()[Split.CANARY]
+</code></pre>
+<p>Run it offline first with a <code>ScriptedProvider</code> (deterministic), then live
+through <code>projects/*/run.py</code>-style runners with hard budgets and the
+response cache.</p>
+<h2>Evidence that the seam is real</h2>
+<ul>
+<li><strong>Structural</strong>: the engine-source guard; the config seam accepts any
+objective name (M14 fix).</li>
+<li><strong>Behavioral</strong>: three evaluation surfaces (code fences → bare text →
+integer strings → regexes → echo markers) over the same engine, gates,
+archive, safety stack.</li>
+<li><strong>Live (regex_agent, glm-5.3-flash via gateway, 29 calls, exit 0)</strong>:
+baseline val 0.6 — a genuine held-out gap; both real-improver proposals
+were plausible-sounding prompt refinements that <em>regressed train</em> and
+were <strong>correctly rejected at the cascade screen</strong>; the g1 reflection
+visibly shaped the g2 proposal; no ratchet (active stayed at seed);
+sealed test 0.5 on the archive best. Honest headline: the machinery is
+validated; improvement was not found within 2 proposals.</li>
+<li>The live run also surfaced a real <strong>contract hazard</strong>: prompts that tell
+the model to &quot;verify before answering&quot; make it emit prose first, breaking
+a first-line extractor — the gates kept that regression from deploying,
+and the lesson is recorded for extractor design.</li>
+</ul>
+<h2>Design notes</h2>
+<ul>
+<li><code>bootstrap_ci(values)</code> (base.py) gives a seeded 95% CI of the mean —
+<code>rsif report</code> uses it on the sealed test split so a lucky task can&#39;t
+carry a claim.</li>
+<li>Objectives are constructed by you (or <code>objective_from_config</code>) and passed
+to <code>EvolutionEngine</code>; they hold no framework state beyond their task
+packs (memoization of suites is the objective&#39;s own concern — build once,
+as all built-ins do).</li>
+<li>Grading runs in your process unless you choose the sandbox — <code>code-tasks</code>
+and <code>regex_agent</code> execute <em>model-produced code</em> in the sandbox; text
+objectives don&#39;t need it.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="memory.html">← Component guide — memory</a><a class="pn next" href="efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding) →</a></div></main></div></body></html>
