@@ -26,7 +26,7 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 const DOCS_ONLY = process.argv.includes('--docs-only');
 const DOCS_ROOT = path.join(ROOT, 'framework', 'docs');
 const DOCS_MANIFEST = [
-  { group: 'Start', items: ['index.md', 'quickstart.md'] },
+  { group: 'Start', items: ['index.md', 'primer.md', 'walkthrough.md', 'quickstart.md', 'faq.md'] },
   { group: 'Understand', items: ['architecture.md', 'concepts.md', 'lifecycle.md'] },
   { group: 'Component guides', items: ['components/artifacts.md', 'components/engine.md', 'components/runtime.md', 'components/memory.md', 'components/objectives.md', 'components/efficiency.md', 'components/safety.md', 'components/observability.md'] },
   { group: 'Reference & records', items: ['design.md', 'investigation.md', 'plan.md', 'decision-log.md'] },

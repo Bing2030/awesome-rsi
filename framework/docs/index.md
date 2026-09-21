@@ -14,17 +14,23 @@ improver's own templates, even the context-assembly policy — is a
 the model's judgment of itself. The engine that enforces this is trusted,
 frozen code; the agent is modifiable data.
 
-- **Status:** 16 milestones (M0–M16), 125 offline deterministic tests +
+- **Status:** 16 milestones (M0–M16), 126 offline deterministic tests +
   live gateway runs; see [plan.md](plan.md).
 - **Core:** Python 3.11+, stdlib-only (providers are optional extras).
 - **Where the mechanisms come from:** every design decision is grounded in
   the RSI literature — [design.md](design.md) carries the full citation map.
+- **New to agents/LLMs entirely?** [primer.md](primer.md) defines every
+  term from zero; [walkthrough.md](walkthrough.md) then narrates one
+  complete run.
 
 ## Reading paths
 
 | You want to… | Read |
 |---|---|
+| **Learn the background first** — no agent/LLM knowledge assumed | [primer.md](primer.md) |
+| **See one complete run narrated** — every artifact, gate, and event explained | [walkthrough.md](walkthrough.md) |
 | **Run it in the next 10 minutes** (offline demo, no API key) | [quickstart.md](quickstart.md) |
+| **Preempt the questions your team will ask** | [faq.md](faq.md) |
 | **Understand the big picture** — components, trust boundary, data flow | [architecture.md](architecture.md) |
 | **Decode the vocabulary** — artifact, checkout, niche, canary, gate… | [concepts.md](concepts.md) (the glossary) |
 | **Trace one proposal** through every gate, event, and rejection reason | [lifecycle.md](lifecycle.md) |
@@ -32,6 +38,11 @@ frozen code; the agent is modifiable data.
 | **Write your own objective** and run the engine on your task | [components/objectives.md](components/objectives.md) |
 | **Understand why it is built this way** (papers ↔ mechanisms) | [design.md](design.md), [decision-log.md](decision-log.md) |
 | **Audit the implementation** file by file | [investigation.md](investigation.md) |
+
+**Presenting to teams new to agents?** The on-ramp that works: primer →
+walkthrough (one session, ~20 minutes of reading), then whichever
+subsystem page owns their question. The FAQ is organized to be skimmed
+live during Q&A.
 
 ## The component guides
 
@@ -62,6 +73,11 @@ These are historical/engineering records rather than reference docs:
   walkthrough (mechanism ↔ design point ↔ evidence).
 
 ## The one-paragraph mental model
+
+In one sentence, for newcomers: **rsif is a CI pipeline for agent
+configuration** — an LLM proposes changes the way a contributor opens pull
+requests, and nothing merges without passing held-out tests. With that
+framing, the precise version:
 
 An **Improver** meta-agent proposes one **bounded patch** to the agent's
 artifacts (a prompt tweak, a new skill, a playbook rule, an architecture

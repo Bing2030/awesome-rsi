@@ -8,7 +8,7 @@ map): here every claim is anchored to a file and a test, and validated by
 `projects/regex_agent/` (run against a live model) and
 `projects/harness_efficiency/` (the cost-aware objective).
 
-Status: post-M16 (harness-efficiency objective + evolvable context policy). 125 offline tests + live runs.
+Status: post-M16 (harness-efficiency objective + evolvable context policy). 126 offline tests + live runs.
 
 ---
 
@@ -301,7 +301,7 @@ objective + structural guard), `test_regex_project.py` (this project),
 
 ## 12. Evidence index
 
-- Offline suite: `uv run pytest -q` — 125 passed (deterministic, no network).
+- Offline suite: `uv run pytest -q` — 126 passed (deterministic, no network).
 - Independent corroboration: SoL-Pi [2609.20519] — full entry in the study
   site (`site/p/2609.20519.html`, `curated.json`, local PDF in `resources/`).
 - Golden: `tests/golden/` — byte-identical reproduction across processes.

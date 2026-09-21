@@ -36,7 +36,25 @@ bugs — kept distinct on purpose).
 
 ## The five phases of one proposal
 
-Every event below is stamped with its phase; the flagship golden test
+In plain words first — the PR/CI analogy from [primer.md](primer.md):
+
+1. **Proposal** — the improver opens a pull request: one small change plus
+   a stated hypothesis of what it should improve.
+2. **Design** — CI checks the PR's *shape* and materializes it into a
+   scratch build: is the edit bounded, is the mutation verb known, does
+   the code pass static analysis, would it even load? Nothing has run yet;
+   the live agent is untouched.
+3. **Exploration** — a fast smoke test on two tasks kills obviously bad
+   ideas before the expensive checks spend anything.
+4. **Verification** — the full suite, in order of strictness: the
+   never-regress canaries, the whole train set, and finally the held-out
+   validation split — the actual merge gate.
+5. **Correction** — the outcome is recorded *as memory*: a merge becomes a
+   distilled lesson; a rejection becomes a reflection the next proposal
+   will read. Nothing is wasted, nothing deploys on opinion.
+
+Now the same phases precisely. Every event below is stamped with its
+phase; the flagship golden test
 asserts per-proposal phase monotonicity
 `proposal → design → exploration → verification → correction`.
 

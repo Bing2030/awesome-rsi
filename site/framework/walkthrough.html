@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Walkthrough — one run, narrated end to end — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="primer.html">Primer — LLM agents from zero</a><a href="quickstart.html">rsif Quickstart</a><a href="faq.html">FAQ — the questions teams ask on first contact</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Walkthrough — one run, narrated end to end</h1>
+<p><em>The offline demo run, followed file by file and event by event. Everything
+quoted below is real output from <code>rsif evolve</code> — you can reproduce it with
+<a href="quickstart.html">quickstart.md</a> and diff your run against this page byte for
+byte.</em></p>
+<p>One caveat before we start, stated honestly: the demo runs <strong>offline</strong>,
+against a scripted provider (<code>llm/demo.py</code>) that plays both the agent and
+the improver with pre-written, content-addressed answers. That makes the
+run free, instant, and deterministic — ideal for seeing the <em>machinery</em>.
+Every gate, store write, and event you see below is the real production
+code path; only the model&#39;s words are canned. <a href="quickstart.html">quickstart.md</a>
+shows the same loop against a live API.</p>
+<h2>1. The task: what is being improved, and against what</h2>
+<p>The demo objective is <code>code-tasks</code>: the agent must implement small Python
+functions. Each task is a JSON file like this one — the real <code>val/01</code>:</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;val/01&quot;,
+  &quot;prompt&quot;: &quot;Implement `sum_list(xs)` summing a list of numbers.&quot;,
+  &quot;function_name&quot;: &quot;sum_list&quot;,
+  &quot;hidden_tests&quot;: &quot;assert sum_list([1, 2, 3]) == 6\nassert sum_list([]) == 0\nassert sum_list([-1, 1]) == 0\n&quot;
+}
+</code></pre>
+<p>Note what the agent sees and doesn&#39;t see: the <code>prompt</code> is given to it; the
+<code>hidden_tests</code> are <strong>not</strong>. Scoring extracts the fenced <code>python</code> code
+block from the agent&#39;s answer and executes the hidden tests against it in
+a locked-down sandbox subprocess. A task scores 1.0 or 0.0.</p>
+<p>The 26 tasks are split into four <strong>suites</strong> with distinct jobs — a strict
+train/validation/test discipline like in ML:</p>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Tasks</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>train</code> (8)</td>
+<td>seen during search</td>
+<td>cheap signal for screening candidates</td>
+</tr>
+<tr>
+<td><code>val</code> (10)</td>
+<td>seen at acceptance</td>
+<td><strong>the</strong> gate: a change must measurably improve held-out val score to deploy</td>
+</tr>
+<tr>
+<td><code>test</code> (5)</td>
+<td>sealed until the end</td>
+<td>final honesty check, opened only by <code>rsif report</code></td>
+</tr>
+<tr>
+<td><code>canary</code> (3)</td>
+<td>trivial</td>
+<td>must <strong>never</strong> regress — smoke tests</td>
+</tr>
+</tbody></table>
+<h2>2. <code>rsif init</code> — what exists before any improvement</h2>
+<p><code>rsif init ../runs/demo --objective code-tasks --provider scripted</code> writes
+a workspace and six <strong>seed artifacts</strong> — the complete starting agent, all
+of it versioned data under <code>artifacts/</code>:</p>
+<pre><code>runs/demo/
+├── artifacts/
+│   ├── prompt/system/v1/system.md          ← the agent&#39;s system prompt
+│   ├── memory/playbook/v1/playbook.json    ← its standing &quot;lessons&quot; file
+│   ├── module/default/v1/module.py         ← its control loop as code
+│   ├── meta/improver-template/v1/template.md   ← the IMPROVER&#39;s prompt
+│   ├── meta/operator-catalog/v1/operators.json ← its allowed mutation verbs
+│   └── policy/context/v1/policy.json       ← {&quot;max_memory_chars&quot;: 4000}
+├── checkout.json        ← the ACTIVE agent: artifact → version (all v1)
+├── config.json, seed.json
+└── (events.jsonl, lineage.jsonl, archive.json, evals/, memory/ appear as the run progresses)
+</code></pre>
+<p>Three of the seeds are worth actually reading, because they are the whole
+agent. The system prompt (<code>prompt/system</code> v1):</p>
+<pre><code class="language-markdown">You are a careful Python-solving agent. Read the task, think, and answer
+with a single ```python code block implementing the requested function
+exactly (signature and name as specified). Prefer simple, correct,
+dependency-free code. The block must be self-contained: only stdlib
+imports.
+</code></pre>
+<p>The control loop (<code>module/default</code> v1) — an agent&#39;s &quot;architecture&quot; here is
+just a Python class the harness calls; this one is ask-once-then-submit:</p>
+<pre><code class="language-python">class Module(AgentModule):
+    name = &quot;default&quot;
+    def step(self, ctx: ModuleContext) -&gt; Action:
+        if not ctx.session.messages:   # nothing asked yet
+            return LLMAction()         # → harness calls the model
+        return SubmitAction()          # → harness takes the last reply as the answer
+</code></pre>
+<p>And the improver template (<code>meta/improver-template</code> v1) — the prompt of the
+meta-agent whose whole job is proposing changes. Its blanks are filled at
+runtime with the <em>current</em> checkout summary, archive frontier, and recent
+lessons, which is how the improver &quot;sees&quot; what it is improving:</p>
+<pre><code>You are the Improver: … propose ONE bounded, testable change …
+## Current agent      {checkout_summary}
+## Archive frontier   {archive_summary}
+## Recent lessons     {lessons}
+## Available operators {operators}
+… Answer with a single JSON object:
+{&quot;surface&quot;: …, &quot;operator&quot;: …, &quot;hypothesis&quot;: …, &quot;rationale&quot;: …, &quot;ops&quot;: […]}
+</code></pre>
+<p>The <code>operator catalog</code> lists the nine mutation verbs the improver may use
+(<code>prompt/refine</code>, <code>skill/add</code>, <code>memory/add-rule</code>, <code>module/edit</code>, …) — it
+cannot invent others, and every verb is typed to the surface it may touch.</p>
+<h2>3. The baseline — measuring the seed agent</h2>
+<p>The run starts by scoring the seed agent on all three suites. Each
+<strong>attempt</strong> works like this: the harness assembles the full context
+(system prompt + task prompt + injected memory), the module drives the
+loop (here: one model call, then submit), and the objective grades the
+result against hidden tests. One line per attempt lands in the log:</p>
+<pre><code>eval{suite=train, label=baseline, n=8,  score=0.375}   ← 3 of 8 passed
+eval{suite=canary, label=baseline, n=3, score=1.0}
+eval{suite=val,    label=baseline, n=10, score=0.4}    ← 4 of 10 passed
+archive_update{action=baseline, descriptor=[seed,1,0], fitness=0.4}
+</code></pre>
+<p>The last line registers the seed agent as the root of the <strong>archive</strong> —
+the zoo of agents the search keeps. <code>0.4</code> on held-out tasks is our
+starting line: the seed prompt is decent but loses boundary cases
+(empty lists, zeros, off-by-ones).</p>
+<h2>4. Generation 1 — an accepted change, gate by gate</h2>
+<h3>The proposal</h3>
+<p>One LLM call in the <code>improver</code> role returns a JSON proposal (abridged to
+the fields that matter):</p>
+<pre><code class="language-json">{&quot;surface&quot;: &quot;prompt&quot;, &quot;operator&quot;: &quot;prompt/refine&quot;,
+ &quot;hypothesis&quot;: &quot;edge-case enumeration discipline reduces boundary failures&quot;,
+ &quot;rationale&quot;: &quot;the baseline loses iteration and aggregation tasks to
+               off-by-one and edge-case mistakes&quot;,
+ &quot;ops&quot;: [ … one UpdateOp against prompt/system … ]}
+</code></pre>
+<p>Event: <code>proposal{g1p1, surface=prompt, operator=prompt/refine, hypothesis=…}</code>.</p>
+<h3>The patch materializes — but does NOT deploy</h3>
+<p>The engine applies the op, which writes a <strong>new immutable version</strong> on
+disk. The live agent (checkout.json) is untouched — this is the equivalent
+of a pull request that checks out into a scratch worktree:</p>
+<pre><code>artifacts/prompt/system/
+├── v1/system.md   ← unchanged, still what the deployed agent uses
+└── v2/system.md   ← the candidate (its edit is quoted below)
+</code></pre>
+<p>v2 appends a worked-example strategy to the prompt:</p>
+<pre><code class="language-markdown">Worked example: restate the signature, enumerate edge cases (empty
+input, zero, one element), then implement the simplest loop-based
+solution.
+</code></pre>
+<p>Before any evaluation, two cheap static gates run <strong>before execution</strong>:
+<code>gate{scan, passed}</code> — the import whitelist (a no-op for prompts, load-
+bearing for code artifacts) — and, for module patches only, a load test.
+Only then does anything run.</p>
+<h3>The gates, in order, with the real numbers</h3>
+<ol>
+<li><strong>Screen</strong> (cheap probe, 2 of the 8 train tasks):
+<code>child 0.5 ≥ parent 0.5 − 0.30</code> → pass. A catastrophically bad idea
+dies here for the price of two tasks.</li>
+<li><strong>Canary</strong> (the 3 trivial tasks): <code>child 1.0 ≥ parent 1.0</code> → pass.
+Any drop here is an instant reject, however good val looks.</li>
+<li><strong>Full train</strong>: child 0.75.</li>
+<li><strong>Val acceptance</strong> — the merge gate. Child and parent both run all 10
+held-out tasks:
+<code>0.60 &gt; 0.40 + 0.02</code> ✓ and the child wins on at least one more task
+than it loses (a floor against lucky reshuffles) ✓
+<code>gate{val, passed=true, child=0.6, parent=0.4, threshold=0.02}</code></li>
+</ol>
+<h3>Acceptance</h3>
+<pre><code>accept{g1p1, promoted=true, val_child=0.6, val_parent=0.4}
+archive_update{descriptor=[prompt,2,0], fitness=0.6, stored=true}
+reflect{action=distill_insight}
+</code></pre>
+<p><code>promoted=true</code> means <strong>checkout.json is rewritten</strong>: <code>prompt/system</code> now
+points at v2. The deployed agent changed. The archive entry
+<code>[prompt, 2, 0]</code> decodes as: <em>prompt-surface agent, val in band 2 of 4
+(band = ⌊mean·4⌋), 0 = a steps-band placeholder</em> — bands are the
+&quot;behavior niches&quot; that keep the search diverse. Finally, a one-line
+<strong>insight</strong> is distilled into long-term memory (only from verified wins):
+<em>&quot;edge-case enumeration discipline reduces boundary failures (val 0.40 →
+0.60)&quot;</em> — future improver calls and agent contexts will retrieve it.</p>
+<h2>5. Generation 2 — same drill, compounding</h2>
+<p>The improver (now seeing the v2 prompt, the archive, and the distilled
+insight) doubles down — hypothesis: <em>&quot;verifying each enumerated edge case
+before answering generalizes further&quot;</em> → v3 adds one sentence (&quot;Verify
+your logic against every enumerated edge case before answering&quot;). Gates:
+screen 1.0 vs 0.5, canary 1.0, train 1.0, <strong>val 1.0</strong> — every held-out
+task passes.</p>
+<pre><code>accept{g2p1, promoted=true, val_child=1.0, val_parent=0.6}
+archive_update{descriptor=[prompt,4,0], fitness=1.0}   ← a second niche
+</code></pre>
+<p>Held-out accuracy went <strong>0.40 → 0.60 → 1.00</strong> through two one-line prompt
+edits, each deployed only after measured, held-out improvement. That is
+the entire thesis of the framework in one sentence.</p>
+<h2>6. Generation 3 — the most instructive moment: accepted, NOT deployed</h2>
+<p>The improver now proposes the <em>opposite</em> hypothesis — <em>&quot;dropping
+edge-case enumeration produces faster, simpler answers&quot;</em> → v4 strips the
+enumeration discipline. This is exactly the kind of plausible-sounding
+regression the gates exist for. Watch what happens:</p>
+<ul>
+<li>The <strong>parent it must beat is sampled from the archive</strong>, and the sample
+landed on the <em>seed</em> lineage (superseded, val 0.4), not the current
+best. Deliberate: the search keeps old lineages selectable so dead ends
+can be revisited.</li>
+<li>Gates: screen <code>child 1.0 ≥ parent 0.0 − 0.3</code> ✓ (the seed parent flunks
+its own probes), canary 1.0 ✓, <strong>val 0.9</strong> — worse than the active
+agent&#39;s 1.0, but <em>better than its sampled parent&#39;s 0.4</em>.</li>
+<li>So val acceptance passes (0.9 &gt; 0.4 + 0.02)… and then:</li>
+</ul>
+<pre><code>accept{g3p1, promoted=FALSE, val_child=0.9, val_parent=0.4}
+archive_update{descriptor=[prompt,3,0], fitness=0.9, stored=true}
+</code></pre>
+<p>Two different verdicts in one event: <strong>archive-accept</strong> (it beat its
+sampled parent → kept as a stepping stone in the <code>[prompt,3,0]</code> niche)
+but <strong>no promotion</strong> (it did not beat the <em>active</em> agent, 0.9 &lt; 1.0 → the
+deployed agent does not change). The final checkout proves it:</p>
+<pre><code class="language-json">{&quot;prompt/system&quot;: 3,   ← still v3; v4 exists on disk but was never deployed
+ &quot;memory/playbook&quot;: 1, &quot;module/default&quot;: 1, &quot;policy/context&quot;: 1,
+ &quot;meta/improver-template&quot;: 1, &quot;meta/operator-catalog&quot;: 1}
+</code></pre>
+<p>This two-level rule is the anti-ratchet: you can never talk the system
+into deploying a worse agent by beating up on a weak sparring partner.</p>
+<h2>7. The end state — everything auditable</h2>
+<pre><code>run_end{accepted=3, rejected=0, best_fitness=1.0}
+</code></pre>
+<p>Final accounting of a 3-generation run:</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Where the answer lives</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What is deployed?</td>
+<td><code>checkout.json</code> (v3 of the prompt)</td>
+</tr>
+<tr>
+<td>What was ever tried?</td>
+<td><code>lineage.jsonl</code> — 9 append-only entries (6 seeds, 3 updates), including v4</td>
+</tr>
+<tr>
+<td>What existed and was rejected?</td>
+<td><code>archive.json</code> — 4 individuals across 4 niches; v4&#39;s lineage stays selectable</td>
+</tr>
+<tr>
+<td>Why was each decision made?</td>
+<td><code>events.jsonl</code> — 147 events; every gate carries its numbers</td>
+</tr>
+<tr>
+<td>What did it actually learn?</td>
+<td><code>memory/insights.jsonl</code> — 3 distilled insights with provenance</td>
+</tr>
+<tr>
+<td>Does it hold up on unseen data?</td>
+<td><code>rsif report</code> unseals the 5 sealed test tasks on the archive best, with a bootstrap confidence interval</td>
+</tr>
+</tbody></table>
+<p>And the determinism claim, concretely: delete the workspace, re-run with
+the same seed, and <code>events.jsonl</code>, <code>archive.json</code>, <code>checkout.json</code>, and
+<code>lineage.jsonl</code> regenerate <strong>byte-identically</strong> — that assertion runs in
+the offline test suite on every commit (the golden test).</p>
+<h2>8. The loop, restated in one diagram</h2>
+<pre><code>        ┌──────────────── IMPROVER (LLM) ────────────────┐
+        │  reads: active agent + archive + lessons       │
+        │  emits: ONE bounded patch + hypothesis         │
+        └───────────────────────┬────────────────────────┘
+                                ▼
+        materialize as candidate versions (checkout untouched)
+                                ▼
+   static gates (scan / load) — before any execution
+                                ▼
+   cheap screen (2 tasks) ── fail ──► reject + reflect
+                                ▼ pass
+   canary (never regress) ── fail ──► reject + reflect
+                                ▼ pass
+   full train + VAL (held-out) ─────► reject + reflect
+                                ▼ pass: val(child) &gt; val(parent)+θ
+        beat sampled parent? → keep in archive (stepping stone)
+        also beat ACTIVE agent? → promote → the deployed agent changes
+                                ▼
+        lessons distilled; budget &amp; drift checks; next generation
+</code></pre>
+<p>Everything else in these docs — the component guides, the design
+rationale, the safety stack — is one box of this diagram in detail.</p>
+<h2>Where to go next</h2>
+<ul>
+<li>Do it yourself: <a href="quickstart.html">quickstart.md</a> (one minute, offline).</li>
+<li>Why each gate is shaped that way: <a href="lifecycle.html">lifecycle.md</a>, then
+<a href="design.html">design.md</a> for the papers behind each mechanism.</li>
+<li>The static map of components: <a href="architecture.html">architecture.md</a>.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="primer.html">← Primer — LLM agents from zero</a><a class="pn next" href="quickstart.html">rsif Quickstart →</a></div></main></div></body></html>

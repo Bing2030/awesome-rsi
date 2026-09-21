@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif documentation — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif documentation</h1>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rsif documentation — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="primer.html">Primer — LLM agents from zero</a><a href="walkthrough.html">Walkthrough — one run, narrated end to end</a><a href="quickstart.html">rsif Quickstart</a><a href="faq.html">FAQ — the questions teams ask on first contact</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>rsif documentation</h1>
 <p><strong>rsif</strong> is a Python framework for building agents that improve themselves
 through a verified evolution loop:</p>
 <pre><code>proposal → exploration → design → verification → correction
@@ -10,11 +10,14 @@ improver&#39;s own templates, even the context-assembly policy — is a
 the model&#39;s judgment of itself. The engine that enforces this is trusted,
 frozen code; the agent is modifiable data.</p>
 <ul>
-<li><strong>Status:</strong> 16 milestones (M0–M16), 125 offline deterministic tests +
+<li><strong>Status:</strong> 16 milestones (M0–M16), 126 offline deterministic tests +
 live gateway runs; see <a href="plan.html">plan.md</a>.</li>
 <li><strong>Core:</strong> Python 3.11+, stdlib-only (providers are optional extras).</li>
 <li><strong>Where the mechanisms come from:</strong> every design decision is grounded in
 the RSI literature — <a href="design.html">design.md</a> carries the full citation map.</li>
+<li><strong>New to agents/LLMs entirely?</strong> <a href="primer.html">primer.md</a> defines every
+term from zero; <a href="walkthrough.html">walkthrough.md</a> then narrates one
+complete run.</li>
 </ul>
 <h2>Reading paths</h2>
 <table>
@@ -25,8 +28,20 @@ the RSI literature — <a href="design.html">design.md</a> carries the full cita
 </tr>
 </thead>
 <tbody><tr>
+<td><strong>Learn the background first</strong> — no agent/LLM knowledge assumed</td>
+<td><a href="primer.html">primer.md</a></td>
+</tr>
+<tr>
+<td><strong>See one complete run narrated</strong> — every artifact, gate, and event explained</td>
+<td><a href="walkthrough.html">walkthrough.md</a></td>
+</tr>
+<tr>
 <td><strong>Run it in the next 10 minutes</strong> (offline demo, no API key)</td>
 <td><a href="quickstart.html">quickstart.md</a></td>
+</tr>
+<tr>
+<td><strong>Preempt the questions your team will ask</strong></td>
+<td><a href="faq.html">faq.md</a></td>
 </tr>
 <tr>
 <td><strong>Understand the big picture</strong> — components, trust boundary, data flow</td>
@@ -57,6 +72,10 @@ the RSI literature — <a href="design.html">design.md</a> carries the full cita
 <td><a href="investigation.html">investigation.md</a></td>
 </tr>
 </tbody></table>
+<p><strong>Presenting to teams new to agents?</strong> The on-ramp that works: primer →
+walkthrough (one session, ~20 minutes of reading), then whichever
+subsystem page owns their question. The FAQ is organized to be skimmed
+live during Q&amp;A.</p>
 <h2>The component guides</h2>
 <p>Each guide covers one subsystem: what it does, the files and key classes,
 the exact semantics and invariants, the configuration knobs, the events it
@@ -121,6 +140,10 @@ and corrections to earlier claims.</li>
 walkthrough (mechanism ↔ design point ↔ evidence).</li>
 </ul>
 <h2>The one-paragraph mental model</h2>
+<p>In one sentence, for newcomers: <strong>rsif is a CI pipeline for agent
+configuration</strong> — an LLM proposes changes the way a contributor opens pull
+requests, and nothing merges without passing held-out tests. With that
+framing, the precise version:</p>
 <p>An <strong>Improver</strong> meta-agent proposes one <strong>bounded patch</strong> to the agent&#39;s
 artifacts (a prompt tweak, a new skill, a playbook rule, an architecture
 edit, or a mutation of its own template). The engine materializes the patch
@@ -136,4 +159,4 @@ drift monitors, and append-only lineage bound the whole process. Everything
 is recorded in a phase-attributed event log that is byte-reproducible from
 the seed.</p>
 <p>Once that paragraph feels obvious, you know rsif.</p>
-</article><div class="docs-prevnext"><a class="pn next" href="quickstart.html">rsif Quickstart →</a></div></main></div></body></html>
+</article><div class="docs-prevnext"><a class="pn next" href="primer.html">Primer — LLM agents from zero →</a></div></main></div></body></html>
