@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Harness-Zero — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="rsiagent.html">← RSIAgent</a> · <a href="adas.html">ADAS →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>Harness-Zero</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/metaevo-ai/harness-zero" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Official implementation of Harness-Zero — agent harness distillation. Evolves a student-side harness h*, adapts it into a private reference harness K, and uses a harnessing agent to review and rewrite the student's responses into SFT data, so the distilled model keeps the gains under a minimal target harness.</p></section><section class="block"><h2>How it works</h2><ul><li>Two harness families per domain under harness_bank/: the evolved student-side h* (tools, middleware, skills, memory in the DeepAgents abstraction) and its adaptation K for the harnessing agent (action recipes, review middleware, review guidance, failure patterns).</li><li>Core pipeline in src/harness_zero/: review schema, the harnessing agent, the student wrapper, trajectory store, SFT datum builder, and a Tinker training loop, exposed through a CLI (run-rollout → build-sft → train-sft).</li><li>src/deepagents_harbor/ is the Harbor Docker-sandbox backend; AppWorld gets a dedicated env/ (mini-SWE-agent + environment + image build) because its rollouts need a specialized rig.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2609.24974.html">Harness-Zero: Harness Distillation via Agent-as-Harness</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python 3.12+ and Docker (rollouts run in Harbor sandboxes). Clone, `uv sync` (add `--group tinker` for training), copy `.env.example` to `.env` and set the route you use (OpenAI / Azure / OpenRouter / Tinker). Rollout: `harness-zero run-rollout --dataset data/uspto --components harness_bank/uspto --teacher-middleware-factory harness_bank.uspto.middlewares:build_teacher_middlewares ...`, then `build-sft` and `train-sft`.</pre></section><section class="block"><h2>Learning note</h2><p>Read harness_bank/ to see what an evolved harness and its teacher adaptation look like on disk (each *_student is h*, the sibling is K), and .agents/skills/student-harness-evolve/SKILL.md for the evolution skill. The distilled checkpoints are on HuggingFace as metaevo-ai/ahd-9b-{ssb,appworld,uspto}.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><div align="center">
+
+<h1>Harness-Zero: Harness Distillation via Agent-as-Harness</h1>
+<p><strong>Distill an optimized agent harness into model weights — deploy with a minimal harness, keep the gains.</strong></p>
+<p><a href="https://www.alphaxiv.org/abs/2609.24974"><img src="https://img.shields.io/badge/paper-alphaXiv-red" alt="Paper"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License"></a> <a href="https://huggingface.co/metaevo-ai"><img src="https://img.shields.io/badge/HuggingFace-metaevo--ai-yellow" alt="Models"></a> <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.12%2B-green" alt="Python"></a></p>
+</div>
+
+<p align="center">
+  <img src="assets/harness-zero.png" width="85%" alt="Harness-Zero overview">
+</p>
+
+<p>Agent harnesses — the external systems that mediate model–environment interaction — can substantially improve agent performance, but their gains remain tied to the harness at deployment. <strong>Harness-Zero</strong> transfers the behaviors an optimized harness induces into the model itself: a <em>harnessing agent</em> reviews the student&#39;s every response during training-time rollouts and rewrites it, in the student&#39;s own action space, whenever the optimized harness would have done better. Fine-tuning on the reviewed trajectories internalizes the behavior — at deployment the harness is gone and the gains remain. The full paper is available on <a href="https://www.alphaxiv.org/abs/2609.24974">alphaXiv</a>.</p>
+<h2>Highlights</h2>
+<ul>
+<li>📈 <strong>+21.0 points macro-average</strong> on the base model (23.3% → 44.3%) across three domains — a 90.1% relative improvement.</li>
+<li>🏆 The distilled model <strong>under the minimal harness alone (44.3%) beats the base model with the optimized harness still attached (41.7%)</strong>.</li>
+<li>🔁 <strong>Agent-as-harness &gt; code-as-harness</strong>: the same evolved harness applied through a harnessing agent averages 81.1% vs. 78.1% for direct mounting on frontier models.</li>
+<li>🧠 <strong>82.3% recovery</strong> of 28 harness-exclusive behavior patterns (memory, skill, tool, middleware) — direct evidence the behavior moved into the weights.</li>
+</ul>
+<h2>Results</h2>
+<p>Distillation into Qwen3.5-9B:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>SpreadsheetBench</th>
+<th>AppWorld</th>
+<th>USPTO</th>
+<th><strong>Avg.</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mini-SWE-agent (target harness <em>h</em>)</td>
+<td>31.0</td>
+<td>26.8</td>
+<td>12.0</td>
+<td>23.3</td>
+</tr>
+<tr>
+<td>meta-harness (evolved harness <em>h*</em>)</td>
+<td>39.0</td>
+<td>48.2</td>
+<td><strong>38.0</strong></td>
+<td>41.7</td>
+</tr>
+<tr>
+<td>DeepAgents</td>
+<td>35.0</td>
+<td>19.6</td>
+<td>7.0</td>
+<td>20.5</td>
+</tr>
+<tr>
+<td>Claude Code</td>
+<td>31.0</td>
+<td>10.7</td>
+<td>6.0</td>
+<td>15.9</td>
+</tr>
+<tr>
+<td><strong>Harness-Zero (distilled, <em>h</em> only)</strong></td>
+<td><strong>44.0</strong></td>
+<td><strong>58.9</strong></td>
+<td>30.0</td>
+<td><strong>44.3</strong></td>
+</tr>
+</tbody></table>
+<h2>How it works</h2>
+<ol>
+<li><strong>Evolve &amp; Adapt.</strong> A student-side harness <em>h*</em> (tools, middleware, skills, memory —
+the DeepAgents abstraction) is evolved on training tasks, then adapted into a private reference harness <em>K</em> (action recipes, review middleware, review guidance, failure patterns) for the harnessing agent. See <code>harness_bank/</code> for the evolved harnesses and <code>.agents/skills/</code> for the evolution skill.</li>
+<li><strong>Agent-as-harness trajectory collection.</strong> The student runs under a fixed, minimal
+mini-SWE-agent-style target harness <em>h</em> (one bash tool, fixed system prompt). Before any response is executed, the harnessing agent reviews it using <em>K</em> and either <strong>PASS</strong>es it unchanged or <strong>REPLACE</strong>s it with a complete response valid under <em>h</em>. Only the accepted response enters the student-visible trajectory; the review stays private.</li>
+<li><strong>Train &amp; deploy.</strong> SFT on the reviewed trajectories (masking any reviewer-perspective
+reasoning). The distilled student deploys under <em>h</em> alone — no <em>h*</em>, no <em>K</em>, no harnessing agent.</li>
+</ol>
+<h2>Installation</h2>
+<pre><code class="language-bash">git clone git@github.com:metaevo-ai/harness-zero.git &amp;&amp; cd harness-zero
+uv sync                      # rollout + evaluation
+uv sync --group tinker       # additionally: training (Tinker recipe)
+</code></pre>
+<p>Requirements: Python 3.12–3.13, Docker (rollouts run in local Docker sandboxes via <a href="https://github.com/harbor-framework/harbor">Harbor</a>).</p>
+<p><strong>Environment variables.</strong> Copy <code>.env.example</code> to <code>.env</code> and fill in the routes you use — rollouts read this file via Harbor&#39;s <code>--env-file</code>. Which keys you need depends on the model route: official OpenAI (<code>OPENAI_API_KEY</code>), Azure AI Foundry (<code>AZURE_OPENAI_API_KEY</code> + <code>AZURE_OPENAI_ENDPOINT</code>), OpenRouter (<code>OPENROUTER_API_KEY</code>), and Tinker training (<code>TM_API_KEY</code>).</p>
+<h2>Quickstart</h2>
+<p><strong>1. Run a reviewed rollout</strong> (launches Harbor directly; Docker sandboxes):</p>
+<pre><code class="language-bash">printf &#39;uspto-train-000\nuspto-train-001\n&#39; &gt; /tmp/tasks.txt
+
+harness-zero run-rollout \
+  --dataset data/uspto \
+  --components harness_bank/uspto \
+  --teacher-middleware-factory harness_bank.uspto.middlewares:build_teacher_middlewares \
+  --tasks-file /tmp/tasks.txt \
+  --attempts 1 --concurrency 8 \
+  --student-model openai:&lt;student-model&gt; --student-reasoning-effort high \
+  --teacher-provider openai --teacher-model &lt;harnessing-model&gt; --teacher-reasoning-effort high \
+  --job-name demo --output-dir runs
+</code></pre>
+<p><strong>2. Build the SFT dataset</strong> from successful reviewed trials:</p>
+<pre><code class="language-bash">harness-zero build-sft --trials runs/demo --output sft.jsonl --reward-threshold 1.0
+</code></pre>
+<p><strong>3. Train</strong> (LoRA SFT via Tinker; asks for confirmation before submitting, <code>--yes</code> skips the prompt):</p>
+<pre><code class="language-bash">harness-zero train-sft --data sft.jsonl --base-model Qwen/Qwen3.5-9B \
+  --renderer qwen3_5 --rank 32 --peak-learning-rate 2e-4 --final-learning-rate 1e-6 \
+  --warmup-ratio 0.05 --epochs 2 --batch-size 8 --max-length 65536 --seed 42 \
+  --run-name hz-demo --output-dir runs/train
+</code></pre>
+<p>AppWorld rollouts <strong>must</strong> use the dedicated mini-SWE-agent and environment — see <a href="envs/appworld/README.md"><code>envs/appworld/README.md</code></a>.</p>
+<h2>Repository layout</h2>
+<pre><code>src/harness_zero/      core method: review schema, harnessing agent, student wrapper,
+                       trajectory store, SFT datum builder, Tinker training loop, CLI
+src/deepagents_harbor/ Harbor sandbox backend + shared message/reasoning parsing
+harness_bank/          per-domain harnesses: evolved student-side h* (*_student) and the
+                       adapted reference harness K for the harnessing agent
+envs/appworld/         dedicated AppWorld agent/environment + image build + SFT pipeline
+data/                  the three Harbor benchmark task sets, exactly as used in the paper
+.agents/skills/        the skill used to evolve the student-side harnesses
+assets/                figures used in this README
+tests/                 local test suite:  PYTHONPATH=src pytest -q
+</code></pre>
+<h2>Benchmarks</h2>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Train</th>
+<th>Test</th>
+<th>Metric</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SpreadsheetBench Verified</td>
+<td>300</td>
+<td>100</td>
+<td>pass@1</td>
+</tr>
+<tr>
+<td>AppWorld (<code>test_normal</code>)</td>
+<td>147</td>
+<td>168 (56 scenarios)</td>
+<td>SGC</td>
+</tr>
+<tr>
+<td>USPTO retrosynthesis</td>
+<td>500</td>
+<td>100</td>
+<td>pass@1</td>
+</tr>
+</tbody></table>
+<p>All task sets ship in <a href="data/README.md"><code>data/</code></a> and run under Harbor in Docker.</p>
+<h2>Models</h2>
+<p>Distilled checkpoints (Qwen3.5-9B base, LoRA SFT on reviewed trajectories):</p>
+<ul>
+<li>🤗 <a href="https://huggingface.co/metaevo-ai/ahd-9b-ssb"><code>metaevo-ai/ahd-9b-ssb</code></a> — SpreadsheetBench</li>
+<li>🤗 <a href="https://huggingface.co/metaevo-ai/ahd-9b-appworld"><code>metaevo-ai/ahd-9b-appworld</code></a> — AppWorld</li>
+<li>🤗 <a href="https://huggingface.co/metaevo-ai/ahd-9b-uspto"><code>metaevo-ai/ahd-9b-uspto</code></a> — USPTO</li>
+</ul>
+<h2>Citation</h2>
+<p>Paper: <a href="assets/Harness-Zero%20Harness%20Distillation%20via%20Agent-as-Harness.pdf">Harness-Zero: Harness Distillation via Agent-as-Harness</a></p>
+<pre><code class="language-bibtex">@article{ye2026harnesszero,
+  title  = {Harness-Zero: Harness Distillation via Agent-as-Harness},
+  author = {Ye, Haoran and Lu, Yuxing and Dong, Haonan and Su, Zhaochen and Song, Guojie},
+  year   = {2026}
+}
+</code></pre>
+<h2>License &amp; acknowledgments</h2>
+<p>Apache-2.0 (see <a href="LICENSE">LICENSE</a>). <code>src/deepagents_harbor/.local_deps/</code> vendors a frozen copy of <a href="https://github.com/langchain-ai/deepagents">deepagents</a> (MIT, LangChain Inc.). <code>envs/appworld/prompts/upstream/</code> contains material from <a href="https://github.com/StonyBrookNLP/appworld">AppWorld</a>; see the bundled license and <code>provenance.json</code>.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="rsiagent.html">RSIAgent<small>repo</small></a><a href="adas.html">ADAS<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

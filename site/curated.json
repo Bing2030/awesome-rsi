@@ -1148,5 +1148,32 @@
     ],
     "run": "Python 3.12 + uv on a Linux host with Docker and /dev/kvm. Clone, `cp .env.example .env` and set OPENROUTER_API_KEY; then per benchmark: pinned OSWorld-V2 v2026.08.08 (tools/prepare_osworld_v2_release.py, smoke_osworld.py) or scripts/setup_ale.py for Agents' Last Exam (~160-170 GiB per OS image). Batches: `python run_osworld.py --arm both --name run_01 --concurrency 1` / `run_ale.py run --arm both`. Credential-free validation: `.venv/bin/python tools/check_rsi_release.py`.",
     "note": "The most complete open implementation of explore-verify-remember RSI at computer-use scale. Even without the VM rigs, read docs/ARCHITECTURE.md (wave memory barrier, stopping rules, verifier isolation) and docs/PAPER.md (honest aggregation scope of the headline numbers)."
+  },
+  "2609.24974": {
+    "tldr": "Distills an optimized agent harness into model weights: a harnessing agent reviews and rewrites the student's responses at training time, and SFT on those trajectories moves the behavior into the model — so the specialized harness can be removed at deployment and the gains remain (23.3% → 44.3% macro-average, beating the 41.7% the base model gets with the optimized harness still attached).",
+    "method": "Three stages. (1) Evolve a student-side harness h* on training tasks, then Adapt it into a private reference harness K for a separate harnessing agent — e.g. a middleware rule that blocks risky actions becomes a review-time warning. (2) Agent-as-harness trajectory collection: the student runs under a fixed minimal target harness h (one bash tool, fixed system prompt); before any response is executed, the harnessing agent reviews it against K and either PASSes it unchanged or REPLACEs it with a complete response valid in h's action space; only the accepted response enters the student-visible trajectory and the review stays private. (3) SFT on the reviewed rollouts (masking reviewer-perspective reasoning), then deploy under h alone.",
+    "results": [
+      "Agent-as-harness beats code-as-harness on frontier models: 81.1% vs 78.1% averaged across six benchmark–model settings.",
+      "Harness distillation into Qwen3.5-9B lifts macro-average task success from 23.3% to 44.3% across SpreadsheetBench / AppWorld / USPTO — above the 41.7% the base model reaches with the evolved harness h* still attached (a 90.1% relative improvement).",
+      "82.3% average recovery of 28 harness-induced behavior patterns (memory, skill, tool, middleware) absent from the base model — direct evidence the behavior moved into the weights.",
+      "Supervision-source ablation: harness-guided review (30%) far exceeds direct trajectories from a stronger model, trajectories under h*, review without K, or review given only the task answer (3–15%)."
+    ],
+    "limitations": [
+      "Depends on a capable harnessing model; with weaker models review can become harmful and agent-as-harness loses its edge over code-as-harness.",
+      "Reviewing every proposal multiplies collection cost (an extra model call per step; ~2.4× USPTO latency) — though the overhead is absent after distillation.",
+      "Some harness mechanisms (notably context management) are not fully expressible as student responses, and SFT may not fully internalize deep domain knowledge — so it narrows rather than removes the need for a harness."
+    ],
+    "fits": "The clearest demonstration yet of the harness→weight transfer rsif's policy surface points at: an optimized harness's induced behaviors are distilled into model parameters via a temporary reviewing agent, then the harness is removed. rsif evolves its artifacts directly under programmatic gates; Harness-Zero shows the complementary move — that harness gains can be converted into training signal and folded back into weights, collapsing a harness collection into one minimal harness. Its agent-as-harness-beats-code-as-harness result is the key empirical claim to weigh against rsif's code-as-substrate stance.",
+    "reading": "Read §3 for the evolve→adapt→review→SFT pipeline (the PASS/REPLACE review boundary and why the review stays private), then §4.2's agent-as-harness vs code-as-harness comparison and §4.4's supervision-source ablation (30% vs 3–15%) as the tightest evidence for review quality."
+  },
+  "harness-zero": {
+    "what": "Official implementation of Harness-Zero — agent harness distillation. Evolves a student-side harness h*, adapts it into a private reference harness K, and uses a harnessing agent to review and rewrite the student's responses into SFT data, so the distilled model keeps the gains under a minimal target harness.",
+    "architecture": [
+      "Two harness families per domain under harness_bank/: the evolved student-side h* (tools, middleware, skills, memory in the DeepAgents abstraction) and its adaptation K for the harnessing agent (action recipes, review middleware, review guidance, failure patterns).",
+      "Core pipeline in src/harness_zero/: review schema, the harnessing agent, the student wrapper, trajectory store, SFT datum builder, and a Tinker training loop, exposed through a CLI (run-rollout → build-sft → train-sft).",
+      "src/deepagents_harbor/ is the Harbor Docker-sandbox backend; AppWorld gets a dedicated env/ (mini-SWE-agent + environment + image build) because its rollouts need a specialized rig."
+    ],
+    "run": "Python 3.12+ and Docker (rollouts run in Harbor sandboxes). Clone, `uv sync` (add `--group tinker` for training), copy `.env.example` to `.env` and set the route you use (OpenAI / Azure / OpenRouter / Tinker). Rollout: `harness-zero run-rollout --dataset data/uspto --components harness_bank/uspto --teacher-middleware-factory harness_bank.uspto.middlewares:build_teacher_middlewares ...`, then `build-sft` and `train-sft`.",
+    "note": "Read harness_bank/ to see what an evolved harness and its teacher adaptation look like on disk (each *_student is h*, the sibling is K), and .agents/skills/student-harness-evolve/SKILL.md for the evolution skill. The distilled checkpoints are on HuggingFace as metaevo-ai/ahd-9b-{ssb,appworld,uspto}."
   }
 }
