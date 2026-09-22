@@ -125,6 +125,13 @@ Status legend: ⬜ todo · 🔄 in-progress · ✅ done (with verification evide
 <td><strong>125 passed</strong> (5 new in <code>test_harness_efficiency.py</code>). Fourth objective — <code>projects/harness_efficiency/</code> <code>EfficiencyObjective</code> — folds token spend into correctness (<code>correctness − λ·min(1, tokens/500)</code>, quality-first scalar floor): concise-correct accepted over verbose-correct (val 0.91→0.97), concise-wrong screened (~−0.01); the val threshold + M13 paired net-gain floor enforce SoL-Pi&#39;s predeclared capability floor [2609.20519] <em>unchanged</em>. New POLICY artifact <code>policy/context</code> bounds injected memory; <code>build_spec</code> truncates to <code>max_memory_chars</code>; the same floor accepts context compaction (policy v1→v2). <code>Attempt.input_chars</code> exposes input cost additively</td>
 <td><code>ArtifactType.POLICY</code> + <code>policy/bound-context</code> operator (catalog 8→9) + <code>policy</code> in <code>FAST_SURFACES</code>; golden event bytes unchanged</td>
 </tr>
+<tr>
+<td>M17</td>
+<td>RSIAgent lessons: gap map + infra-unscored + scoped insights (CR-1/2/3)</td>
+<td>✅</td>
+<td><strong>138 passed</strong> (12 new in <code>test_m17.py</code>). CR-1: improver sees a train-split gap map (<code>{gaps}</code> slot in <code>meta/improver-template</code>) — <strong>train-only, val aggregate, test sealed</strong> — derived from the memoized active train book (no extra eval; val/test task ids provably absent). CR-2: <code>TaskScore.infra</code> + infra-aware <code>ScoreBook.mean</code>; <code>code_tasks.evaluate</code> classifies sandbox timeout / spawn <code>OSError</code> / signal-kill as infra; <code>selection.paired_scores</code> aligns over commonly-scored tasks (<code>None</code> when none compare); the val gate fail-closes when inconclusive; EVAL events + persisted scorebooks carry <code>n_infra</code>/<code>infra</code>. CR-3: <code>Insight.scope</code> (round-trips, defaults &quot;&quot;) + <code>[applies when: …]</code> render prefix; accept-distill records <code>{surface}/{operator}</code> scope</td>
+<td>golden regenerated (9 EVAL lines gain <code>&quot;n_infra&quot;:0</code>, verdicts unchanged); infra → &quot;UNSCORED&quot; in <code>render.scorebook</code></td>
+</tr>
 </tbody></table>
 <p>Ordering: M0 → (M1 ∥ M2) → M3 → (M4 ∥ M5) → M6 → M7 → M8 → M9 → M10 → M11 → M12.</p>
 <hr>

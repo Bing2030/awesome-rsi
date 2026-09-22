@@ -53,8 +53,12 @@ cousin of rsif&#39;s design published so far: training-free multi-agent RSI
 (curriculum/actor/verifier) with memory as the only evolving artifact,
 verifier isolated from the actor&#39;s reasoning, and frozen-memory test-time
 reuse. None of the four adoptions below touch the trust boundary.</p>
-<h3>CR-1 — Failure-aware improver context (the &quot;gap map&quot;) ⬜</h3>
-<p><strong>Status:</strong> ⬜ proposed (candidate M17; smallest of the four, do first).</p>
+<h3>CR-1 — Failure-aware improver context (the &quot;gap map&quot;) ✅</h3>
+<p><strong>Status:</strong> ✅ landed (2026-09-22, milestone M17). Train-split failure summary
+injected as the <code>{gaps}</code> slot of <code>meta/improver-template</code>; train-only, val
+stays aggregate, test sealed. Derived from the memoized active train book
+(no extra evaluation). Verified: <code>tests/unit/test_m17.py::test_improver_ build_prompt_renders_gaps</code>, <code>test_train_gaps_text_is_train_only</code> (val/test
+task ids absent; eval-event count unchanged).</p>
 <p><strong>Motivation.</strong> The improver proposes mutations without knowing <em>where</em> the
 active agent fails. Its prompt
 (<code>src/rsif/evolve/proposer.py</code>, <code>build_prompt</code>) contains only artifact
@@ -90,8 +94,15 @@ verdicts.</p>
 gaps; <code>docs/ARCHITECTURE.md</code> role table.</li>
 <li>internal: <code>proposer.py</code> context audit (2026-09-22).</li>
 </ul>
-<h3>CR-2 — Infrastructure failures are not behavioral failures ⬜</h3>
-<p><strong>Status:</strong> ⬜ proposed (candidate M17).</p>
+<h3>CR-2 — Infrastructure failures are not behavioral failures ✅</h3>
+<p><strong>Status:</strong> ✅ landed (2026-09-22, milestone M17). <code>TaskScore.infra</code> +
+infra-aware <code>ScoreBook.mean</code> (unscored tasks leave the mean, never read as
+0.0); <code>code_tasks.evaluate</code> classifies sandbox timeout / spawn <code>OSError</code> /
+signal-kill as infra; <code>selection.paired_scores</code> aligns over commonly-scored
+tasks and returns <code>None</code> when none compare; the val gate fail-closes when
+inconclusive; EVAL events and persisted scorebooks carry <code>n_infra</code>/<code>infra</code>.
+Verified: <code>tests/unit/test_m17.py</code> CR-2 block; golden regenerated (9 EVAL
+lines gain <code>&quot;n_infra&quot;:0</code>, verdicts unchanged).</p>
 <p><strong>Motivation.</strong> Today a sandbox timeout, OOM kill, or spawn failure scores
 <code>TaskScore(task, 0.0, error)</code> — byte-identical to a wrong answer
 (<code>objectives/code_tasks.py::evaluate</code>). In live runs this can val-reject a
@@ -120,8 +131,12 @@ PASS or FAIL).</li>
 <li>internal: decision-log M15 (clean-abort on provider errors — same
 principle, different layer).</li>
 </ul>
-<h3>CR-3 — Scoped insights (memory entries carry their conditions) ⬜</h3>
-<p><strong>Status:</strong> ⬜ proposed (candidate M17).</p>
+<h3>CR-3 — Scoped insights (memory entries carry their conditions) ✅</h3>
+<p><strong>Status:</strong> ✅ landed (2026-09-22, milestone M17). <code>Insight.scope</code> field
+(round-trips through persistence, defaults &quot;&quot;); <code>distill</code> accepts
+<code>(traj_id, summary, scope)</code>; <code>render_for_context</code> prefixes scoped insights
+with <code>[applies when: …]</code>; the accept-path distill records <code>{surface}/{operator}</code>
+as scope. Retirement unchanged. Verified: <code>tests/unit/test_m17.py</code> CR-3 block.</p>
 <p><strong>Motivation.</strong> RSIAgent&#39;s memory-failure audit found <strong>66.7% of unreliable-
 consolidation cases were &quot;rule scope loss&quot;</strong> — a rule learned in one context
 retained without its conditions and reused where it is wrong (their example:
@@ -308,6 +323,11 @@ index.</p>
 <td>M16</td>
 <td>Fourth objective (harness-efficiency) + POLICY artifact bounding injected memory</td>
 <td>paper 2609.20519 (SoL-Pi: predeclared capability floor; efficiency gated by non-regression)</td>
+</tr>
+<tr>
+<td>M17</td>
+<td>CR-1 train-split gap map in improver prompt · CR-2 infra failures unscored · CR-3 scoped insights</td>
+<td>paper 2609.15364 §3.2/§4.1/§4.6; code AetherLabsAI/RSIAgent ARCHITECTURE.md Phase 3; paper 2308.10144; paper 2510.16657</td>
 </tr>
 </tbody></table>
 <h2>Maintenance</h2>

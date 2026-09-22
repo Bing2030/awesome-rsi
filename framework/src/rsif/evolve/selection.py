@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from rsif.objectives.base import ScoreBook
+
 
 @dataclass(frozen=True)
 class Decision:
@@ -51,3 +53,21 @@ def accept_val(child_val: float, parent_val: float, threshold: float,
 def pass_canary(child_score: float, parent_score: float) -> bool:
     """Canaries must never regress: any drop is a hard reject."""
     return child_score >= parent_score
+
+
+def paired_scores(child: ScoreBook, parent: ScoreBook,
+                  ) -> tuple[list[float], list[float]] | None:
+    """Per-task paired scores over tasks BOTH sides actually scored.
+
+    A task that timed out on either side carries no verdict, so it is
+    excluded from the paired comparison rather than counted as a loss or a
+    win — an infra failure is unscored, not a zero [2609.15364 §4.1].
+    Returns None when no task was scored on both sides (no comparable
+    evidence at all; the caller must treat the gate as unscored).
+    """
+    c = {s.task_id: s.score for s in child.scored}
+    p = {s.task_id: s.score for s in parent.scored}
+    common = [t for t in c if t in p]  # child's order = suite order
+    if not common:
+        return None
+    return [c[t] for t in common], [p[t] for t in common]

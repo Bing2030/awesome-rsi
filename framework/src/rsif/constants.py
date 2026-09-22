@@ -27,6 +27,9 @@ ONE bounded, testable change (a patch of at most {max_ops} operations).
 ## Archive frontier
 {archive_summary}
 
+## Train-split gaps (where the agent currently fails)
+{gaps}
+
 ## Recent lessons (reflections & insights)
 {lessons}
 

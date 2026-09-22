@@ -7,11 +7,11 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":7,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":14,"role":"agent"},"phase":"","seq":8,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":9,"ts":0.0}
-{"generation":0,"kind":"eval","payload":{"label":"baseline","n":8,"score":0.375,"suite":"train"},"phase":"","seq":10,"ts":0.0}
+{"generation":0,"kind":"eval","payload":{"label":"baseline","n":8,"n_infra":0,"score":0.375,"suite":"train"},"phase":"","seq":10,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":11,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":12,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":13,"ts":0.0}
-{"generation":0,"kind":"eval","payload":{"label":"baseline","n":3,"score":1.0,"suite":"canary"},"phase":"","seq":14,"ts":0.0}
+{"generation":0,"kind":"eval","payload":{"label":"baseline","n":3,"n_infra":0,"score":1.0,"suite":"canary"},"phase":"","seq":14,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":15,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":19,"role":"agent"},"phase":"","seq":16,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":18,"role":"agent"},"phase":"","seq":17,"ts":0.0}
@@ -22,7 +22,7 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":22,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":23,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":24,"ts":0.0}
-{"generation":0,"kind":"eval","payload":{"label":"baseline","n":10,"score":0.4,"suite":"val"},"phase":"","seq":25,"ts":0.0}
+{"generation":0,"kind":"eval","payload":{"label":"baseline","n":10,"n_infra":0,"score":0.4,"suite":"val"},"phase":"","seq":25,"ts":0.0}
 {"generation":0,"kind":"archive_update","payload":{"action":"baseline","descriptor":["seed",1,0],"fitness":0.4},"phase":"","seq":26,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":181,"role":"improver"},"phase":"","seq":27,"ts":0.0}
 {"generation":1,"kind":"proposal","payload":{"hypothesis":"Adding an edge-case checklist to the system prompt improves boundary-condition correctness","operator":"prompt/refine","proposal_id":"g1p1","surface":"prompt"},"phase":"proposal","seq":28,"ts":0.0}
@@ -36,12 +36,12 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":36,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":14,"role":"agent"},"phase":"","seq":37,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":38,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":8,"score":0.625,"suite":"train"},"phase":"exploration","seq":39,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":8,"n_infra":0,"score":0.625,"suite":"train"},"phase":"exploration","seq":39,"ts":0.0}
 {"generation":1,"kind":"screen","payload":{"child":0.625,"epsilon":0.3,"parent":0.375,"passed":true,"proposal_id":"g1p1"},"phase":"exploration","seq":40,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":41,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":42,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":43,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":3,"score":1.0,"suite":"canary"},"phase":"verification","seq":44,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":3,"n_infra":0,"score":1.0,"suite":"canary"},"phase":"verification","seq":44,"ts":0.0}
 {"generation":1,"kind":"gate","payload":{"child":1.0,"gate":"canary","parent":1.0,"passed":true,"proposal_id":"g1p1"},"phase":"verification","seq":45,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":46,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":19,"role":"agent"},"phase":"","seq":47,"ts":0.0}
@@ -53,7 +53,7 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":23,"role":"agent"},"phase":"","seq":53,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":54,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":55,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":10,"score":0.8,"suite":"val"},"phase":"verification","seq":56,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":10,"n_infra":0,"score":0.8,"suite":"val"},"phase":"verification","seq":56,"ts":0.0}
 {"generation":1,"kind":"gate","payload":{"child":0.8,"detail":"0.8000 > 0.4000 + 0.02 (net task gain >= 1)","gate":"val","parent":0.4,"passed":true,"proposal_id":"g1p1","threshold":0.02},"phase":"verification","seq":57,"ts":0.0}
 {"generation":1,"kind":"accept","payload":{"meta_provisional":false,"promoted":true,"proposal_id":"g1p1","train_child":0.625,"val_child":0.8,"val_parent":0.4},"phase":"correction","seq":58,"ts":0.0}
 {"generation":1,"kind":"archive_update","payload":{"action":"candidate","active":0.8,"descriptor":["prompt",3,0],"fitness":0.8,"proposal_id":"g1p1","stored":true},"phase":"correction","seq":59,"ts":0.0}
@@ -70,12 +70,12 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":70,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":14,"role":"agent"},"phase":"","seq":71,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":72,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":8,"score":0.5,"suite":"train"},"phase":"exploration","seq":73,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":8,"n_infra":0,"score":0.5,"suite":"train"},"phase":"exploration","seq":73,"ts":0.0}
 {"generation":1,"kind":"screen","payload":{"child":0.5,"epsilon":0.3,"parent":0.375,"passed":true,"proposal_id":"g1p2"},"phase":"exploration","seq":74,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":11,"role":"agent"},"phase":"","seq":75,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":76,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":77,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":3,"score":1.0,"suite":"canary"},"phase":"verification","seq":78,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":3,"n_infra":0,"score":1.0,"suite":"canary"},"phase":"verification","seq":78,"ts":0.0}
 {"generation":1,"kind":"gate","payload":{"child":1.0,"gate":"canary","parent":1.0,"passed":true,"proposal_id":"g1p2"},"phase":"verification","seq":79,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":80,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":19,"role":"agent"},"phase":"","seq":81,"ts":0.0}
@@ -87,7 +87,7 @@
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":87,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":13,"role":"agent"},"phase":"","seq":88,"ts":0.0}
 {"generation":-1,"kind":"llm_call","payload":{"in_tokens":1,"model":"scripted","out_tokens":12,"role":"agent"},"phase":"","seq":89,"ts":0.0}
-{"generation":1,"kind":"eval","payload":{"label":"child","n":10,"score":0.4,"suite":"val"},"phase":"verification","seq":90,"ts":0.0}
+{"generation":1,"kind":"eval","payload":{"label":"child","n":10,"n_infra":0,"score":0.4,"suite":"val"},"phase":"verification","seq":90,"ts":0.0}
 {"generation":1,"kind":"gate","payload":{"child":0.4,"detail":"0.4000 > 0.4000 + 0.02 (net task gain >= 1)","gate":"val","parent":0.4,"passed":false,"proposal_id":"g1p2","threshold":0.02},"phase":"verification","seq":91,"ts":0.0}
 {"generation":1,"kind":"reject","payload":{"detail":"val 0.4000 <= 0.4000 + 0.02","proposal_id":"g1p2","reason":"val"},"phase":"correction","seq":92,"ts":0.0}
 {"generation":1,"kind":"rollback","payload":{"action":"discard_candidate","checkout_unchanged":true,"parent_descriptor":["seed",1,0],"proposal_id":"g1p2"},"phase":"correction","seq":93,"ts":0.0}

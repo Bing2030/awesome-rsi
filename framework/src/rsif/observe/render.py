@@ -67,11 +67,18 @@ def lineage_table(entries: list) -> str:
 
 
 def scorebook(book: ScoreBook, suite: TaskSuite) -> str:
-    rows = [[s.task_id, "pass" if s.score >= 1.0 else "FAIL",
-             s.detail[:60]] for s in book.scores]
+    def verdict(s):
+        if s.infra:
+            return "UNSCORED"
+        return "pass" if s.score >= 1.0 else "FAIL"
+    rows = [[s.task_id, verdict(s), s.detail[:60]] for s in book.scores]
     out = table(["task", "result", "detail"], rows)
+    passed = int(sum(1 for s in book.scored if s.score >= 1.0))
     out += f"\n{suite.split.value}: {book.mean():.4f} "
-    out += f"({int(sum(1 for s in book.scores if s.score >= 1.0))}/{len(book.scores)} passed)"
+    out += f"({passed}/{book.n_scored} passed"
+    if book.n_infra:
+        out += f", {book.n_infra} unscored (infra)"
+    out += ")"
     return out
 
 

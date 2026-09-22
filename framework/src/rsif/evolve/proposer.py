@@ -40,13 +40,15 @@ class Improver:
 
     def build_prompt(self, store: ArtifactStore, archive: Archive,
                      lessons: str, parent: Individual,
-                     open_surfaces: set[str] | None = None) -> tuple[str, str]:
+                     open_surfaces: set[str] | None = None,
+                     gaps: str = "") -> tuple[str, str]:
         template = self._template(store)
         catalog = load_catalog(store)
         user = template.format(
             max_ops=self.cfg.max_patch_ops,
             checkout_summary=self._checkout_summary(store),
             archive_summary=self._archive_summary(archive, parent),
+            gaps=gaps or "(none recorded)",
             lessons=lessons or "(none yet)",
             operators=render_operators(catalog, surfaces=open_surfaces),
             op_schema=OP_SCHEMA,
@@ -93,9 +95,10 @@ class Improver:
 
     def propose(self, store: ArtifactStore, archive: Archive, lessons: str,
                 parent: Individual,
-                open_surfaces: set[str] | None = None) -> Proposal:
+                open_surfaces: set[str] | None = None,
+                gaps: str = "") -> Proposal:
         system, user = self.build_prompt(store, archive, lessons, parent,
-                                         open_surfaces)
+                                         open_surfaces, gaps)
         req = CompletionRequest(
             messages=(Message("system", system), Message("user", user)),
             model=self.cfg.resolved_model(_IMPROVER_ROLE),

@@ -21,13 +21,15 @@ from pathlib import Path
 class Insight:
     text: str
     provenance: list[str] = field(default_factory=list)  # trajectory ids
+    scope: str = ""  # "applies when…" condition; "" = applies generally
     uses: int = 0
     failures_after_use: int = 0
     ts: float = 0.0
 
     def to_dict(self) -> dict:
         return {"text": self.text, "provenance": self.provenance,
-                "uses": self.uses, "failures_after_use": self.failures_after_use,
+                "scope": self.scope, "uses": self.uses,
+                "failures_after_use": self.failures_after_use,
                 "ts": self.ts}
 
 
@@ -45,11 +47,21 @@ class InsightStore:
         self.retriever = retriever
         self._load()
 
-    def distill(self, trajectories: list[tuple[str, str]]) -> list[Insight]:
-        """Add one insight per successful trajectory (id, summary)."""
+    def distill(self, trajectories: list[tuple]) -> list[Insight]:
+        """Add one insight per successful trajectory.
+
+        Each item is ``(traj_id, summary)`` or ``(traj_id, summary, scope)``.
+        ``scope`` is a free-text "applies when…" condition so a lesson learned
+        in one context is not over-applied in another [RSIAgent 2609.15364
+        §4.6 mode 3: unreliable memory consolidation / rule-scope loss; ExpeL
+        2308.10144].
+        """
         added = []
-        for traj_id, summary in trajectories:
-            ins = Insight(text=summary, provenance=[traj_id], ts=self.clock())
+        for item in trajectories:
+            traj_id, summary = item[0], item[1]
+            scope = item[2] if len(item) > 2 else ""
+            ins = Insight(text=summary, provenance=[traj_id], scope=scope,
+                          ts=self.clock())
             self._insights.append(ins)
             added.append(ins)
         if len(self._insights) > self.max_entries:
@@ -86,7 +98,9 @@ class InsightStore:
         ins = self.retrieve(query, top_k)
         if not ins:
             return ""
-        return "\n".join(f"- {i.text}" for i in ins)
+        return "\n".join(
+            f"- {i.text}" + (f" [applies when: {i.scope}]" if i.scope else "")
+            for i in ins)
 
     def all(self) -> list[Insight]:
         return list(self._insights)
