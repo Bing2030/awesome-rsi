@@ -5,6 +5,15 @@ of one evaluation, and the on-disk layout. Terms are defined in
 [concepts.md](concepts.md); the dynamic view (what happens, in what order)
 is [lifecycle.md](lifecycle.md).
 
+> **If you are new to agents:** the one idea this page rests on is that an
+> "agent" is just *model + prompts + tools + memory + a control loop* —
+> all ordinary text and code you can put under version control. rsif
+> freezes the loop that does the versioning (trusted engine) and makes
+> everything else editable data (artifacts). If that sentence isn't yet
+> comfortable, [primer.md](primer.md) builds it from zero and
+> [walkthrough.md](walkthrough.md) shows it happening; the diagram below
+> will still be here.
+
 ## The trust boundary (the one diagram that matters)
 
 rsif targets **harness-level recursive self-improvement**: LLM weights are
@@ -123,7 +132,7 @@ framework/
 │   ├── regex_agent/         third objective + live gateway runner
 │   └── harness_efficiency/  fourth objective: cost-aware fitness (SoL-Pi)
 ├── examples/custom_objective.py   ~30-line custom objective
-└── tests/               unit / integration / golden / live (125 offline)
+└── tests/               unit / integration / golden / live (126 offline)
 ```
 
 ## Data flow of one evaluation
