@@ -75,5 +75,6 @@ subsystem:
 | [`docs/design.md`](docs/design.md) | mechanisms ↔ papers ↔ code ↔ tests (citation map) |
 | [`docs/investigation.md`](docs/investigation.md) | file-by-file implementation walkthrough |
 | [`docs/plan.md`](docs/plan.md), [`docs/decision-log.md`](docs/decision-log.md) | milestone status; decisions & corrections |
+| [`docs/changes.md`](docs/changes.md) | change register: status + lesson sources (paper / code / internal) per change |
 
 See `docs/plan.md` for milestone status and `docs/design.md` for the referenced design.

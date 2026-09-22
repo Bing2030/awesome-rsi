@@ -1,0 +1,322 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Change register — every change, its status, and where the lesson came from — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a></aside><main class="docs-main"><article class="readme-html"><h1>Change register — every change, its status, and where the lesson came from</h1>
+<p>rsif changes are learned from somewhere: a paper&#39;s mechanism or failure
+analysis, another codebase&#39;s design or implementation, or one of our own live
+runs and audits. This register records <strong>every change with that provenance</strong>,
+and tracks its lifecycle. It is the single place to answer &quot;what is being
+changed, why, based on what source, and where does it stand?&quot;</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answered by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What was built, in what order, with what verification?</td>
+<td><a href="plan.html">plan.md</a> — milestone status table</td>
+</tr>
+<tr>
+<td>Which decisions were made, reversed, or corrected — and why?</td>
+<td><a href="decision-log.html">decision-log.md</a></td>
+</tr>
+<tr>
+<td><strong>Where did each change&#39;s lesson come from, and what is its status now?</strong></td>
+<td><strong>this page</strong></td>
+</tr>
+</tbody></table>
+<p>A change enters this register when it is first <em>proposed</em> (before any code),
+moves through the statuses below, and ends up either landed (with its
+milestone and verification evidence) or rejected (with the reason — rejected
+lessons are lessons too, and recording them prevents re-litigating).</p>
+<h2>Entry format</h2>
+<p>Every entry carries:</p>
+<ul>
+<li><strong>ID</strong> — <code>CR-n</code> (change register); <code>CRX-n</code> for rejected/not-adopted items.</li>
+<li><strong>Status</strong> — ⬜ proposed · 🔬 design agreed · 🔄 in progress · ✅ landed ·
+⏸ deferred (reason) · ❌ rejected (reason).</li>
+<li><strong>Sources</strong> — each tagged with its kind:<ul>
+<li><code>paper &lt;arxiv-id&gt; §&lt;section&gt;</code> — mechanism, result, or failure analysis;</li>
+<li><code>code &lt;repo&gt; &lt;path/mechanism&gt;</code> — a design or implementation lesson taken
+from reading or running another codebase;</li>
+<li><code>internal &lt;run/audit&gt;</code> — one of our own live runs, reviews, or audits.</li>
+</ul>
+</li>
+<li><strong>Change</strong>, <strong>touchpoints</strong> (rsif files), <strong>guards</strong> (what keeps it safe),
+<strong>verification</strong> (how &quot;landed&quot; will be proven).</li>
+</ul>
+<p>Entry IDs are stable forever; a landed entry never renumbers.</p>
+<hr>
+<h2>Open entries</h2>
+<p>First opened 2026-09-22 from the design review of <strong>RSIAgent</strong>
+(paper <code>2609.15364</code>, repo <code>AetherLabsAI/RSIAgent</code>) — the closest large-scale
+cousin of rsif&#39;s design published so far: training-free multi-agent RSI
+(curriculum/actor/verifier) with memory as the only evolving artifact,
+verifier isolated from the actor&#39;s reasoning, and frozen-memory test-time
+reuse. None of the four adoptions below touch the trust boundary.</p>
+<h3>CR-1 — Failure-aware improver context (the &quot;gap map&quot;) ⬜</h3>
+<p><strong>Status:</strong> ⬜ proposed (candidate M17; smallest of the four, do first).</p>
+<p><strong>Motivation.</strong> The improver proposes mutations without knowing <em>where</em> the
+active agent fails. Its prompt
+(<code>src/rsif/evolve/proposer.py</code>, <code>build_prompt</code>) contains only artifact
+previews, archive fitness values, and lessons — no per-task outcome
+information at all. RSIAgent&#39;s #1 failure mode is exactly this blindness:
+&quot;insufficiently targeted exploration&quot; — practice that never challenges the
+decisions responsible for the target-specific weakness (75% of that mode&#39;s
+audited cases were target-skill mismatch).</p>
+<p><strong>Change.</strong> Inject a train-split failure summary into the improver prompt (a
+<code>{gaps}</code> template slot): per-task id, score, and error signature for tasks
+the <em>active</em> agent fails, capped to a few lines. The data already exists —
+<code>_evaluate</code> memoizes per-task scorebooks and persists them under
+<code>evals/&lt;gen&gt;/</code> with error text (<code>objectives/code_tasks.py</code> keeps a 300-char
+error snippet) — this only surfaces it to the generator.</p>
+<p><strong>Hard constraint (this is where rsif must NOT copy RSIAgent).</strong> RSIAgent&#39;s
+curriculum sees the target task — its evaluation <em>is</em> the benchmark, so there
+is no holdout to protect. rsif&#39;s val split is an acceptance gate: the gap map
+must be <strong>train-split only</strong>; val stays aggregate means; test stays sealed.
+Otherwise the improver starts tailoring to specific held-out tasks and the
+val gate&#39;s meaning erodes.</p>
+<p><strong>Touchpoints.</strong> <code>evolve/proposer.py</code> (summary assembly), the improver
+template seed (<code>meta/improver-template</code>), optionally <code>evolve/engine.py</code>
+(pass the active agent&#39;s train book).</p>
+<p><strong>Guards / verification.</strong> Determinism: the summary is a pure function of
+persisted scorebooks. Unit-test prompt contents (train task ids present, val
+task ids absent); golden event log regenerated deliberately with unchanged
+verdicts.</p>
+<p><strong>Sources.</strong></p>
+<ul>
+<li>paper <code>2609.15364</code> §3.2 (curriculum role: pick tasks from knowledge gaps),
+§4.6 failure mode 1 &quot;insufficiently targeted exploration&quot; + Fig 5a.</li>
+<li>code <code>AetherLabsAI/RSIAgent</code> <code>explore/</code> — curriculum orchestration from
+gaps; <code>docs/ARCHITECTURE.md</code> role table.</li>
+<li>internal: <code>proposer.py</code> context audit (2026-09-22).</li>
+</ul>
+<h3>CR-2 — Infrastructure failures are not behavioral failures ⬜</h3>
+<p><strong>Status:</strong> ⬜ proposed (candidate M17).</p>
+<p><strong>Motivation.</strong> Today a sandbox timeout, OOM kill, or spawn failure scores
+<code>TaskScore(task, 0.0, error)</code> — byte-identical to a wrong answer
+(<code>objectives/code_tasks.py::evaluate</code>). In live runs this can val-reject a
+good candidate for infrastructure flakiness and distill insights from
+wins that were partly infra noise. Provider-level errors are already handled
+correctly (they abort the run cleanly — M13/M15); per-task sandbox-infra
+outcomes are the remaining mis-attribution.</p>
+<p><strong>Change.</strong> <code>TaskScore</code> gains an infra classification (or an exclude-and-
+retry policy) for sandbox outcomes that are infrastructure-class (timeout,
+resource kill, executor spawn failure) as opposed to test failure. Gates
+treat infra outcomes as <em>unscored</em>, never as evidence about the candidate.</p>
+<p><strong>Touchpoints.</strong> <code>objectives/base.py</code> (<code>TaskScore</code>), <code>code_tasks.py</code>
+(classify <code>outcome</code>), <code>evolve/selection.py</code> + <code>engine.py</code> (gate arithmetic),
+<code>observe/events.py</code> (event payload carries the classification).</p>
+<p><strong>Guards.</strong> Determinism: any retry must be bounded, seeded, and logged; the
+memo key must not change meaning. An objective that cannot distinguish infra
+from behavior keeps today&#39;s semantics (the field is optional metadata to the
+engine).</p>
+<p><strong>Sources.</strong></p>
+<ul>
+<li>code <code>AetherLabsAI/RSIAgent</code> <code>docs/ARCHITECTURE.md</code> (Phase 3): &quot;An
+infrastructure failure is unscored; it is not an official zero&quot;;
+<code>STALLED</code>/budget exits kept distinguishable from convergence.</li>
+<li>paper <code>2609.15364</code> §4.1/Appendix C (protocol: infra errors never become
+PASS or FAIL).</li>
+<li>internal: decision-log M15 (clean-abort on provider errors — same
+principle, different layer).</li>
+</ul>
+<h3>CR-3 — Scoped insights (memory entries carry their conditions) ⬜</h3>
+<p><strong>Status:</strong> ⬜ proposed (candidate M17).</p>
+<p><strong>Motivation.</strong> RSIAgent&#39;s memory-failure audit found <strong>66.7% of unreliable-
+consolidation cases were &quot;rule scope loss&quot;</strong> — a rule learned in one context
+retained without its conditions and reused where it is wrong (their example:
+treating missing-data markers as valid answers). rsif&#39;s <code>Insight</code>
+(<code>memory/insights.py</code>) is free text + provenance + usage counters; retirement
+is reactive (<code>failures_after_use &gt;= 2</code> — the rule must first <em>cause</em> failures
+before leaving context). Their phrasing of the lesson is the design note:
+<em>&quot;memory must preserve the conditions and uncertainty of an experience,
+rather than treating local acceptance as evidence of general validity.&quot;</em></p>
+<p><strong>Change.</strong> <code>Insight</code> gains an explicit <strong>scope</strong> (&quot;applies when …&quot;);
+distillation prompts phrase lessons scoped (hypothesis + where it applied);
+retrieval surfaces the scope alongside the text. Retirement stays as-is
+(usage-grounded), now with scope visible to the consumer.</p>
+<p><strong>Touchpoints.</strong> <code>memory/insights.py</code> (schema + render), <code>evolve/engine.py</code>
+(distill call), improver template (phrasing), golden files regenerated.</p>
+<p><strong>Verification.</strong> Unit: scoped render; retire behavior unchanged; golden
+regenerated deliberately.</p>
+<p><strong>Sources.</strong></p>
+<ul>
+<li>paper <code>2609.15364</code> §4.6 failure mode 3 &quot;unreliable memory consolidation&quot;<ul>
+<li>Fig 5c (rule scope loss 2/3 = 66.7%, uncertainty-not-enforced 1/3).</li>
+</ul>
+</li>
+<li>paper <code>2308.10144</code> (ExpeL — existing grounding for insights).</li>
+<li>paper <code>2510.16657</code> (model-collapse guard — the existing reason insights
+come only from verified wins).</li>
+</ul>
+<h3>CR-4 — Broad-then-deep generation cadence ⏸</h3>
+<p><strong>Status:</strong> ⏸ deferred until CR-1 lands (builds on the gap map; biggest of
+the four).</p>
+<p><strong>Motivation.</strong> RSIAgent&#39;s stage ablation is the cleanest evidence yet for
+rsif&#39;s archive design: broad-only 65.52 / <strong>deep-only 56.50</strong> (below baseline
+on 2 of 4 tasks — pure exploitation from thin memory <em>hurts</em>) / both 74.54.
+rsif already gets diversity from MAP-Elites + superseded-lineage sampling;
+what it lacks is the <em>cadence</em>: today every generation is the same shape
+(free parent sampling, insights distilled immediately on accept).</p>
+<p><strong>Change.</strong> The scheduler alternates generation kinds: <strong>broad</strong> generations
+(diverse sampled parents; insight writes held to generation end — the &quot;wave
+memory barrier&quot;) and <strong>deep</strong> generations (parent = active best; improver
+context = CR-1&#39;s gap map of that parent). Cadence knob alongside
+<code>meta_every_k</code>.</p>
+<p><strong>Touchpoints.</strong> <code>evolve/scheduler.py</code>, <code>evolve/engine.py</code> (slot loop,
+insight-write timing), config.</p>
+<p><strong>Guards.</strong> Determinism preserved (generation shape is a pure function of
+generation number + config); golden regenerated; the two-level acceptance
+rule is untouched.</p>
+<p><strong>Sources.</strong></p>
+<ul>
+<li>paper <code>2609.15364</code> §3.3 (BRS/DRS staging), §4.4 (stage ablation numbers).</li>
+<li>code <code>AetherLabsAI/RSIAgent</code> <code>docs/ARCHITECTURE.md</code> Phase 1 (wave barrier:
+branches from a shared pre-wave snapshot, serial consolidation in authored
+order, budgets at wave boundaries).</li>
+<li>internal: <code>scheduler.py</code> fast/slow cadence is the existing precedent for
+cadence-by-generation.</li>
+</ul>
+<hr>
+<h2>Rejected / deliberately not adopted</h2>
+<p>Recorded so the reasoning survives and is not re-litigated. All four date
+from the 2026-09-22 RSIAgent review.</p>
+<h3>CRX-1 — LLM verifier as an acceptance signal ❌</h3>
+<p>RSIAgent&#39;s verifier is an LLM reading environment evidence, and its own
+§4.6 lists &quot;incomplete verification&quot; (verifier PASS without full requirement
+coverage; fidelity gaps 50% of audited cases) as a core failure mode. rsif&#39;s
+mechanical, executed held-out gates are strictly stronger; LLM judgment
+stays advisory context, never a gate (design invariant 4). <em>Sources: paper
+<code>2609.15364</code> §3.2, §4.6; internal design.md invariants.</em></p>
+<h3>CRX-2 — Runtime-grown task or canary packs ❌</h3>
+<p>RSIAgent&#39;s curriculum generates practice and stress-test tasks at runtime.
+For rsif this would mean the acceptance instruments (canaries, splits) are
+edited by the thing being measured — grader-gaming risk, and canaries must
+stay static and trivial to be trustworthy. Task-pack growth belongs to
+objective-design time (the solvability-test discipline in
+<a href="components/objectives.html">components/objectives.md</a>). <em>Sources: paper
+<code>2609.15364</code> §3.2; internal safety design.</em></p>
+<h3>CRX-3 — Single-lineage serially-consolidated memory ❌</h3>
+<p>RSIAgent&#39;s memory is one evolving lineage; it cannot backtrack to a
+superseded state. rsif&#39;s MAP-Elites archive + two-level acceptance
+(archive-accept vs promote) supersedes this — the demo&#39;s generation 3
+(accepted, not promoted) is exactly the capability RSIAgent lacks.
+<em>Sources: paper <code>2609.15364</code> §3.3; internal archive design [1504.04909,
+1901.01753].</em></p>
+<h3>CRX-4 — Target-task detail visible to the improver ❌</h3>
+<p>RSIAgent&#39;s curriculum uses the target query as reference — correct for its
+setting, wrong for rsif&#39;s: our val split is an acceptance gate, and
+per-task val detail in the improver context would invite tailoring to the
+held-out set. The gap map (CR-1) is train-only by construction.
+<em>Sources: paper <code>2609.15364</code> §3.3/§4.1; internal splits discipline
+[2605.23904].</em></p>
+<hr>
+<h2>Landed history (backfill)</h2>
+<p>The register starts 2026-09-22; earlier changes are backfilled from
+<a href="plan.html">plan.md</a> and <a href="decision-log.html">decision-log.md</a> with their lesson
+sources. Full detail lives in those records; this table is the provenance
+index.</p>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Change (one line)</th>
+<th>Lesson sources</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M0</td>
+<td>Scaffold + tracked plan doc</td>
+<td>internal (greenfield conventions)</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>Artifacts &amp; lineage: immutable versions, append-only lineage, checkout</td>
+<td>paper 2410.04444 (behavior as inspectable/rewritable code); paper 2510.04618 (bounded incremental edits)</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>LLM layer: one-method Protocol, capped adapters, disk cache</td>
+<td>internal engineering (risk table: provider abstraction creep)</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Sandbox + hidden-test objective</td>
+<td>paper 2603.03329 (guard layers before execution); paper 2605.23904 (held-out splits discipline)</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Runtime + module ABI (modules see only their context)</td>
+<td>paper 2408.08435; paper 2410.04444</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Memory: episodic / insights / playbook / retrieval</td>
+<td>paper 2303.11366 (Reflexion); paper 2308.10144 (ExpeL); paper 2510.04618 (ACE); paper 2502.12110 (A-MEM)</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>Engine v1 + MAP-Elites archive + golden determinism</td>
+<td>paper 1504.04909; paper frontiers-quality-diversity-2016; paper 2505.22954 (DGM: only evaluated improvements kept); paper 1901.01753 (stepping stones)</td>
+</tr>
+<tr>
+<td>M7</td>
+<td>Module surface + META recursion + fast/slow scheduler</td>
+<td>paper 2310.02304 (STOP); paper 2309.16797 (Promptbreeder); paper 2607.05297 (two-timescale loop); paper 2408.08435</td>
+</tr>
+<tr>
+<td>M8</td>
+<td>Safety hardening: gate chain, drift, budget, approvers, rollback, two-level acceptance</td>
+<td>paper 2509.26354 + 2603.06333 (misevolution expected); paper 2506.13131 (cascade + budgets)</td>
+</tr>
+<tr>
+<td>M9</td>
+<td>CLI + phase-attributed observability + reproducible demo</td>
+<td>paper 2604.25850 (edit-attribution observability)</td>
+</tr>
+<tr>
+<td>M10</td>
+<td>design.md + live smoke + PDF citation spot-checks (5/6 confirmed, DGM partial)</td>
+<td>internal (design.md §10 audit)</td>
+</tr>
+<tr>
+<td>M11</td>
+<td>Second objective (exact-match) — task-agnostic seam proven</td>
+<td>internal (requirement R2 proof)</td>
+</tr>
+<tr>
+<td>M12</td>
+<td>Overall review: dead-code audit, design↔implementation reconciliation, provider-error clean abort</td>
+<td>internal audit; paper 2310.01798 (self-correction negative result, grounding for gates)</td>
+</tr>
+<tr>
+<td>M13</td>
+<td>External-review fixes: provisional META windows, import whitelist, paired net-gain floor, superseded-lineage ε-reseed</td>
+<td>internal review; paper 2605.23904 (acceptance floor); paper 1901.01753 (reseed source)</td>
+</tr>
+<tr>
+<td>M14</td>
+<td>Third objective (regex) via public seams + live gateway run</td>
+<td>internal live run (decision-log M14)</td>
+</tr>
+<tr>
+<td>M15</td>
+<td>Extraction-contract fix + clean abort on post-run provider errors</td>
+<td>internal live run #3 (decision-log M15 — first candidate to clear canary after fix)</td>
+</tr>
+<tr>
+<td>M16</td>
+<td>Fourth objective (harness-efficiency) + POLICY artifact bounding injected memory</td>
+<td>paper 2609.20519 (SoL-Pi: predeclared capability floor; efficiency gated by non-regression)</td>
+</tr>
+</tbody></table>
+<h2>Maintenance</h2>
+<ul>
+<li>A new change gets a <code>CR-n</code> entry here <strong>before</strong> implementation starts.</li>
+<li>Moving ⬜→🔬 requires the design paragraph to be complete; 🔄 adds a plan.md
+milestone row; ✅ records verification evidence here and links the
+milestone; ❌/⏸ records the reason and date.</li>
+<li>Landed entries are never rewritten — corrections go to
+<a href="decision-log.html">decision-log.md</a> and the register row gains a pointer.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="decision-log.html">← rsif Decision Log</a></div></main></div></body></html>

@@ -29,7 +29,7 @@ const DOCS_MANIFEST = [
   { group: 'Start', items: ['index.md', 'quickstart.md'] },
   { group: 'Understand', items: ['architecture.md', 'concepts.md', 'lifecycle.md'] },
   { group: 'Component guides', items: ['components/artifacts.md', 'components/engine.md', 'components/runtime.md', 'components/memory.md', 'components/objectives.md', 'components/efficiency.md', 'components/safety.md', 'components/observability.md'] },
-  { group: 'Reference & records', items: ['design.md', 'investigation.md', 'plan.md', 'decision-log.md'] },
+  { group: 'Reference & records', items: ['design.md', 'investigation.md', 'plan.md', 'decision-log.md', 'changes.md'] },
 ];
 
 function docTitle(md, fallback) {

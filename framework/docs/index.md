@@ -54,6 +54,9 @@ emits, and the tests that pin it down.
 
 These are historical/engineering records rather than reference docs:
 
+- [changes.md](changes.md) — the change register: every change with its
+  lifecycle status and lesson sources (paper / code / internal), open
+  proposals first.
 - [plan.md](plan.md) — the milestone status table (M0–M16) and the original
   approved plan.
 - [decision-log.md](decision-log.md) — per-milestone decisions, bugs caught,
