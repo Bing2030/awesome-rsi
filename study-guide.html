@@ -101,7 +101,7 @@
 <header>
   <div class="hrow">
     <h1>RSI Study Guide</h1>
-    <span class="sub">Harness-level · Multi-Agent · Coding · Automated AI R&D · Evolutionary · Frameworks — 103 entries, reordered into a learning path</span>
+    <span class="sub">Harness-level · Multi-Agent · Coding · Automated AI R&D · Evolutionary · Frameworks — 105 entries, reordered into a learning path</span>
   </div>
 </header>
 
@@ -118,7 +118,7 @@
 
 <div class="progresswrap">
   <div class="bar"><div id="fill"></div></div>
-  <div class="pct" id="pct">0 / 103 complete</div>
+  <div class="pct" id="pct">0 / 105 complete</div>
 </div>
 <div class="nextup" id="nextup"></div>
 
@@ -285,6 +285,9 @@ const E = [
   { t:"Harness-Zero: Harness Distillation via Agent-as-Harness", u:"https://arxiv.org/abs/2609.24974", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"full",
     desc:"Distills an evolved agent harness into model weights via a harnessing agent that reviews and rewrites student responses at training time; SFT internalizes the behavior so the gains survive under a minimal harness.",
     note:"Crosses the harness→weight boundary cleanly: an <b>evolved harness h*</b> is adapted into a <b>private reference harness K</b>, and a <b>harnessing agent</b> reviews every student response, PASSing it or REPLACEing it in the student's own action space. SFT on the reviewed rollouts moves the behavior into the weights — at deployment the student runs under one minimal harness and <b>beats the base model with h* still attached</b> (44.3% vs 41.7%). The agent-as-harness-beats-code-as-harness result (81.1% vs 78.1%) is the key empirical claim." },
+  { t:"RRSI: Regularized Recursive Self-Improvement of Agent Harnesses", u:"https://arxiv.org/abs/2609.24972", v:"arXiv 2026", s:"Harness-level RSI", ss:"Harness & Scaffold Evolution", ph:5, d:"full",
+    desc:"Regularizes harness self-improvement against overfitting: proposal-side constraints (annealed edit budget, history-conditioned proposer, exploration redirection) plus selection-side constraints (critic, noise-adjusted floor, cost rule, pruner) favor edits that generalize out-of-distribution.",
+    note:"The regularization-first companion to SoL-Pi and Harness-Zero: plain harness evolution overfits the evolve split (in-distribution gains shrink or vanish out-of-distribution), so RRSI constrains <b>how the search moves</b>, not what the harness may contain. Its <b>critic / noise-adjusted floor / cost rule / pruner</b> stack is the same non-regression discipline rsif encodes as its val gate and held-out gates — the selector's floor and cost rule are the direct analogs." },
   { t:"Hyperagents", u:"https://arxiv.org/abs/2603.19461", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
     desc:"Combines a task agent with an editable meta-agent whose self-modification procedure can itself evolve and transfer improvements across domains.",
     note:"A task agent + an <b>editable meta-agent whose self-modification routine is itself evolvable</b> and transferable. Emphasizes that the <i>procedure</i> of self-improvement is a learnable, portable asset." },
@@ -458,6 +461,9 @@ const E = [
   { t:"Harness-Zero (code)", u:"https://github.com/metaevo-ai/harness-zero", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
     desc:"Official implementation of Harness-Zero: evolve a student-side harness, adapt it into a reference harness, and use a harnessing agent to rewrite student responses into SFT data.",
     note:"Companion to Harness-Zero (stage 5). <b>harness_bank/</b> holds the per-domain evolved h* and adapted K harnesses (spreadsheetbench, appworld, uspto), and <b>.agents/skills/student-harness-evolve/</b> is the harness-evolution skill — worth reading even without the Docker/Harbor rigs." },
+  { t:"RRSI (code)", u:"https://github.com/google-research/rrsi", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Official implementation of RRSI: a single search core that drafts, screens and evaluates harness candidates in git worktrees, with proposal- and selection-side regularization.",
+    note:"Companion to RRSI (stage 5). The <b>method-to-code table</b> in the README maps each regularization rule to a file — selection.py (noise-adjusted floor + cost rule) and critic.py (leakage screen) are the copyable forms of rsif's val-gate discipline. Candidates live in their own git worktrees, so every round is an auditable commit." },
   { t:"ADAS (code)", u:"https://github.com/ShengranHu/ADAS", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
     desc:"Official implementation of a meta-agent that searches over executable agent designs.",
     note:"Companion to ADAS (stage 5) — the meta-agent that searches over agent designs, runnable." },
@@ -573,6 +579,7 @@ const METHODS = {
   "https://arxiv.org/abs/2609.20519": "Auto-research loops at the harness layer: agents generate exploration trajectories, map-reduce them into mechanism proposals, implement + review + validate each candidate against a held-out, isolated test set, and keep only mechanisms that cut token cost within a predeclared capability floor. 152 ideas -> 4 surviving mechanisms; ~45% fewer tokens and ~1/3 lower cost at ~94% of Pi's score.",
   "https://arxiv.org/abs/2609.15364": "One durable, evolvable memory driven by three roles: a curriculum agent picks practice tasks from knowledge gaps and decides when practice stops; actor agents execute them code-as-policy and, after verdicts, distill their own verified experience back into memory; a verifier agent judges outcomes from environment evidence alone, isolated from the actor's private reasoning. Exploration is broad-then-deep — parallel task waves from a shared memory snapshot (BRS, consolidated serially per wave, budget checked at wave boundaries), then sequential progressively harder targeted practice (DRS, each verified experience committed before the next task). At test time the memory is frozen and curriculum and memory updates are disabled. GLM-5.3 actor + Kimi-K3 verifier/curriculum: 78.98 partial on OSWorld 2.0, 84.82 on ALE — above GPT-6 Astra on both.",
   "https://arxiv.org/abs/2609.24974": "Distills an optimized agent harness into model weights. An evolved student-side harness h* is adapted into a private reference harness K for a separate harnessing agent, which reviews every student response before execution and either passes it or replaces it with a complete response in the student's own action space. SFT on those reviewed trajectories internalizes the behavior, so at deployment the student runs under a fixed minimal target harness h alone. Agent-as-harness beats code-as-harness on frontier models (81.1% vs 78.1%); distilled Qwen3.5-9B lifts macro-average from 23.3% to 44.3% (above the 41.7% with h* still attached) and recovers 82.3% of 28 harness-induced behavior patterns.",
+  "https://arxiv.org/abs/2609.24972": "Regularizes harness self-improvement to fight overfitting to the evolve split. Proposal side: an annealed budget caps how many edits one candidate bundles, the proposer is conditioned on the full edit history (so a falsified hypothesis isn't redrawn), and a stalled run is redirected to never-exercised components. Selection side: a critic screens benchmark-specific (leakage) proposals before evaluation, a noise-adjusted floor blocks gains within evaluation variance, a cost rule requires added tokens to be paid for by measured gain, and components that stop helping are pruned. Up to +14.1 points on the evolve split and up to +4.7 on five held-out benchmarks, at ~30% fewer policy tokens.",
 };
 
 function card(e){
@@ -599,7 +606,7 @@ function card(e){
 function updateNext(){
   const next = E.find(e => !done.has(e.u));
   const el = document.getElementById("nextup");
-  if (!next) { el.innerHTML = '<span class="pill">🎉 All 103 entries complete</span>'; return; }
+  if (!next) { el.innerHTML = '<span class="pill">🎉 All 105 entries complete</span>'; return; }
   el.innerHTML = `<span class="pill">Next up · stage ${next.ph}</span> <a href="${esc(detailHref(next))}">${esc(next.t)}</a>`;
 }
 
