@@ -101,7 +101,7 @@
 <header>
   <div class="hrow">
     <h1>RSI Study Guide</h1>
-    <span class="sub">Harness-level · Multi-Agent · Coding · Automated AI R&D · Evolutionary · Frameworks — 98 entries, reordered into a learning path</span>
+    <span class="sub">Harness-level · Multi-Agent · Coding · Automated AI R&D · Evolutionary · Frameworks — 100 entries, reordered into a learning path</span>
   </div>
 </header>
 
@@ -306,6 +306,9 @@ const E = [
   { t:"Self-evolving Agents with Reflective and Memory-Augmented Abilities", u:"https://arxiv.org/abs/2409.00872", v:"Neurocomputing 2025", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"skim",
     desc:"Combines iterative feedback, reflection, and forgetting-aware memory optimization for continual agent adaptation.",
     note:"A survey-style integration of feedback + reflection + <b>forgetting-aware memory</b>. Good as a consolidation read once you've seen the individual mechanisms." },
+  { t:"RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments", u:"https://arxiv.org/abs/2609.15364", v:"arXiv 2026", s:"Harness-level RSI", ss:"Self-Evolving Agent Frameworks", ph:5, d:"full",
+    desc:"Coordinates curriculum, actor, and verifier agents to explore a new computer environment, ground outcomes in environment feedback, and consolidate reusable causal knowledge into a memory that is frozen and reused at test time.",
+    note:"RSI demonstrated at computer-use scale with <b>memory as the only evolving artifact</b> — weights frozen, code-as-policy actions, and a curriculum→act→verify loop with <b>broad-then-deep</b> exploration. Note the architectural echoes of safe design: the <b>verifier is isolated from the actor's private reasoning</b>, memory is <b>frozen before evaluation</b> (rsif's checkout semantics), and the paper's own failure taxonomy — untargeted exploration, incomplete verification, unreliable memory consolidation — is a checklist of what any RSI loop must engineer against." },
 
   // ---------- PHASE 6 — Multi-Agent ----------
   { t:"Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate", u:"https://arxiv.org/abs/2305.19118", v:"EMNLP 2024", s:"Multi-Agent Self-Improvement", ss:"Inference-time Debate", ph:6, d:"skim",
@@ -446,6 +449,9 @@ const E = [
   { t:"Voyager (code)", u:"https://github.com/MineDojo/Voyager", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
     desc:"Embodied lifelong-learning agent with automatic curriculum, iterative prompting, and a reusable skill library.",
     note:"Companion to Voyager (stage 4). Requires a Minecraft server but is the classic skill-library demonstration." },
+  { t:"RSIAgent (code)", u:"https://github.com/AetherLabsAI/RSIAgent", v:"repo", s:"Frameworks & Tools", ss:"Harness / Memory / Skill Evolution", ph:10, d:"code",
+    desc:"Official implementation of RSIAgent: curriculum, actor, and verifier agents that explore a new environment and build a frozen, reusable memory.",
+    note:"Companion to RSIAgent (stage 5). Heavy but complete: pinned OSWorld-V2 and Agents' Last Exam rigs on Linux + Docker/KVM, plus a credential-free release check. The <b>docs/ARCHITECTURE.md</b> role-and-phase map (wave memory barrier, stopping rules, sealed evaluation) is worth reading even if you never start a VM." },
   { t:"ADAS (code)", u:"https://github.com/ShengranHu/ADAS", v:"repo", s:"Frameworks & Tools", ss:"Automated Search / AI R&D", ph:10, d:"code",
     desc:"Official implementation of a meta-agent that searches over executable agent designs.",
     note:"Companion to ADAS (stage 5) — the meta-agent that searches over agent designs, runnable." },
@@ -559,6 +565,7 @@ const METHODS = {
   "https://www.nature.com/articles/s41586-023-06924-6": "A frozen (never fine-tuned) LLM proposes candidate functions in a problem skeleton; a separate evaluator scores them; the best are injected back as few-shot examples in the prompt, forming an evolutionary loop. Discovered new cap-set constructions and a better bin-packing heuristic — genuine mathematical novelty.",
   "https://arxiv.org/abs/2506.13131": "A Gemini-powered coding agent writes candidate algorithms, evaluates them (often via fast approximate evaluators over a distributed pool), and uses island-based evolutionary search to improve them. Applied to matrix multiplication, sorting, and other kernels, discovering faster algorithms — including code used to train AI.",
   "https://arxiv.org/abs/2609.20519": "Auto-research loops at the harness layer: agents generate exploration trajectories, map-reduce them into mechanism proposals, implement + review + validate each candidate against a held-out, isolated test set, and keep only mechanisms that cut token cost within a predeclared capability floor. 152 ideas -> 4 surviving mechanisms; ~45% fewer tokens and ~1/3 lower cost at ~94% of Pi's score.",
+  "https://arxiv.org/abs/2609.15364": "One durable, evolvable memory driven by three roles: a curriculum agent picks practice tasks from knowledge gaps and decides when practice stops; actor agents execute them code-as-policy and, after verdicts, distill their own verified experience back into memory; a verifier agent judges outcomes from environment evidence alone, isolated from the actor's private reasoning. Exploration is broad-then-deep — parallel task waves from a shared memory snapshot (BRS, consolidated serially per wave, budget checked at wave boundaries), then sequential progressively harder targeted practice (DRS, each verified experience committed before the next task). At test time the memory is frozen and curriculum and memory updates are disabled. GLM-5.3 actor + Kimi-K3 verifier/curriculum: 78.98 partial on OSWorld 2.0, 84.82 on ALE — above GPT-6 Astra on both.",
 };
 
 function card(e){
@@ -585,7 +592,7 @@ function card(e){
 function updateNext(){
   const next = E.find(e => !done.has(e.u));
   const el = document.getElementById("nextup");
-  if (!next) { el.innerHTML = '<span class="pill">🎉 All 98 entries complete</span>'; return; }
+  if (!next) { el.innerHTML = '<span class="pill">🎉 All 100 entries complete</span>'; return; }
   el.innerHTML = `<span class="pill">Next up · stage ${next.ph}</span> <a href="${esc(detailHref(next))}">${esc(next.t)}</a>`;
 }
 
