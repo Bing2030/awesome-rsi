@@ -1,8 +1,18 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Architecture — the system map — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="quickstart.html">rsif Quickstart</a><div class="dg">Understand</div><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a><a href="changes.html">Change register — every change, its status, and where the lesson came from</a></aside><main class="docs-main"><article class="readme-html"><h1>Architecture — the system map</h1>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Architecture — the system map — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="primer.html">Primer — LLM agents from zero</a><a href="walkthrough.html">Walkthrough — one run, narrated end to end</a><a href="quickstart.html">rsif Quickstart</a><a href="faq.html">FAQ — the questions teams ask on first contact</a><div class="dg">Understand</div><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a><a href="changes.html">Change register — every change, its status, and where the lesson came from</a></aside><main class="docs-main"><article class="readme-html"><h1>Architecture — the system map</h1>
 <p>How rsif is put together: the trust boundary, the components, the data flow
 of one evaluation, and the on-disk layout. Terms are defined in
 <a href="concepts.html">concepts.md</a>; the dynamic view (what happens, in what order)
 is <a href="lifecycle.html">lifecycle.md</a>.</p>
+<blockquote>
+<p><strong>If you are new to agents:</strong> the one idea this page rests on is that an
+&quot;agent&quot; is just <em>model + prompts + tools + memory + a control loop</em> —
+all ordinary text and code you can put under version control. rsif
+freezes the loop that does the versioning (trusted engine) and makes
+everything else editable data (artifacts). If that sentence isn&#39;t yet
+comfortable, <a href="primer.html">primer.md</a> builds it from zero and
+<a href="walkthrough.html">walkthrough.md</a> shows it happening; the diagram below
+will still be here.</p>
+</blockquote>
 <h2>The trust boundary (the one diagram that matters)</h2>
 <p>rsif targets <strong>harness-level recursive self-improvement</strong>: LLM weights are
 frozen; everything the agent <em>is</em> is evolvable <em>data</em> under a trusted,
@@ -112,7 +122,7 @@ disk cache for replay.</li>
 │   ├── regex_agent/         third objective + live gateway runner
 │   └── harness_efficiency/  fourth objective: cost-aware fitness (SoL-Pi)
 ├── examples/custom_objective.py   ~30-line custom objective
-└── tests/               unit / integration / golden / live (125 offline)
+└── tests/               unit / integration / golden / live (126 offline)
 </code></pre>
 <h2>Data flow of one evaluation</h2>
 <p>The same path scores baselines, candidates, <code>rsif run</code>, and <code>rsif report</code> —
@@ -335,4 +345,4 @@ advisory context, never a gate.</li>
 providers, timestamp-free event payloads, memoized evaluation; the
 golden test reproduces a full run byte-identically across processes.</li>
 </ol>
-</article><div class="docs-prevnext"><a class="pn prev" href="quickstart.html">← rsif Quickstart</a><a class="pn next" href="concepts.html">Concepts — the rsif glossary →</a></div></main></div></body></html>
+</article><div class="docs-prevnext"><a class="pn prev" href="faq.html">← FAQ — the questions teams ask on first contact</a><a class="pn next" href="concepts.html">Concepts — the rsif glossary →</a></div></main></div></body></html>

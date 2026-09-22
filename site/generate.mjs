@@ -26,7 +26,7 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 const DOCS_ONLY = process.argv.includes('--docs-only');
 const DOCS_ROOT = path.join(ROOT, 'framework', 'docs');
 const DOCS_MANIFEST = [
-  { group: 'Start', items: ['index.md', 'quickstart.md'] },
+  { group: 'Start', items: ['index.md', 'primer.md', 'walkthrough.md', 'quickstart.md', 'faq.md'] },
   { group: 'Understand', items: ['architecture.md', 'concepts.md', 'lifecycle.md'] },
   { group: 'Component guides', items: ['components/artifacts.md', 'components/engine.md', 'components/runtime.md', 'components/memory.md', 'components/objectives.md', 'components/efficiency.md', 'components/safety.md', 'components/observability.md'] },
   { group: 'Reference & records', items: ['design.md', 'investigation.md', 'plan.md', 'decision-log.md', 'changes.md'] },
@@ -128,7 +128,7 @@ const REPO_TO_PAPER = {
   'alma': '2602.07755', 'continual-harness': '2605.09998', 'evoagentx': '2507.03616',
   'evolver': '2510.16079', 'voyager': '2305.16291', 'adas': '2408.08435',
   'ai-scientist': '2408.06292', 'funsearch': 'nature-funsearch-2024', 'mlevolve': '2606.06473',
-  'poet': '1901.01753',
+  'poet': '1901.01753', 'rsiagent': '2609.15364',
 };
 
 // ---- cache ----

@@ -1,0 +1,345 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Primer — LLM agents from zero — rsif docs</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="index.html">rsif docs</a></nav><div class="docs-layout"><aside class="docs-side"><div class="docs-brand"><a href="index.html">rsif docs</a></div><div class="dg">Start</div><a href="index.html">rsif documentation</a><a href="walkthrough.html">Walkthrough — one run, narrated end to end</a><a href="quickstart.html">rsif Quickstart</a><a href="faq.html">FAQ — the questions teams ask on first contact</a><div class="dg">Understand</div><a href="architecture.html">Architecture — the system map</a><a href="concepts.html">Concepts — the rsif glossary</a><a href="lifecycle.html">The lifecycle of a proposal</a><div class="dg">Component guides</div><a href="components/artifacts.html">Component guide — the artifact store</a><a href="components/engine.html">Component guide — the evolution engine</a><a href="components/runtime.html">Component guide — the runtime, module ABI, and sandbox</a><a href="components/memory.html">Component guide — memory</a><a href="components/objectives.html">Component guide — objectives: the task-agnostic seam</a><a href="components/efficiency.html">Component guide — cost-aware evolution (SoL-Pi grounding)</a><a href="components/safety.html">Component guide — the safety stack</a><a href="components/observability.html">Component guide — observability, CLI, determinism</a><div class="dg">Reference &amp; records</div><a href="design.html">rsif — Design Document</a><a href="investigation.html">rsif Implementation Investigation — Details &amp; Design Points</a><a href="plan.html">rsif Implementation Plan — Status Tracking</a><a href="decision-log.html">rsif Decision Log</a><a href="changes.html">Change register — every change, its status, and where the lesson came from</a></aside><main class="docs-main"><article class="readme-html"><h1>Primer — LLM agents from zero</h1>
+<p><em>Everything you need before the rest of the docs, assuming no background in
+agent or AI development. If words like &quot;prompt&quot; or &quot;token&quot; are new, read
+this page first; it defines every term the other pages use.</em></p>
+<p>The pages after this one describe rsif precisely but tersely, the way
+engineers document a database or a compiler. This page is slower: it builds
+the vocabulary and the mental model from nothing, using comparisons to
+ordinary software engineering. Nothing here is rsif-specific — it is the
+shared background the other pages assume.</p>
+<h2>1. What is an LLM?</h2>
+<p>An LLM (large language model) is a function: <strong>text in → text out</strong>.</p>
+<pre><code>&quot;You are a careful Python-solving agent. … Implement sum_list(xs).&quot;
+        │
+        ▼
+   ┌─────────┐
+   │   LLM   │   a neural network with billions of trained parameters
+   └─────────┘
+        │
+        ▼
+&quot;```python\ndef sum_list(xs): return sum(xs)\n```&quot;
+</code></pre>
+<p>Three properties matter for everything that follows:</p>
+<ol>
+<li><strong>It is stateless.</strong> The model remembers nothing between calls. Every
+conversation you have ever had with a chatbot works only because the
+<em>software around the model</em> resends the whole conversation with every
+new message. &quot;Memory&quot; in an agent is always something the surrounding
+software assembles and re-injects.</li>
+<li><strong>It is trained, not programmed.</strong> Nobody wrote rules for grammar or
+Python; the behavior emerged from training on enormous amounts of text.
+Consequence: behavior is statistical. The same input usually gives
+similar output, but &quot;usually&quot; is doing work — and you cannot debug it
+by reading code.</li>
+<li><strong>It is rented, not run by you.</strong> You call it over an HTTP API. The
+company operating the model is the <strong>provider</strong> (Anthropic, OpenAI,
+…); the specific model is identified by a <strong>model id</strong>
+(<code>claude-sonnet-5</code>, …). You never download the weights.</li>
+</ol>
+<h2>2. The vocabulary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>The engineering analogy</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Prompt</strong></td>
+<td>The full input text sent to the model.</td>
+<td>A function&#39;s arguments — the <em>only</em> way to influence the output.</td>
+</tr>
+<tr>
+<td><strong>System prompt</strong></td>
+<td>The standing part of the prompt: role, rules, style. Set once, prepended to every call.</td>
+<td>A base config applied to every request.</td>
+</tr>
+<tr>
+<td><strong>Completion</strong></td>
+<td>The text the model returns.</td>
+<td>The function&#39;s return value.</td>
+</tr>
+<tr>
+<td><strong>Token</strong></td>
+<td>The unit models read and write — roughly ¾ of an English word. Providers bill and cap by tokens.</td>
+<td>Bytes on the wire: the unit of both cost and limits.</td>
+</tr>
+<tr>
+<td><strong>Context window</strong></td>
+<td>The maximum prompt + completion size a model accepts.</td>
+<td>A fixed-size request buffer.</td>
+</tr>
+<tr>
+<td><strong>Temperature</strong></td>
+<td>A 0–1 randomness dial (0 ≈ same answer every time, 1 ≈ varied).</td>
+<td>A seedable RNG for the output.</td>
+</tr>
+<tr>
+<td><strong>Provider</strong></td>
+<td>The service that runs the model behind an HTTP API.</td>
+<td>A cloud vendor.</td>
+</tr>
+<tr>
+<td><strong>LLM call</strong></td>
+<td>One request/response round trip.</td>
+<td>One RPC. Latency hundreds of ms to minutes; this is why agents are slow.</td>
+</tr>
+</tbody></table>
+<p>Two cost consequences worth internalizing, because the framework treats
+them as first-class concerns:</p>
+<ul>
+<li><strong>Money</strong>: every token processed costs money (fractions of a cent, but
+an agent loop makes hundreds of calls — unbounded loops are a real
+billing incident).</li>
+<li><strong>Context bloat</strong>: everything you &quot;give the agent&quot; — instructions,
+memories, tool descriptions — is tokens resent on every call. More
+context = more cost, and past some point, <em>worse</em> accuracy. An agent&#39;s
+context is a budget, not a shopping cart.</li>
+</ul>
+<h2>3. From chatbot to agent</h2>
+<p>A chatbot answers once. An <strong>agent</strong> is a loop around the model that lets
+it <em>act</em>:</p>
+<pre><code>            ┌──────────────────────────────────────────┐
+            │                agent loop                │
+  task ──►  │  build prompt (system + task + history)  │
+            │        │                                 │
+            │        ▼                                 │
+            │     LLM call                            │
+            │        │                                 │
+            │   answer says:                           │
+            │   • final answer ──────────────► done    │
+            │   • &quot;run tool X with args Y&quot;             │
+            │        │                                 │
+            │        ▼                                 │
+            │   execute X in some sandbox              │
+            │        │                                 │
+            │        ▼                                 │
+            │   append result to history, repeat       │
+            └──────────────────────────────────────────┘
+</code></pre>
+<ul>
+<li>A <strong>tool</strong> (rsif calls it a <strong>skill</strong>) is a function the model may ask
+the harness to run: a calculator, a web search, a Python sandbox. The
+model never executes anything itself — it <em>emits a request</em> (&quot;call
+<code>run_tests(code=…)</code>) and trusted code decides whether and how to run it.</li>
+<li>The <strong>harness</strong> is the trusted code around the model: it assembles
+prompts, runs tools, enforces limits, records what happened. rsif is a
+harness. The model is a component <em>inside</em> it, not the program itself.</li>
+</ul>
+<p>So &quot;an agent&quot; = <strong>model + tools + control loop + context</strong>, and crucially,
+the last three are <em>ordinary code and text that you choose</em>. That leads to
+the uncomfortable question the framework exists to answer.</p>
+<h2>4. Why agents are hard to improve today</h2>
+<p>Everything that makes an agent good — the system prompt, the tool set, the
+memories, the control-flow policy — is hand-written configuration. Teams
+tune it by intuition:</p>
+<ul>
+<li>someone rewords a prompt and the agent gets better on the tasks they
+tried and silently worse on tasks they didn&#39;t;</li>
+<li>there is no regression suite, so a &quot;fix&quot; shipped last week is undone by
+a &quot;tweak&quot; this week;</li>
+<li>nobody can say <em>which</em> instruction in a 2,000-word prompt is load-bearing.</li>
+</ul>
+<p>Compare with ordinary software: we long ago stopped &quot;improving&quot; programs
+by hand-editing machine code and hoping. We have version control, tests,
+and CI. Agent configuration has none of that discipline by default — and
+the thing being tuned (a prompt) doesn&#39;t even behave deterministically.</p>
+<p><strong>This is the gap rsif fills</strong>: treat the agent&#39;s own configuration as
+<em>data under version control</em>, and let a search process propose changes
+that a <strong>test-gated pipeline</strong> must accept before anything deploys.</p>
+<h2>5. What &quot;self-improvement&quot; means here (and what it does not)</h2>
+<p>rsif does <strong>not</strong> train or modify the model&#39;s weights. The LLM is frozen,
+rented, identical in every run. What evolves is the <em>configuration around
+it</em> — and in rsif all of it is stored as versioned files called
+<strong>artifacts</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>What it is</th>
+<th>The everyday equivalent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>prompt/*</code></td>
+<td>The system prompt.</td>
+<td>A config file for behavior.</td>
+</tr>
+<tr>
+<td><code>skill/*</code></td>
+<td>Executable tools (Python modules).</td>
+<td>Microservices the agent can call.</td>
+</tr>
+<tr>
+<td><code>memory/*</code></td>
+<td>A structured &quot;playbook&quot; of lessons.</td>
+<td>A wiki the agent rereads every task.</td>
+</tr>
+<tr>
+<td><code>module/*</code></td>
+<td>The agent&#39;s control loop <em>as code</em> (ask model → maybe use tool → repeat → submit).</td>
+<td>The <code>while</code> loop of the agent, written as a plugin.</td>
+</tr>
+<tr>
+<td><code>policy/*</code></td>
+<td>Numeric knobs (how much memory may be injected).</td>
+<td>Resource limits.</td>
+</tr>
+<tr>
+<td><code>meta/*</code></td>
+<td>The improver&#39;s own template and mutation vocabulary.</td>
+<td>The CI pipeline&#39;s own configuration.</td>
+</tr>
+</tbody></table>
+<p>The loop that improves them is plain Darwin, applied to configuration:</p>
+<ol>
+<li>An LLM called the <strong>Improver</strong> proposes one small, bounded change (a
+&quot;prompt edit&quot;, a &quot;new skill&quot;, …), with a stated hypothesis.</li>
+<li>The change is applied to a <strong>copy</strong> — never the live agent.</li>
+<li>The copy is <strong>executed on real test tasks</strong> and scored.</li>
+<li>Only measured improvement on held-out tasks lets the change deploy;
+every rejection is remembered as a lesson for future proposals.</li>
+</ol>
+<p>Why believe an LLM can propose such changes at all? Because the research
+says yes when — and only when — a <em>mechanical</em> selector does the
+accepting: prompt-evolution work (Promptbreeder), self-rewriting agents
+(Darwin Gödel Machine), and code-search systems (AlphaEvolve, FunSearch)
+all show real gains exactly in this &quot;LLM proposes, evaluator disposes&quot;
+shape. The same literature shows the failure mode when the model judges
+its own work: confident nonsense. Hence the rule below.</p>
+<h2>6. The one rule everything else follows</h2>
+<blockquote>
+<p><strong>No change deploys on the model&#39;s say-so. Only measured, held-out
+performance deploys.</strong> An LLM&#39;s opinion of a candidate is never an
+input to acceptance.</p>
+</blockquote>
+<p>Everything in the safety docs is that rule made structural. A short tour
+of what could go wrong and the corresponding mechanism, in the vocabulary
+you&#39;ll meet later:</p>
+<table>
+<thead>
+<tr>
+<th>Fear (reasonable!)</th>
+<th>rsif&#39;s answer</th>
+<th>Where to read</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&quot;The agent rewrites itself into something broken or dangerous.&quot;</td>
+<td>Candidates never touch the live agent until promotion; even then, history is append-only and any regression auto-rolls back.</td>
+<td><a href="architecture.html">architecture.md</a>, <a href="components/safety.html">components/safety.md</a></td>
+</tr>
+<tr>
+<td>&quot;Evolved code does something malicious (read secrets, escape).&quot;</td>
+<td>Code changes pass a static import whitelist <em>before execution</em>, then run in a locked-down subprocess with no env secrets, CPU/time/memory caps.</td>
+<td><a href="components/runtime.html">components/runtime.md</a></td>
+</tr>
+<tr>
+<td>&quot;It finds a cheap way to cheat the tests.&quot;</td>
+<td>Acceptance requires gains on a <em>held-out</em> split the proposals never see, plus a floor on trivial &quot;canary&quot; tasks, plus a per-task net-gain floor so noise can&#39;t fake a win.</td>
+<td><a href="lifecycle.html">lifecycle.md</a></td>
+</tr>
+<tr>
+<td>&quot;A run costs $500.&quot;</td>
+<td>Hard budgets on calls, dollars, and wall-clock, enforced mid-run.</td>
+<td><a href="components/safety.html">components/safety.md</a></td>
+</tr>
+<tr>
+<td>&quot;It optimizes into a corner (only good at the drills).&quot;</td>
+<td>A quality-diversity <strong>archive</strong> keeps many behaviorally-different agents as stepping stones, not just the current best.</td>
+<td><a href="components/engine.html">components/engine.md</a></td>
+</tr>
+<tr>
+<td>&quot;Nobody can tell me why it changed.&quot;</td>
+<td>Every proposal, score, gate and decision lands in an append-only, replayable event log.</td>
+<td><a href="components/observability.html">components/observability.md</a></td>
+</tr>
+</tbody></table>
+<h2>7. The analogy table (rsif ↔ what you already know)</h2>
+<table>
+<thead>
+<tr>
+<th>rsif concept</th>
+<th>Familiar equivalent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Artifact store (versions, lineage, checkout)</td>
+<td>Git: immutable commits, reflog, <code>HEAD</code></td>
+</tr>
+<tr>
+<td>Improver</td>
+<td>A contributor opening a pull request</td>
+</tr>
+<tr>
+<td>Patch (bounded ops)</td>
+<td>A PR that may touch at most 3 files</td>
+</tr>
+<tr>
+<td>Static scan gate</td>
+<td>Lint/<code>deny</code> rules in CI, before any build</td>
+</tr>
+<tr>
+<td>Cascade screen</td>
+<td>A fast smoke test before the slow suite</td>
+</tr>
+<tr>
+<td>Canary suite</td>
+<td>The smoke tests that must <em>never</em> regress</td>
+</tr>
+<tr>
+<td>Val acceptance</td>
+<td>The merge gate: full suite on held-out tests</td>
+</tr>
+<tr>
+<td>Promotion into checkout</td>
+<td>Merging the PR — the only way code ships</td>
+</tr>
+<tr>
+<td>Archive (MAP-Elites)</td>
+<td>Keeping promising branches alive, not just <code>main</code></td>
+</tr>
+<tr>
+<td>Rejection → reflection</td>
+<td>A failed PR with comments the next PR reads</td>
+</tr>
+<tr>
+<td>Budget</td>
+<td>spend limit + job timeout in CI</td>
+</tr>
+<tr>
+<td>Auto-rollback</td>
+<td><code>git revert</code> + redeploy, done automatically</td>
+</tr>
+<tr>
+<td>Golden test / replay</td>
+<td>A byte-identical reproducible build</td>
+</tr>
+</tbody></table>
+<h2>8. What rsif is not</h2>
+<p>Worth stating plainly, because &quot;self-improving agent&quot; invites sci-fi
+readings:</p>
+<ul>
+<li><strong>Not model training.</strong> Weights are untouched; no GPUs, no datasets.</li>
+<li><strong>Not autonomous deployment.</strong> Nothing leaves the run directory; a run
+is a batch job that starts, is bounded, and ends.</li>
+<li><strong>Not a chat product.</strong> It is a Python library + CLI for running an
+<em>experiment loop</em> on agent configuration.</li>
+<li><strong>Not unbounded.</strong> Every run is capped by budget and every accepted
+change is reversible through append-only history.</li>
+<li><strong>Not claiming the model understands itself.</strong> The framework&#39;s entire
+design assumes the opposite: proposals are guesses; only execution
+decides.</li>
+</ul>
+<h2>9. Where to go next</h2>
+<ul>
+<li><a href="walkthrough.html">walkthrough.md</a> — a complete real run narrated event by
+event (the fastest way to make this concrete).</li>
+<li><a href="quickstart.html">quickstart.md</a> — run that demo yourself in one minute,
+offline, no API key.</li>
+<li><a href="architecture.html">architecture.md</a> — the system map, now that the words
+are in place.</li>
+<li><a href="faq.html">faq.md</a> — the questions teams reliably ask on first contact.</li>
+</ul>
+</article><div class="docs-prevnext"><a class="pn prev" href="index.html">← rsif documentation</a><a class="pn next" href="walkthrough.html">Walkthrough — one run, narrated end to end →</a></div></main></div></body></html>

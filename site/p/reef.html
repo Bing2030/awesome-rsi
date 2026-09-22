@@ -259,17 +259,17 @@ harness, and ask for a change:</p>
 curl -fsS -H &quot;x-reef-scenario: my-harness&quot; \
   &#39;http://127.0.0.1:8901/reef/harness/install?adapter=pi&#39; | bash
 
-reef-pi harness &quot;when I ask you to fix a bug, reproduce it with a failing test first&quot;
+reef-pi evolve &quot;when I ask you to fix a bug, reproduce it with a failing test first&quot;
 </code></pre>
-<p>Inside a <code>reef-pi</code> session, <code>/reef-harness &lt;text&gt;</code> files the same ask. The served
+<p>Inside a <code>reef-pi</code> session, <code>/evolve &lt;text&gt;</code> files the same ask. The served
 model writes the change as a skill, a rules entry, an agent command, or a pi
 extension. Where the host can isolate it (Linux with <code>bwrap</code> and <code>pasta</code>, as a
 non-root user), or with <code>REEF_PROPOSER_SANDBOX=none</code> on a machine you trust, it
 works as a coding agent that runs the changed harness before handing the change
 back. The next session&#39;s update notice offers the install; a step that
 settles while you are between turns offers its install right away. Review the
-versions with <code>/reef-versions</code>, which opens a step&#39;s page, and install one with
-<code>/reef-versions &lt;step&gt; install</code>. To change the model, restart
+versions with <code>/versions</code>, which opens a step&#39;s page, and install one with
+<code>/versions &lt;version&gt; install</code>. To change the model, restart
 <code>reef serve</code> with another <code>--inference.upstream-model</code> and rerun the install
 command: installation writes the model ID into the local harness configuration.
 See the <a href="tutorials/reefine/README.md">Reefine tutorial</a> for scripted bug-fix and
@@ -358,5 +358,6 @@ recipes by task type, with code, docs, example, and results for each</li>
 improve over time. The people below help turn that idea into working infrastructure.</p>
 <p>This list is non-exhaustive, with team members listed alphabetically by last name:</p>
 <p><a href="https://github.com/wenhaochai">Wenhao Chai</a>,
-<a href="https://github.com/Mark12Ding">Shuangrui Ding</a>,</p>
+<a href="https://github.com/Mark12Ding">Shuangrui Ding</a>,
+<a href="https://github.com/zoedsy">Shiyi Zoe Du</a>,</p>
 </div><p class="abstract">… (truncated for length) — <a href="https://github.com/Human-Agent-Society/reef" target="_blank" rel="noopener">full README on GitHub</a></p></section><section class="block"><h2>Related</h2><div class="related"><a href="memento-skills.html">Memento-Skills<small>repo</small></a><a href="voyager.html">Voyager<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>

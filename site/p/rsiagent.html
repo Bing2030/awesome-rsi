@@ -1,0 +1,320 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RSIAgent — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="voyager.html">← Voyager</a> · <a href="adas.html">ADAS →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>RSIAgent</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/AetherLabsAI/RSIAgent" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Official implementation of RSIAgent — a training-free multi-agent framework (curriculum, actor, verifier) that recursively explores a new computer environment and consolidates verified experience into a memory that is frozen and reused at test time.</p></section><section class="block"><h2>How it works</h2><ul><li>Three roles: Curriculum Agent (picks practice tasks from knowledge gaps, decides when practice stops), Actor Agent (code-as-policy execution; distills its own verified experience into memory), Verifier Agent (judges outcomes from environment evidence, isolated from the actor's private reasoning and memory).</li><li>Three runtime phases: Phase 1 BRS — parallel practice waves from a shared memory snapshot, consolidated serially per wave with budget checks at wave boundaries; Phase 2 DRS — sequential, progressively harder targeted practice, each verified experience committed to memory before the next; Phase 3 — frozen-memory task execution with the curriculum agent and memory updates disabled, followed by sealed official evaluation.</li><li>The host harness enforces isolation, records artifacts, commits memory only at valid boundaries (the wave barrier), and keeps benchmark setup and grading outside the learning loop; infra failures stay distinguishable from scored outcomes.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2609.15364.html">RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python 3.12 + uv on a Linux host with Docker and /dev/kvm. Clone, `cp .env.example .env` and set OPENROUTER_API_KEY; then per benchmark: pinned OSWorld-V2 v2026.08.08 (tools/prepare_osworld_v2_release.py, smoke_osworld.py) or scripts/setup_ale.py for Agents' Last Exam (~160-170 GiB per OS image). Batches: `python run_osworld.py --arm both --name run_01 --concurrency 1` / `run_ale.py run --arm both`. Credential-free validation: `.venv/bin/python tools/check_rsi_release.py`.</pre></section><section class="block"><h2>Learning note</h2><p>The most complete open implementation of explore-verify-remember RSI at computer-use scale. Even without the VM rigs, read docs/ARCHITECTURE.md (wave memory barrier, stopping rules, verifier isolation) and docs/PAPER.md (honest aggregation scope of the headline numbers).</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><p align="center">
+  <img src="docs/assets/rsiagent-icon.svg" alt="RSIAgent icon" width="104" height="104">
+</p>
+
+<h1 align="center">
+  <img src="docs/assets/rsiagent-wordmark.svg" alt="RSIAgent" width="480">
+</h1>
+
+<h2 align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="docs/assets/rsiagent-subtitle-mobile.svg">
+    <img src="docs/assets/rsiagent-subtitle.svg" alt="Autonomous Exploration for Recursive Self-improvement in New Environments" width="100%">
+  </picture>
+</h2>
+
+<p align="center">
+  <a href="https://arxiv.org/pdf/2609.15364"><img src="https://img.shields.io/badge/Paper-arXiv-b31b1b?style=flat" alt="Paper: arXiv"></a>
+  <a href="https://huggingface.co/papers/2609.15364" title="No. 6 on the September 15, 2026 Daily Papers list; checked September 16, 2026 (UTC)"><img src="https://img.shields.io/badge/HF_Daily_Papers-%236_%C2%B7_2026--09--15-FFD21E?style=flat&amp;logo=huggingface&amp;logoColor=FFD21E" alt="Hugging Face Daily Papers: #6 on the September 15, 2026 list"></a>
+  <a href="https://aetherlabsai.github.io/RSIAgent/"><img src="https://img.shields.io/badge/Website-RSIAgent-6554c0?style=flat" alt="Website: RSIAgent"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat" alt="License: Apache 2.0"></a>
+</p>
+
+<!-- Rank snapshot verified September 16, 2026 (UTC): https://huggingface.co/papers/date/2026-09-15 -->
+
+<p align="center">
+  <a href="#news">News</a> · <a href="#demos">Demos</a> · <a href="#method">Method</a> · <a href="#results">Results</a> · <a href="#installation">Quickstart</a> · <a href="#documentation">Documentation</a> · <a href="#citation">Citation</a>
+</p>
+
+<p><a href="https://github.com/user-attachments/assets/11cb3919-1073-4ba3-8bcd-37a15ec53c33">https://github.com/user-attachments/assets/11cb3919-1073-4ba3-8bcd-37a15ec53c33</a></p>
+<p><a id="news"></a></p>
+<h2>📰 News &amp; Highlights</h2>
+<blockquote>
+<p><strong>🔥 Headline feature in 机器之心 · September 2026</strong></p>
+<p><strong>Open-source models surpass GPT-6 Astra on challenging computer-use benchmarks.</strong>
+Discover how RSIAgent turns autonomous exploration into reusable experience—without updating model weights.</p>
+<p><a href="https://mp.weixin.qq.com/s/bg0tkvHsKTZ88uBNKUdVTQ"><img src="https://img.shields.io/badge/WeChat_reads-40K%2B-2E7D32?style=flat-square&logo=wechat&logoColor=white" alt="WeChat article reads: 40K+"></a></p>
+<p><sub>Read-count snapshot: September 16, 2026.</sub></p>
+</blockquote>
+<p><a id="overview"></a></p>
+<h2>🧭 Overview</h2>
+<p>RSIAgent is a <strong>training-free framework for recursive self-improvement</strong> in new
+digital environments. It coordinates the Curriculum Agent, Actor Agent, and
+Verifier Agent to discover how an environment works, check what they learn against actual execution,
+and retain reusable knowledge in persistent memory. Model parameters stay fixed
+throughout exploration and downstream task execution.</p>
+<p>The paper&#39;s central strategy is <strong>broad-then-deep exploration</strong>: first acquire
+diverse experience, then investigate hard cases, hidden constraints, and boundary
+conditions. The resulting memory contains procedures, scripts, and failure lessons
+that the Actor Agent reuses for downstream task execution.</p>
+<p><a id="demos"></a></p>
+<h2>🎬 Demos</h2>
+<p><a href="https://github.com/user-attachments/assets/b939a9c2-4acb-4c30-b72e-18bab646529c">https://github.com/user-attachments/assets/b939a9c2-4acb-4c30-b72e-18bab646529c</a></p>
+<p><a id="framework"></a></p>
+<h2>🧩 Framework</h2>
+<p><a href="docs/assets/framework.png"><img src="docs/assets/framework.png" alt="RSIAgent framework: parallel Broad Recursive Self-exploration, sequential Deep Recursive Self-exploration, and test-time reuse of frozen memory, illustrated with FreeCAD."></a></p>
+<p><em>The paper&#39;s original framework figure, illustrated with a FreeCAD task. Broad
+experience is progressively refined into targeted memory, then frozen for reuse.
+Click the figure for full resolution. <a href="docs/PAPER.md#figure-provenance">Figure provenance</a>.</em></p>
+<p><a id="method"></a></p>
+<h2>🔄 Method</h2>
+<p>Three agents carry out the recursive learning loop:</p>
+<ul>
+<li><strong>Curriculum Agent</strong> chooses informative exploration tasks using prior outcomes and
+accumulated knowledge, then decides whether further practice is useful.</li>
+<li><strong>Actor Agent</strong> interacts with software through executable Python or Bash programs
+and visual observations. After verification, the same Actor Agent distills its
+experience and reconciles it with existing memory.</li>
+<li><strong>Verifier Agent</strong> independently inspects task requirements and the resulting
+environment. Its feedback grounds learning; it cannot read the Actor Agent&#39;s
+private reasoning or memory.</li>
+</ul>
+<p>The paper has <strong>two exploration stages followed by test-time memory reuse</strong>.
+<strong>RSI and test-time execution use the same agent framework</strong>, with fixed model
+parameters throughout. At test time, memory is frozen, and the Curriculum Agent
+and memory updates are disabled. The implementation exposes these as three
+runtime phases:</p>
+<table>
+<thead>
+<tr>
+<th>Runtime phase</th>
+<th>Paper stage</th>
+<th>Learning and execution</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Phase 1</strong></td>
+<td><strong>Broad Recursive Self-exploration (BRS)</strong></td>
+<td>The Curriculum Agent proposes diverse projects. Actor Agents execute and Verifier Agents check them in parallel from a shared starting memory. After the complete wave, Actor Agents consolidate their experiences in order.</td>
+</tr>
+<tr>
+<td><strong>Phase 2</strong></td>
+<td><strong>Deep Recursive Self-exploration (DRS)</strong></td>
+<td>Target attempts reveal gaps and fragile successes. The Curriculum Agent selects focused practice; each verified experience updates memory before subsequent practice or another target attempt.</td>
+</tr>
+<tr>
+<td><strong>Phase 3</strong></td>
+<td><strong>Test-time memory reuse</strong></td>
+<td>The Actor Agent uses frozen memory to guide task execution, interacting with the Verifier Agent through the same action–verification loop used during RSI. Sealed official evaluation follows task execution and verification.</td>
+</tr>
+</tbody></table>
+<p>Memory is the persistent learning state across tasks. Interaction histories and
+task environments are reset between independent attempts; the Agent framework
+remains unchanged. Both grounded successes and failures can teach useful lessons.
+Official benchmark scores are kept outside the learning loop. See
+<a href="docs/ARCHITECTURE.md">Architecture</a> for the role interfaces, wave memory barrier,
+and stopping rules.</p>
+<p><a id="results"></a></p>
+<h2>📊 Results</h2>
+<p>The manuscript reports these <strong>mean partial-credit scores (%)</strong> for the shared
+harness coordinating the Actor Agent and Verifier Agent, with and without RSI:</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark and reporting coverage</th>
+<th align="right">RSIAgent w/o RSI</th>
+<th align="right">RSIAgent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OSWorld 2.0 · 0808 offline · 82 tasks</td>
+<td align="right">71.97</td>
+<td align="right"><strong>78.98</strong></td>
+</tr>
+<tr>
+<td>Agents&#39; Last Exam · Near-term · 67 tasks</td>
+<td align="right">83.75</td>
+<td align="right"><strong>84.82</strong></td>
+</tr>
+</tbody></table>
+<p>These are the manuscript&#39;s reported aggregates. The RSI column uses 41 recorded
+RSI entries for OSWorld and 19 for ALE, retaining baseline scores for the other
+41 OSWorld tasks and 48 ALE tasks. ALE includes all 67 Near-term tasks, including
+the three GPU baseline results. The RSI column includes selected retries and
+checkpoints with differing budgets; it is not an average over matched repeated
+runs. ALE also includes qualified local
+regrades and protocol variants. See the <a href="docs/PAPER.md">paper and reporting notes</a>
+for the full scope, full-credit metrics, and aggregation details.</p>
+<p>The paper also examines stage ablations, memory growth, and game development.
+Its failure analysis identifies three limits to improvement: practice can miss
+the relevant weakness, verification can accept incomplete work, and memory can
+preserve an incorrect rule. The quality of exploration, verification, and memory
+consolidation therefore matters alongside the amount of practice.</p>
+<p><a id="benchmarks"></a></p>
+<h2>🧪 Benchmarks</h2>
+<table>
+<thead>
+<tr>
+<th>Integration</th>
+<th>Pinned release</th>
+<th>Public batch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OSWorld-V2</td>
+<td>August 8, 2026</td>
+<td>108 tasks, Docker/QEMU</td>
+</tr>
+<tr>
+<td>Agents&#39; Last Exam (ALE)</td>
+<td><code>d10fb61a14f9719774c3520c5763068b28ef5546</code></td>
+<td>67 Near-term tasks; 64 CPU tasks and 3 completed GPU-task baselines</td>
+</tr>
+</tbody></table>
+<p>All three GPU-task baselines are complete. Chroma Key ran on a Google Cloud
+(GCP) VM using the official ALE Windows image and an NVIDIA L4 vWS GPU.</p>
+<p>Only the current runtime is included. Both integrations use the same Actor,
+Verifier, Curriculum, and memory protocol. Benchmark setup and grading remain
+outside the learning process.</p>
+<p><a id="repository-layout"></a></p>
+<h2>🗂️ Repository layout</h2>
+<pre><code class="language-text">run_osworld.py        OSWorld batch entrypoint
+run_ale.py            ALE preparation, execution, and reporting
+benchmarks/
+  osworld/           OSWorld stages, VM adapter, and evaluation
+  ale/               ALE host, worker, and VM adapters
+core/                Shared Actor and Verifier runtime
+explore/             Curriculum, learning, memory, and recovery
+env/                 Shared guest transport and isolation
+llm/                 Model clients
+config/              Role profiles and benchmark configurations
+scripts/             Setup and individual-study helpers
+tools/               Preparation, smoke checks, and recovery utilities
+tests/               Regression tests
+docs/                Guides, architecture, and attribution
+</code></pre>
+<p>The two root entrypoints are the starting point for benchmark runs. Internal
+OSWorld stages are Python modules under <code>benchmarks/osworld/</code>; see the
+<a href="docs/ARCHITECTURE.md#source-map">source map</a> for their responsibilities.</p>
+<p><a id="installation"></a></p>
+<h2>⚙️ Installation</h2>
+<p>Use Python 3.12, <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a>,
+and a Linux host with Docker and access to <code>/dev/kvm</code>. Start with the repository
+and your own model API credential:</p>
+<pre><code class="language-bash">git clone https://github.com/AetherLabsAI/RSIAgent.git
+cd RSIAgent
+cp .env.example .env
+</code></pre>
+<p>Fill in <code>OPENROUTER_API_KEY</code> in <code>.env</code>. Paths default to this checkout and sibling
+benchmark directories. Export <code>RSIAGENT_ROOT</code>, <code>OSWORLD_ROOT</code>, or
+<code>RSIAGENT_ENV_FILE</code> only when using a different layout.</p>
+<p>Follow the setup for the benchmark you want to run. All commands below start
+from the <code>RSIAgent</code> directory unless a <code>cd</code> is shown. VM images and benchmark
+assets are downloaded separately.</p>
+<p><a id="osworld"></a></p>
+<h3>🖥️ OSWorld</h3>
+<p>Install the pinned <a href="https://github.com/xlang-ai/OSWorld-V2/tree/v2026.08.08">OSWorld release</a>
+and follow its <a href="https://github.com/xlang-ai/OSWorld-V2/blob/v2026.08.08/docs/PROVIDER_SETUP.md#docker">Docker setup</a>.
+From the RSIAgent checkout:</p>
+<pre><code class="language-bash">git clone --branch v2026.08.08 https://github.com/xlang-ai/OSWorld-V2.git ../OSWorld-V2
+cd ../OSWorld-V2
+uv sync --frozen
+uv pip install --python .venv/bin/python -r ../RSIAgent/requirements.txt
+source .venv/bin/activate
+cd ../RSIAgent
+</code></pre>
+<p>Prepare the benchmark assets and audit files, then check the VM:</p>
+<pre><code class="language-bash">python tools/prepare_osworld_v2_release.py
+python tools/build_p2_corpus.py
+python tools/exam_fence.py build
+python tools/smoke_osworld.py --output results/smoke/osworld
+</code></pre>
+<p>Keep this environment active for the OSWorld batch commands below. In a new
+shell, activate it with <code>source ../OSWorld-V2/.venv/bin/activate</code>.
+The audit files under <code>results/</code> stay on the host and never enter Agent prompts
+or memory.</p>
+<p><a id="ale"></a></p>
+<h3>🎓 ALE</h3>
+<p>The setup script clones the pinned upstream source and installs separate grader
+and worker environments. This separation prevents the two projects&#39; Python
+packages from shadowing each other.</p>
+<pre><code class="language-bash">python3 scripts/setup_ale.py
+../agents-last-exam/.venv/bin/python run_ale.py prepare --os linux
+../agents-last-exam/.venv/bin/python run_ale.py prepare --os windows
+</code></pre>
+<p>Each preparation downloads only the selected OS image. Linux requires about
+167 GiB and Windows about 157 GiB, plus download and VM working space. Use
+<code>--cache /path/with/space</code> consistently for preparation, smoke tests, and runs.</p>
+<p>Check both guest types before running the full CPU cohort:</p>
+<pre><code class="language-bash">../agents-last-exam/.venv/bin/python run_ale.py smoke \
+  --os linux --output results/smoke/ale_linux
+../agents-last-exam/.venv/bin/python run_ale.py smoke \
+  --os windows --output results/smoke/ale_windows
+</code></pre>
+<p>ALE requires a successful smoke for each requested OS on the current source and
+runner image. Use a new <code>--output</code> directory when repeating a smoke. See
+<a href="docs/ALE.md">ALE operations</a> for storage options and the upstream guide.</p>
+<p><a id="run-batches"></a></p>
+<h2>🚀 Run batches</h2>
+<p>Choose <code>--arm baseline</code> for task execution without RSI, <code>--arm rsi</code> for learning
+followed by frozen-memory evaluation, or <code>--arm both</code> to run both.</p>
+<p><a id="osworld-1"></a></p>
+<h3>🖥️ OSWorld</h3>
+<p>Inspect the full 108-task plan, then run it:</p>
+<pre><code class="language-bash">python run_osworld.py --arm both --name osworld_run_01 --dry-run
+python run_osworld.py --arm both --name osworld_run_01 --concurrency 1
+</code></pre>
+<p><code>--dry-run</code> prints the plan without starting VMs, making model calls, or writing
+outputs. Logs and task status are under <code>results/batches/&lt;name&gt;/</code>. A task failure
+stops its remaining phases; other tasks continue. Choose a new <code>--name</code> for each
+batch because existing outputs are never overwritten.</p>
+<p><a id="ale-1"></a></p>
+<h3>🎓 ALE</h3>
+<p>Inspect the cohort, run the supported tasks, and generate a report:</p>
+<pre><code class="language-bash">../agents-last-exam/.venv/bin/python run_ale.py plan --arm both
+../agents-last-exam/.venv/bin/python run_ale.py run \
+  --arm both --output results/ale/run_01 --concurrency 1
+../agents-last-exam/.venv/bin/python run_ale.py report \
+  --runs results/ale/run_01 --output results/ale/report_01
+</code></pre>
+<p>Use a new <code>--output</code> directory for each run. The report contains <code>tasks.csv</code> and
+<code>summary.json</code>, keeps missing results explicit, and rejects
+duplicate scored attempts.</p>
+<p>Both entrypoints run batches directly. Begin with <code>--concurrency 1</code>; raise it
+when the host has capacity for additional independent task lineages. For custom
+OSWorld protocols and recovery, see <a href="docs/OPERATIONS.md">operations</a>.</p>
+<p><a id="validation"></a></p>
+<h2>✅ Validation</h2>
+<p>Portable checks run without credentials, Docker, or benchmark installations:</p>
+<pre><code class="language-bash">uv venv .venv --python 3.12
+uv pip install --python .venv/bin/python -r requirements-dev.txt
+.venv/bin/python tools/check_rsi_release.py
+</code></pre>
+<p>The VM smoke commands in the installation steps check transport, immutable
+memory, candidate replay, Verifier isolation, and checkpoint rollback using
+synthetic files. They make no model or official grader calls. Smoke success
+validates runtime mechanics; reproducing benchmark scores requires complete
+experiments with the pinned configuration.</p>
+<p><a id="documentation"></a></p>
+<h2>📚 Documentation</h2>
+<ul>
+<li><a href="docs/ARCHITECTURE.md">Architecture</a></li>
+<li><a href="docs/OPERATIONS.md">OSWorld operations and recovery</a></li>
+<li><a href="docs/ALE.md">ALE setup, batches, and reports</a></li>
+<li><a href="docs/RELEASE.md">Release provenance and validation</a></li>
+<li><a href="docs/PAPER.md">Paper and reporting scope</a></li>
+<li><a href="docs/CONTRIBUTING.md">Contributing</a> · <a href="docs/THIRD_PARTY.md">Third-party attribution</a></li>
+</ul>
+<p><a id="citation"></a></p>
+<h2>📝 Citation</h2>
+<p>If you use RSIAgent, please cite the <a href="https://arxiv.org/abs/2609.15364">arXiv preprint</a>:</p>
+<pre><code class="language-bibtex">@misc{zhu2026rsiagentautonomousexplorationrecursive,
+      title={RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments},
+      author={Sibo Zhu and Shicheng Fan and Xinyue Wang and Wenyi Wu and Kun Zhou and Biwei Huang},
+      year={2026},
+      eprint={2609.15364},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2609.15364},
+}
+</code></pre>
+<p><a id="license"></a></p>
+<h2>⚖️ License</h2>
+<p>RSIAgent is licensed under the <a href="LICENSE">Apache License 2.0</a>. Third-party dependencies and benchmark assets retain their respective licenses and terms; see <a href="docs/THIRD_PARTY.md">third-party attribution</a>.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="voyager.html">Voyager<small>repo</small></a><a href="adas.html">ADAS<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>
