@@ -1175,5 +1175,34 @@
     ],
     "run": "Python 3.12+ and Docker (rollouts run in Harbor sandboxes). Clone, `uv sync` (add `--group tinker` for training), copy `.env.example` to `.env` and set the route you use (OpenAI / Azure / OpenRouter / Tinker). Rollout: `harness-zero run-rollout --dataset data/uspto --components harness_bank/uspto --teacher-middleware-factory harness_bank.uspto.middlewares:build_teacher_middlewares ...`, then `build-sft` and `train-sft`.",
     "note": "Read harness_bank/ to see what an evolved harness and its teacher adaptation look like on disk (each *_student is h*, the sibling is K), and .agents/skills/student-harness-evolve/SKILL.md for the evolution skill. The distilled checkpoints are on HuggingFace as metaevo-ai/ahd-9b-{ssb,appworld,uspto}."
+  },
+  "2609.24972": {
+    "tldr": "Regularizes harness self-improvement so it doesn't overfit the evolve split: proposal-side constraints (annealed edit budget, history-conditioned proposer, exploration redirection) and selection-side constraints (a critic that screens benchmark-specific edits, a noise-adjusted floor, a cost rule, and a pruner) favor reusable mechanisms over benchmark-specific ones — up to +14.1 points in-distribution and up to +4.7 on five held-out benchmarks, while the evolved harness runs on ~30% fewer policy tokens.",
+    "method": "A harness-evolution loop where the edit space stays open (prompts, control flow, config, context, tools, skills, memory, sub-agents) but the search is regularized. Proposal side: an annealed budget b_t caps how many edits one candidate can bundle; the proposer is conditioned on the full edit history so a falsified hypothesis isn't redrawn; a stalled run is redirected toward components it has never exercised. Selection side: a critic screens every candidate for suite-specific logic before evaluation; a noise-adjusted floor blocks gains within evaluation variance; a cost rule requires added inference tokens to be paid for by measured gain; and components that stop helping are pruned. Each candidate is drafted, screened and evaluated in its own git worktree, and accepting one fast-forwards the branch — the incumbent is always a commit.",
+    "results": [
+      "Coding (Claude Opus 4.8 policy): Terminal-Bench 2.1 +6.0 (74.2 → 80.2) on the evolve split; SWE-bench Verified +1.8 (82.0 → 83.8) out-of-distribution.",
+      "Agentic workspace: Harvey LAB +1.1 evolve; JobBench +4.7, GDPval +3.5, APEX-Agents +3.7 out-of-distribution.",
+      "Engineering design: EngDesign +4.9 evolve; Frontier-Eng +4.3 out-of-distribution.",
+      "Not tied to one policy family: with Gemini 3.5 Flash the coding instance goes 64.6 → 78.7 on Terminal-Bench 2.1 and 76.8 → 79.0 on SWE-bench Verified.",
+      "The evolved harness runs on ~30% fewer policy tokens than unregularized evolution."
+    ],
+    "limitations": [
+      "Regularization narrows but does not close the OOD gap — up to +4.7 points out-of-distribution versus up to +14.1 on the evolve split, so in-distribution overfitting is reduced, not eliminated.",
+      "Depends on capable LLM roles (proposer, analyst, critic, selector) and a strong frozen policy (Claude Opus 4.8 / Gemini 3.5 Flash); behavior with weaker models is not demonstrated.",
+      "Each instance is a hand-built Domain adapter with per-domain hyperparameters (the noise band is calibrated per instance), so porting to a new domain is engineering work, not automatic.",
+      "The critic is an LLM regex-deny + review screen for leakage, not a guarantee of non-leakage; the noise floor is an empirical estimate."
+    ],
+    "fits": "The closest published match to rsif's non-regression discipline, applied at the harness layer. RRSI's noise-adjusted acceptance floor, cost rule, and pruner are the direct analogs of rsif's val gate, budget constraints, and archive promotion/rollback — and its critic is the analog of rsif's held-out gates and canaries, all aimed at the same failure mode rsif engineers against: gains that memorize the training surface instead of generalizing. Where rsif evolves the agent's artifacts under executed gates, RRSI evolves the harness's edit space under measured-score gates.",
+    "reading": "Read §3 for the proposal- and selection-side constraints (the repo README's method-to-code table maps each rule to its implementation file); Table 6's round-by-round accept/reject case studies are the clearest picture of the regularization actually firing — a candidate rejected by the cost rule, another by the noise floor, a small reusable fix retained."
+  },
+  "rrsi": {
+    "what": "Official implementation of RRSI — regularized recursive self-improvement of agent harnesses. A single search core drives three Domain instances (coding, workspace, engineering-design), drafting, screening and evaluating harness candidates in git worktrees and fast-forwarding the branch to each winner.",
+    "architecture": [
+      "One core, three instances: rrsi/ holds the search loop (evaluate, propose, analyst, digester, critic, selection, history, schedule, components); each domains/<name>/ is a Domain adapter (evolve/heldout/smoke splits, run/score, leakage denylist, guards) plus its starting harness and rrsi.json hyperparameters.",
+      "Candidates in git worktrees: every candidate harness is drafted, screened and evaluated in its own worktree on a branch off evolve/<domain>; accepting one fast-forwards the branch, so the incumbent is always a commit and the edit history (one JSONL record per edit: component, hypothesis, score/cost change, verdict) is auditable.",
+      "Method-to-code is explicit: the annealed budget in schedule.py, history/stall/exploration in history.py, the critic leakage screen in critic.py, the noise-adjusted floor + cost rule in selection.py, and novelty over structural component types in components.py."
+    ],
+    "run": "Python 3.10+, plus per-instance environments (harbor for the coding instance; a Python 3.11 env with `pip install -e .[agentic]` for workspace/engineering). Point the roles at a LiteLLM model string (default Claude Opus 4.8 on Vertex AI: set VERTEX_PROJECT / VERTEX_LOCATION). Then `python3 rrsi.py --domain coding baseline` then `run`, `status`; `--T/--k/--delta/--beta1` override rrsi.json, and `readjudicate`/`reevaluate` re-apply a round.",
+    "note": "Read domains/<name>/rrsi.json and the method-to-code table in the README to see each regularization rule as an actual function — especially selection.py (noise-adjusted floor + cost rule) and critic.py (leakage screen), which are the concrete, copyable forms of the discipline rsif encodes as its val gate and held-out gates."
   }
 }

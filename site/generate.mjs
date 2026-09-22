@@ -128,7 +128,7 @@ const REPO_TO_PAPER = {
   'alma': '2602.07755', 'continual-harness': '2605.09998', 'evoagentx': '2507.03616',
   'evolver': '2510.16079', 'voyager': '2305.16291', 'adas': '2408.08435',
   'ai-scientist': '2408.06292', 'funsearch': 'nature-funsearch-2024', 'mlevolve': '2606.06473',
-  'poet': '1901.01753', 'rsiagent': '2609.15364', 'harness-zero': '2609.24974',
+  'poet': '1901.01753', 'rsiagent': '2609.15364', 'harness-zero': '2609.24974', 'rrsi': '2609.24972',
 };
 
 // ---- cache ----

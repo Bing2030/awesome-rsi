@@ -1,0 +1,269 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RRSI — RSI Study</title><link rel="stylesheet" href="../assets/style.css"></head><body><nav class="crumbs"><a href="../index.html">← All resources</a> · <a href="harness-zero.html">← Harness-Zero</a> · <a href="adas.html">ADAS →</a></nav><div class="wrap"><div class="detail-head">
+    <div class="kicker">REPOSITORY · stage 10 · Frameworks &amp; Tools</div>
+    <h1>RRSI</h1>
+    
+    <p class="meta">repo</p>
+    <div class="links"><a class="" href="https://github.com/google-research/rrsi" target="_blank" rel="noopener">GitHub</a></div>
+  </div><section class="block"><h2>What it does</h2><p>Official implementation of RRSI — regularized recursive self-improvement of agent harnesses. A single search core drives three Domain instances (coding, workspace, engineering-design), drafting, screening and evaluating harness candidates in git worktrees and fast-forwarding the branch to each winner.</p></section><section class="block"><h2>How it works</h2><ul><li>One core, three instances: rrsi/ holds the search loop (evaluate, propose, analyst, digester, critic, selection, history, schedule, components); each domains/&lt;name&gt;/ is a Domain adapter (evolve/heldout/smoke splits, run/score, leakage denylist, guards) plus its starting harness and rrsi.json hyperparameters.</li><li>Candidates in git worktrees: every candidate harness is drafted, screened and evaluated in its own worktree on a branch off evolve/&lt;domain&gt;; accepting one fast-forwards the branch, so the incumbent is always a commit and the edit history (one JSONL record per edit: component, hypothesis, score/cost change, verdict) is auditable.</li><li>Method-to-code is explicit: the annealed budget in schedule.py, history/stall/exploration in history.py, the critic leakage screen in critic.py, the noise-adjusted floor + cost rule in selection.py, and novelty over structural component types in components.py.</li></ul></section><section class="block"><h2>Related paper</h2><p><a href="2609.24972.html">RRSI: Regularized Recursive Self-Improvement of Agent Harnesses</a></p></section><section class="block"><h2>Install & run</h2><pre class="readme">Python 3.10+, plus per-instance environments (harbor for the coding instance; a Python 3.11 env with `pip install -e .[agentic]` for workspace/engineering). Point the roles at a LiteLLM model string (default Claude Opus 4.8 on Vertex AI: set VERTEX_PROJECT / VERTEX_LOCATION). Then `python3 rrsi.py --domain coding baseline` then `run`, `status`; `--T/--k/--delta/--beta1` override rrsi.json, and `readjudicate`/`reevaluate` re-apply a round.</pre></section><section class="block"><h2>Learning note</h2><p>Read domains/&lt;name&gt;/rrsi.json and the method-to-code table in the README to see each regularization rule as an actual function — especially selection.py (noise-adjusted floor + cost rule) and critic.py (leakage screen), which are the concrete, copyable forms of the discipline rsif encodes as its val gate and held-out gates.</p></section><section class="block"><h2>Repo README</h2><div class="readme-html"><h1>RRSI: Regularized Recursive Self-Improvement of Agent Harnesses</h1>
+<p>Check out our <a href="https://arxiv.org/abs/2609.24972">paper</a> and <a href="https://regularized-rsi.com/">project page</a> for more details.</p>
+<h2>🔥 Updates</h2>
+<ul>
+<li>[09-21-2026] Our <a href="https://arxiv.org/abs/2609.24972">paper</a> is out! Check it out! <a href="https://regularized-rsi.com/">project page</a></li>
+</ul>
+<h2>🧬 Overview</h2>
+<p align="center">
+  <img src="./assets/rrsi_overview.png" width="92%" alt="RRSI overview: proposal-side and selection-side regularization of the harness search">
+</p>
+
+<p>An LLM agent&#39;s capability is largely set by its harness: the prompts, control
+flow, tools, memory and context management around a frozen model. Evolving the
+harness against a fixed evolve set is effective but overfits: the harness
+memorizes the training tasks, and large in-distribution gains shrink or vanish
+out of distribution. RRSI keeps the harness edit space open and regularizes the
+search trajectory through it instead.</p>
+<p>On the proposal side, an annealed budget caps how many independent edits one
+candidate may bundle, the proposer is conditioned on the full edit history so a
+falsified hypothesis is not redrawn, and a stalled run is redirected toward
+components it has never exercised. On the selection side, a critic screens
+every candidate for suite-specific logic before it is evaluated, a
+noise-adjusted floor blocks gains within evaluation variance, a cost rule
+requires added inference tokens to be paid for by measured gain, and
+components that stop helping are pruned.</p>
+<h3>✨ Key features</h3>
+<ul>
+<li><strong>Open edit space, regularized search.</strong> Prompts, control flow, configuration, context management, tools, skills, memory and sub-agents may all be modified; the constraints act on how the search moves, not on what the harness may contain.</li>
+<li><strong>One method, three instances.</strong> The same loop drives a terminal agent (Terminal-Bench 2.1), a document-work agent (Harvey LAB) and an engineering-design agent (EngDesign); each instance is a <code>Domain</code> adapter plus its starting harness.</li>
+<li><strong>Candidates in git worktrees.</strong> Every candidate harness is drafted, screened and evaluated in its own worktree on a branch off <code>evolve/&lt;domain&gt;</code>; accepting one fast-forwards the branch, so the incumbent is always a commit.</li>
+<li><strong>Evidence you can audit.</strong> The edit history records, per edit, the component, the hypothesis, the measured score and cost change and the verdict; the prompts the proposer, analyst and critic receive are plain files in <code>domains/&lt;name&gt;/</code>.</li>
+</ul>
+<h2>🧩 Method to code</h2>
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Empirical score and cost estimate</td>
+<td><code>rrsi/evaluate.py: aggregate</code> (weighted per-trial rewards; a missing trial counts 0 with the full denominator)</td>
+</tr>
+<tr>
+<td>Annealed edit budget b_t</td>
+<td><code>rrsi/schedule.py: edit_budget</code>, enforced in the proposer&#39;s done()</td>
+</tr>
+<tr>
+<td>Edit history L_t, tried set T_t, recent yield g_t</td>
+<td><code>rrsi/history.py: History</code> (one JSONL record per edit; a = 1 only for the edits of the candidate that became H_{t+1})</td>
+</tr>
+<tr>
+<td>Stall flag, untried components, exploration directives</td>
+<td><code>rrsi/history.py: stall_flag, exploration</code>; reserved slots enforced in <code>rrsi/propose.py</code></td>
+</tr>
+<tr>
+<td>Analyze(H_t, D)</td>
+<td><code>rrsi/analyst.py</code> dispatching <code>rrsi/digester.py</code></td>
+</tr>
+<tr>
+<td>Proposer with (component, hypothesis, diff) tags</td>
+<td><code>rrsi/propose.py</code>; tags validated against the diff by <code>rrsi/components.py</code></td>
+</tr>
+<tr>
+<td>Critic (leakage screen before evaluation)</td>
+<td><code>rrsi/critic.py</code> (domain regex denylist plus LLM review, bounded repair)</td>
+</tr>
+<tr>
+<td>Evaluate in parallel</td>
+<td><code>rrsi/evaluate.py</code>, <code>Run.round</code> thread pool</td>
+</tr>
+<tr>
+<td>Noise-adjusted floor, cost rule, within-band rule, argmax</td>
+<td><code>rrsi/selection.py</code></td>
+</tr>
+<tr>
+<td>Novelty nu_t (structural component types never in a winning edit)</td>
+<td><code>rrsi/components.py: novelty</code> over K_str = client_tool, skill, memory, subagent</td>
+</tr>
+<tr>
+<td>Prune set B_t</td>
+<td><code>History.prune_set</code>, handed to the proposer with the accepted machinery to remove</td>
+</tr>
+<tr>
+<td>Noise band delta</td>
+<td>fixed per instance in <code>rrsi.json</code> (0.017 / 0.004 / 0.020); <code>rrsi/calibrate.py</code> re-estimates it when <code>delta</code> is <code>null</code> (bootstrap over trials of the base evaluation, or repeated base evaluations)</td>
+</tr>
+<tr>
+<td>Non-compensatory domain criteria</td>
+<td><code>Domain.guards</code> (engineering: valid-rate drop, no-submission rise)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>⚡️ Quickstart</h2>
+<h3>0. Install</h3>
+<pre><code class="language-bash">git clone https://github.com/google-research/rrsi.git &amp;&amp; cd rrsi
+pip install -e &quot;.[dev]&quot;            # the search core (Python 3.10 or newer)
+python3 -m pytest tests
+</code></pre>
+<p>The benchmark runners live in their own environments: harbor for the coding instance (<code>domains/coding/.venv</code>), and a Python 3.11 environment with <code>pip install -e &quot;.[agentic]&quot;</code> for the workspace and engineering instances (<code>RRSI_AGENT_PYTHON</code>).</p>
+<h3>1. LLM configuration</h3>
+<p>The proposer, the analyst, the critic and the frozen policy are Claude Opus 4.8 on Vertex AI (<code>policy_model</code> in <code>domains/coding/rrsi.json</code>, <code>ORCHESTRATOR_MODEL</code> for the other two instances; any LiteLLM model string works). The Harvey LAB judge is Gemini 3.5 Flash.</p>
+<pre><code class="language-bash">gcloud auth application-default login
+export VERTEX_PROJECT=&quot;your-project-id&quot; VERTEXAI_PROJECT=&quot;your-project-id&quot;
+export VERTEX_LOCATION=global VERTEXAI_LOCATION=global
+export RRSI_VERTEX_PROJECTS=&quot;your-project-id&quot;      # comma-separated list: the search roles spread their calls round-robin
+</code></pre>
+<h3>2. Run an instance</h3>
+<p>Every instance follows the same shape:</p>
+<pre><code class="language-bash">python3 rrsi.py --domain &lt;coding|workspace|eng&gt; smoke     # liveness: compile, construct, a couple of tasks
+python3 rrsi.py --domain &lt;name&gt; baseline                   # Evaluate(H_0), seed runs/&lt;name&gt;/frontier.json
+python3 rrsi.py --domain &lt;name&gt; run                        # rounds 0..T-1, resumable; touch runs/&lt;name&gt;/STOP to stop
+python3 rrsi.py --domain &lt;name&gt; status
+</code></pre>
+<p>Each round drafts two candidates in their own git worktrees, screens them, evaluates both on the full evolve set and fast-forwards <code>evolve/&lt;name&gt;</code> to the winner. <code>runs/&lt;name&gt;/</code> holds the frontier, the edit history and the raw trials. Hyperparameters live in <code>domains/&lt;name&gt;/rrsi.json</code> and can be overridden on the command line (<code>--T</code>, <code>--k</code>, <code>--delta</code>, <code>--beta1</code>, ...); <code>readjudicate --t &lt;t&gt;</code> re-applies Algorithm 2 to a stored round and <code>reevaluate --t &lt;t&gt;</code> re-measures one after an infrastructure failure.</p>
+<p><strong>Open the README of the instance you want to run</strong> for its environment, its evaluation protocol and the out-of-distribution runs:</p>
+<ul>
+<li><a href="domains/coding/README.md"><code>domains/coding</code></a>: Terminal-Bench 2.1, then SWE-bench Verified</li>
+<li><a href="domains/workspace/README.md"><code>domains/workspace</code></a>: Harvey LAB, then JobBench, GDPval and APEX-Agents</li>
+<li><a href="domains/eng/README.md"><code>domains/eng</code></a>: EngDesign, then EngDesign v1 and Frontier-Eng</li>
+</ul>
+<p>The short version of each:</p>
+<pre><code class="language-bash"># coding: Docker + harbor
+python3 -m venv domains/coding/.venv &amp;&amp; domains/coding/.venv/bin/pip install &quot;harbor&gt;=0.18&quot;
+python3 rrsi.py --domain coding baseline &amp;&amp; python3 rrsi.py --domain coding run
+bash domains/coding/scripts/swe_eval.sh                       # H_0 and the incumbent on SWE-bench Verified
+
+# workspace: a Harvey LAB checkout at the pinned commit; the split is generated from it on first use
+git clone https://github.com/harveyai/harvey-labs.git &amp;&amp; (cd harvey-labs &amp;&amp; git checkout 1da4750 &amp;&amp; uv sync)
+export HARVEY_LAB_ROOT=$PWD/harvey-labs RRSI_AGENT_PYTHON=~/venvs/rrsi-agentic/bin/python
+python3 rrsi.py --domain workspace baseline &amp;&amp; python3 rrsi.py --domain workspace run
+python3 rrsi.py --domain workspace heldout --label champ      # the 40 held-out tasks; ood/run_{jobbench,gdpval,apex}.sh for the rest
+
+# eng: the official EngDesign tasks in the verifier layout, a grading venv, a jailed tool gateway
+git clone https://github.com/AGI4Engineering/EngDesign.git
+python3 domains/eng/scripts/engdesign/build_engdesign_bench.py --engdesign-open EngDesign/EngDesign-Open --out domains/eng/engdesign_bench
+python3 -m venv domains/eng/.venvs/engdesign &amp;&amp; domains/eng/.venvs/engdesign/bin/pip install -r domains/eng/scripts/engdesign/requirements.txt
+bash domains/eng/scripts/preflight.sh
+python3 rrsi.py --domain eng baseline &amp;&amp; python3 rrsi.py --domain eng run
+bash domains/eng/scripts/final_eval.sh frontier               # Frontier-Eng, from a Frontier-Engineering checkout
+</code></pre>
+<h2>📊 Results</h2>
+<p>Numbers from the paper, with Claude Opus 4.8 as the frozen policy in every instance and every number measured against the unevolved harness H_0 in the same window. &quot;Evolve&quot; is the split the harness was searched on; the other rows never entered selection. Terminal-Bench, SWE-bench, JobBench, GDPval, APEX-Agents and EngDesign report pass rate, Harvey LAB the fraction of rubric criteria passed and Frontier-Eng Medal points.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Domain</th>
+<th align="left">Benchmark</th>
+<th align="left">Role</th>
+<th align="center">H_0</th>
+<th align="center">RRSI</th>
+<th align="center">Δ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Coding</td>
+<td align="left">Terminal-Bench 2.1</td>
+<td align="left">evolve</td>
+<td align="center">74.2</td>
+<td align="center"><strong>80.2</strong></td>
+<td align="center">+6.0</td>
+</tr>
+<tr>
+<td align="left">Coding</td>
+<td align="left">SWE-bench Verified</td>
+<td align="left">OOD</td>
+<td align="center">82.0</td>
+<td align="center"><strong>83.8</strong></td>
+<td align="center">+1.8</td>
+</tr>
+<tr>
+<td align="left">Agentic workspace</td>
+<td align="left">Harvey LAB</td>
+<td align="left">evolve</td>
+<td align="center">89.4</td>
+<td align="center"><strong>90.5</strong></td>
+<td align="center">+1.1</td>
+</tr>
+<tr>
+<td align="left">Agentic workspace</td>
+<td align="left">Harvey LAB</td>
+<td align="left">ID held-out</td>
+<td align="center">86.9</td>
+<td align="center"><strong>89.2</strong></td>
+<td align="center">+2.3</td>
+</tr>
+<tr>
+<td align="left">Agentic workspace</td>
+<td align="left">JobBench</td>
+<td align="left">OOD</td>
+<td align="center">36.0</td>
+<td align="center"><strong>40.7</strong></td>
+<td align="center">+4.7</td>
+</tr>
+<tr>
+<td align="left">Agentic workspace</td>
+<td align="left">GDPval</td>
+<td align="left">OOD</td>
+<td align="center">48.8</td>
+<td align="center"><strong>52.3</strong></td>
+<td align="center">+3.5</td>
+</tr>
+<tr>
+<td align="left">Agentic workspace</td>
+<td align="left">APEX-Agents</td>
+<td align="left">OOD</td>
+<td align="center">34.2</td>
+<td align="center"><strong>37.9</strong></td>
+<td align="center">+3.7</td>
+</tr>
+<tr>
+<td align="left">Engineering design</td>
+<td align="left">EngDesign</td>
+<td align="left">evolve</td>
+<td align="center">50.0</td>
+<td align="center"><strong>54.9</strong></td>
+<td align="center">+4.9</td>
+</tr>
+<tr>
+<td align="left">Engineering design</td>
+<td align="left">Frontier-Eng</td>
+<td align="left">OOD</td>
+<td align="center">17.7</td>
+<td align="center"><strong>22.0</strong></td>
+<td align="center">+4.3</td>
+</tr>
+</tbody></table>
+<p>The search is not tied to one policy family: with Gemini 3.5 Flash as the frozen policy, the same coding instance goes from 64.6 to 78.7 on Terminal-Bench 2.1 and from 76.8 to 79.0 on SWE-bench Verified.</p>
+<h2>🧱 Adding a domain</h2>
+<p>A domain is one module, <code>domains/&lt;name&gt;/adapter.py</code>, exporting <code>DOMAIN</code>, an
+instance of <code>rrsi.domain.Domain</code> that implements:</p>
+<ul>
+<li><code>evolve_ids</code>, <code>heldout_ids</code>, <code>smoke_ids</code>: the task splits;</li>
+<li><code>run(root, runs_dir, job, ids, k)</code> and <code>score(runs_dir, job, ids, k)</code>: run the harness checked out under <code>root</code> and return per-task trial rewards (Evaluate);</li>
+<li><code>load_trial</code>, <code>render_trace</code>, <code>task_row</code>: the evidence the analyst, digester and proposer read;</li>
+<li><code>smoke</code>: a liveness check of a candidate before it is evaluated;</li>
+<li><code>critic_patterns</code>, <code>component_signals</code>, <code>briefs</code>, <code>guards</code>: the domain&#39;s leakage denylist, diff-to-component signals, role prompts and non-compensatory acceptance criteria;</li>
+</ul>
+<p>plus <code>harness_path</code> (the evolvable directory), <code>SKILL.md</code> and <code>PATTERNS.md</code>
+(the proposer&#39;s constitution) and <code>rrsi.json</code> (hyperparameters). The core
+never reads a trajectory format or a benchmark directory itself.</p>
+<h2>🧪 Tests</h2>
+<pre><code class="language-bash">python3 -m pytest tests            # or: python3 tests/test_core.py
+</code></pre>
+<h2>🙏 Acknowledgements</h2>
+<p>The starting harnesses are the Terminus-2 agent from <a href="https://github.com/laude-institute/harbor">harbor</a> and the react_toolbelt agent and runner from <a href="https://github.com/Mercor-Intelligence/archipelago">archipelago</a>. The instances evaluate on <a href="https://github.com/harbor-framework/terminal-bench">Terminal-Bench</a>, <a href="https://github.com/SWE-bench/SWE-bench">SWE-bench Verified</a>, <a href="https://github.com/harveyai/harvey-labs">Harvey LAB</a>, <a href="https://github.com/Job-Bench/job-bench-eval">JobBench</a>, <a href="https://openai.com/index/gdpval/">GDPval</a>, <a href="https://www.mercor.com/apex/apex-agents-leaderboard/">APEX-Agents</a>, <a href="https://github.com/AGI4Engineering/EngDesign">EngDesign</a> and <a href="https://github.com/Einsia/Frontier-Engineering">Frontier-Eng</a>.</p>
+<h2>💬 Citation</h2>
+<pre><code class="language-bibtex">@article{xia2026rrsi,
+  title={RRSI: Regularized Recursive Self-Improvement of Agent Harnesses},
+  author={Xia, Peng and Han, Rujun and Wang, Zifeng and Chen, Yanfei and Zhang, Yufan and Lee, Yoonho and Huang, Chengsong and Yu, Han and CuiZhu, Zhongying and Ming, Yifei and Yao, Huaxiu and Gokturk, Burak and Pfister, Tomas and Lee, Chen-Yu},
+  journal={arXiv preprint arXiv:2609.24972},
+  year={2026}
+}
+</code></pre>
+<h2>Contributing</h2>
+<p>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<h2>License</h2>
+<p>Apache 2.0; see <a href="LICENSE">LICENSE</a>. Third-party code under <code>third_party/</code>
+carries its own license.</p>
+<h2>Disclaimer</h2>
+<p>This is not an officially supported Google product. This project is not eligible for the <a href="https://bughunters.google.com/open-source-security">Google Open Source Software Vulnerability Rewards Program</a>.</p>
+</div></section><section class="block"><h2>Related</h2><div class="related"><a href="harness-zero.html">Harness-Zero<small>repo</small></a><a href="adas.html">ADAS<small>repo</small></a><a href="agentfactory.html">AgentFactory<small>repo</small></a><a href="dgm.html">Darwin Gödel Machine<small>repo</small></a><a href="godel-agent.html">Gödel Agent<small>repo</small></a><a href="hermes-agent.html">Hermes Agent<small>repo</small></a></div></section><footer>Hand-distilled from the original repository (the abstract/README is included verbatim). Part of the <a href="https://github.com/xzhao/awesome-rsi">awesome-rsi</a> study site.</footer></div></body></html>
