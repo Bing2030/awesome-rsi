@@ -16,7 +16,10 @@ Reader's guide: this document is the *rationale* layer (mechanism ↔ paper ↔
 code ↔ test). For the reference layer — system map, glossary, per-subsystem
 guides — see `docs/index.md` (start there as a newcomer:
 `docs/architecture.md`, `docs/concepts.md`, `docs/lifecycle.md`,
-`docs/components/`).
+`docs/components/`). If agent/LLM vocabulary is new to you, read
+`docs/primer.md` first and treat this page as your *second* pass — every
+mechanism here is previewed in plain language in `docs/walkthrough.md`
+before it appears below with its citations.
 
 ---
 

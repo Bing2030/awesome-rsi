@@ -1,6 +1,10 @@
 # rsif Quickstart
 
 A complete offline walkthrough in under a minute — no API key, no network.
+New to agents, or want every step below *explained* rather than just run?
+Read [primer.md](primer.md) (background) and [walkthrough.md](walkthrough.md)
+(this exact run, narrated) first — then come back and type it yourself.
+
 (The scripted demo provider plays both the agent and the improver; see
 `src/rsif/llm/demo.py`. The story it tells: on a 10-task held-out val suite
 the agent's fitness goes 0.4 → 0.6 → 1.0 through two promoted prompt edits;

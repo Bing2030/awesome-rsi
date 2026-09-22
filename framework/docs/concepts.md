@@ -4,6 +4,21 @@ Every term the framework uses, grouped by where it lives. File anchors point
 into `framework/`; see [architecture.md](architecture.md) for how the pieces
 fit together and [lifecycle.md](lifecycle.md) for the dynamic view.
 
+## Background vocabulary (used everywhere, defined once)
+
+If you have never worked with LLMs, these six terms are prerequisites for
+every other definition. Fuller, slower explanations: [primer.md](primer.md).
+
+| Term | Meaning |
+|---|---|
+| **LLM** | A trained text-in → text-out function. Stateless: it remembers nothing between calls — surrounding software must resend context every time. |
+| **Prompt / system prompt** | The input text / its standing role-and-rules part. The only channel for steering the model. |
+| **Token** | The unit models process and providers bill (~¾ of a word). Cost and limits are counted in tokens. |
+| **Provider / model** | The HTTP service running an LLM (Anthropic, OpenAI, …) / which model it runs (`claude-sonnet-5`, …). |
+| **Tool call (skill)** | The model *emits a request* for trusted code to run a named function and return the result; it never executes anything itself. |
+| **Harness** | The trusted code around the model: prompt assembly, tool execution, limits, logging. rsif is a harness. |
+
+
 ## The agent and what it is made of
 
 | Term | Meaning | Where |

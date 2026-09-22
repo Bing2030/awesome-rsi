@@ -67,6 +67,9 @@ subsystem:
 
 | Doc | What it covers |
 |---|---|
+| [`docs/primer.md`](docs/primer.md) | LLM/agent background from zero — no prior knowledge assumed |
+| [`docs/walkthrough.md`](docs/walkthrough.md) | one full run narrated: artifacts, gates, events, end state |
+| [`docs/faq.md`](docs/faq.md) | plain-language answers to the questions teams ask first |
 | [`docs/quickstart.md`](docs/quickstart.md) | 10-minute offline walkthrough |
 | [`docs/architecture.md`](docs/architecture.md) | trust boundary, component map, data flow, config knobs |
 | [`docs/concepts.md`](docs/concepts.md) | the glossary (artifact, checkout, niche, gates, …) |
