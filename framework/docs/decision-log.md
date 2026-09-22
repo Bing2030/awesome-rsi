@@ -94,3 +94,41 @@ A full design+implementation review found two claims that did not survive scruti
 - **Honest, additive cost accounting** — `Attempt.input_chars` (system+task length) exposes the *input* side of token cost so the objective can reward context compaction, not just short outputs. It defaults to 0 and touches no `session.usage`/budget path, so other objectives and golden determinism are unaffected (flagship event bytes unchanged — events carry ids/scores/decisions, not the policy seed).
 - **Quality-first framing over a pareto gate** (chosen): cost can never promote a wrong answer (≤ −λ·cost) nor push a correct answer below 0.9 — the capability floor is enforced by construction.
 - **Suite: 125 offline tests** (5 new in `test_harness_efficiency.py`; golden `best_snapshot` assertion 5→6 artifacts; operator catalog 8→9).
+
+## M17 — RSIAgent lessons landed (gap map, infra-unscored, scoped insights)
+
+CR-1/2/3 from [changes.md](changes.md), reviewed against the RSIAgent design
+(paper `2609.15364`, repo `AetherLabsAI/RSIAgent`) and landed as one milestone.
+
+- **Gap map is train-only, by construction, not by policy.** CR-1 injects the
+  active agent's *train* failures into the improver prompt. The hard
+  constraint (val stays aggregate, test sealed) is enforced structurally: the
+  gap map is a **memo lookup** of the active snapshot's full-train scorebook —
+  the same scorebook already computed at baseline or as a promoted candidate's
+  `child_train` — so no new evaluation happens, and only `train/*` task ids
+  can appear. `test_train_gaps_text_is_train_only` asserts `train/01` present
+  and `val/`/`test` absent, and that the eval-event count is unchanged. This
+  is the deliberate deviation from RSIAgent, whose curriculum sees its
+  benchmark directly (no holdout to protect); rsif must not.
+- **Infra failures are unscored, never an official zero.** CR-2 adds
+  `TaskScore.infra` (sandbox timeout, spawn `OSError`, signal-kill = the
+  sandbox's RLIMIT enforcement). `ScoreBook.mean` averages only `scored`
+  entries; `paired_scores` aligns child/parent over *commonly-scored* tasks
+  and returns `None` when none compare, at which point the val gate
+  **fail-closes** (inconclusive evidence, not a pass). One design choice worth
+  recording: an infra-heavy suite silently shrinks the paired comparison; the
+  `n_infra` count is surfaced on every EVAL event and persisted scorebook so
+  "0.0 because infra" is never confused with "0.0 because wrong".
+- **Insight scope is a data-model field, not a prompt-only phrasing.** CR-3
+  gives `Insight` a persisted `scope` ("applies when…", default "") and renders
+  it as an `[applies when: …]` prefix. The engine's accept-path distill records
+  `{surface}/{operator}` as a coarse first scope; task-level scoping (the
+  context where the *agent*, not the improver, applies a lesson) is deferred to
+  CR-4's broad-then-deep cadence. Retirement (`failures_after_use ≥ 2`) is
+  untouched — the scope is visible to the consumer, but the reactive
+  usage-grounded guard still does the enforcement.
+- **Golden regenerated deliberately, verdicts unchanged.** CR-2's `n_infra`
+  field is the only event-log change: 9 EVAL lines gain `"n_infra":0`; every
+  accept/reject/screen/canary verdict is byte-identical to the pre-M17 golden.
+- **Suite: 138 offline tests** (12 new in `test_m17.py`), 1 live test
+  deselected.

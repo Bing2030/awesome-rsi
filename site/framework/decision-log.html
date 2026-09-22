@@ -103,4 +103,41 @@ Why: acceptance is bookkeeping about a version, not the version&#39;s content.</
 <li><strong>Quality-first framing over a pareto gate</strong> (chosen): cost can never promote a wrong answer (≤ −λ·cost) nor push a correct answer below 0.9 — the capability floor is enforced by construction.</li>
 <li><strong>Suite: 125 offline tests</strong> (5 new in <code>test_harness_efficiency.py</code>; golden <code>best_snapshot</code> assertion 5→6 artifacts; operator catalog 8→9).</li>
 </ul>
+<h2>M17 — RSIAgent lessons landed (gap map, infra-unscored, scoped insights)</h2>
+<p>CR-1/2/3 from <a href="changes.html">changes.md</a>, reviewed against the RSIAgent design
+(paper <code>2609.15364</code>, repo <code>AetherLabsAI/RSIAgent</code>) and landed as one milestone.</p>
+<ul>
+<li><strong>Gap map is train-only, by construction, not by policy.</strong> CR-1 injects the
+active agent&#39;s <em>train</em> failures into the improver prompt. The hard
+constraint (val stays aggregate, test sealed) is enforced structurally: the
+gap map is a <strong>memo lookup</strong> of the active snapshot&#39;s full-train scorebook —
+the same scorebook already computed at baseline or as a promoted candidate&#39;s
+<code>child_train</code> — so no new evaluation happens, and only <code>train/*</code> task ids
+can appear. <code>test_train_gaps_text_is_train_only</code> asserts <code>train/01</code> present
+and <code>val/</code>/<code>test</code> absent, and that the eval-event count is unchanged. This
+is the deliberate deviation from RSIAgent, whose curriculum sees its
+benchmark directly (no holdout to protect); rsif must not.</li>
+<li><strong>Infra failures are unscored, never an official zero.</strong> CR-2 adds
+<code>TaskScore.infra</code> (sandbox timeout, spawn <code>OSError</code>, signal-kill = the
+sandbox&#39;s RLIMIT enforcement). <code>ScoreBook.mean</code> averages only <code>scored</code>
+entries; <code>paired_scores</code> aligns child/parent over <em>commonly-scored</em> tasks
+and returns <code>None</code> when none compare, at which point the val gate
+<strong>fail-closes</strong> (inconclusive evidence, not a pass). One design choice worth
+recording: an infra-heavy suite silently shrinks the paired comparison; the
+<code>n_infra</code> count is surfaced on every EVAL event and persisted scorebook so
+&quot;0.0 because infra&quot; is never confused with &quot;0.0 because wrong&quot;.</li>
+<li><strong>Insight scope is a data-model field, not a prompt-only phrasing.</strong> CR-3
+gives <code>Insight</code> a persisted <code>scope</code> (&quot;applies when…&quot;, default &quot;&quot;) and renders
+it as an <code>[applies when: …]</code> prefix. The engine&#39;s accept-path distill records
+<code>{surface}/{operator}</code> as a coarse first scope; task-level scoping (the
+context where the <em>agent</em>, not the improver, applies a lesson) is deferred to
+CR-4&#39;s broad-then-deep cadence. Retirement (<code>failures_after_use ≥ 2</code>) is
+untouched — the scope is visible to the consumer, but the reactive
+usage-grounded guard still does the enforcement.</li>
+<li><strong>Golden regenerated deliberately, verdicts unchanged.</strong> CR-2&#39;s <code>n_infra</code>
+field is the only event-log change: 9 EVAL lines gain <code>&quot;n_infra&quot;:0</code>; every
+accept/reject/screen/canary verdict is byte-identical to the pre-M17 golden.</li>
+<li><strong>Suite: 138 offline tests</strong> (12 new in <code>test_m17.py</code>), 1 live test
+deselected.</li>
+</ul>
 </article><div class="docs-prevnext"><a class="pn prev" href="plan.html">← rsif Implementation Plan — Status Tracking</a><a class="pn next" href="changes.html">Change register — every change, its status, and where the lesson came from →</a></div></main></div></body></html>

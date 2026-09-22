@@ -34,7 +34,7 @@ from rsif.evolve.assembler import build_spec
 from rsif.evolve.operators import load_catalog, validate_operator
 from rsif.evolve.proposer import Improver
 from rsif.evolve.scheduler import schedule_for
-from rsif.evolve.selection import accept_val, pass_canary, pass_screen
+from rsif.evolve.selection import accept_val, paired_scores, pass_canary, pass_screen
 from rsif.llm.base import LLMProvider, ProviderError
 from rsif.memory.episodic import ReflectionStore
 from rsif.memory.insights import InsightStore
@@ -308,7 +308,8 @@ class EvolutionEngine:
         try:
             proposal = self.improver.propose(
                 self.store, self.archive, self._lessons_text(), parent,
-                open_surfaces=set(sched.open_surfaces))
+                open_surfaces=set(sched.open_surfaces),
+                gaps=self._train_gaps_text())
         except (ProviderError, BudgetExhausted):
             raise  # infrastructure failure, not a bad proposal: abort the run
         except Exception as e:  # noqa: BLE001 - improver output is untrusted
@@ -460,8 +461,22 @@ class EvolutionEngine:
                              parent, proposal)
                 return
         else:
-            child_scores = self._paired_scores(child_val_book, suites[Split.VAL])
-            parent_scores = self._paired_scores(parent_val_book, suites[Split.VAL])
+            paired = paired_scores(child_val_book, parent_val_book)
+            if paired is None:
+                # no task was scored on both sides (infra failures across the
+                # board): inconclusive evidence, fail-closed rather than
+                # accepting on noise [2609.15364: unscored ≠ a zero]
+                val_ok = False
+                self._gate(pid, gen, "val", False,
+                           child=child_val, parent=parent_val,
+                           detail="no commonly-scored val task "
+                                  "(infrastructure failure) — inconclusive")
+                self._reject(pid, gen, "val",
+                             "no commonly-scored val task "
+                             "(infrastructure failure); cannot accept",
+                             parent, proposal)
+                return
+            child_scores, parent_scores = paired
             val_ok = accept_val(child_val, parent_val,
                                 self.cfg.acceptance_threshold,
                                 child_scores, parent_scores)
@@ -524,10 +539,13 @@ class EvolutionEngine:
             action="candidate", proposal_id=pid, descriptor=list(descriptor),
             fitness=ind.fitness, stored=stored,
             active=self._active_val)
-        # ExpeL-style distillation from the verified success [2308.10144]
+        # ExpeL-style distillation from the verified success [2308.10144], with
+        # the surface/operator as the lesson's scope so it is not over-applied
+        # elsewhere [2609.15364 §4.6 rule-scope loss].
         self.insights.distill([(
             pid, f"{proposal.hypothesis} (val {parent_val_book.mean():.2f} -> "
-                 f"{child_val:.2f})")])
+                 f"{child_val:.2f})",
+            f"{proposal.surface.value}/{proposal.operator}")])
         self.events.append(
             REFLECT, phase=PHASE_CORRECT, generation=gen, action="distill_insight",
             proposal_id=pid)
@@ -639,12 +657,6 @@ class EvolutionEngine:
 
     # -- evaluation -------------------------------------------------------------
 
-    @staticmethod
-    def _paired_scores(book: ScoreBook, suite) -> list[float]:
-        """Per-task scores aligned to the suite's task order (paired gates)."""
-        by_id = {s.task_id: s.score for s in book.scores}
-        return [by_id[t.id] for t in suite.tasks]
-
     def _evaluate(self, mapping: dict[str, int], suite, phase: str,
                   label: str, generation: int) -> ScoreBook:
         key = (tuple(sorted(mapping.items())), suite.split.value,
@@ -661,7 +673,8 @@ class EvolutionEngine:
             self.events.append(
                 EVAL, phase=phase, generation=generation,
                 suite=suite.split.value, label=label,
-                n=len(suite.tasks), score=book.mean())
+                n=len(suite.tasks), score=book.mean(),
+                n_infra=book.n_infra)
         return self._eval_memo[key]
 
     def _persist_scores(self, generation: int, label: str, suite,
@@ -671,7 +684,9 @@ class EvolutionEngine:
         (d / name).write_text(
             json.dumps({
                 "mean": book.mean(),
-                "scores": [{"task_id": s.task_id, "score": s.score}
+                "n_infra": book.n_infra,
+                "scores": [{"task_id": s.task_id, "score": s.score,
+                            "infra": s.infra}
                            for s in book.scores]}, indent=2, sort_keys=True),
             encoding="utf-8")
 
@@ -684,6 +699,28 @@ class EvolutionEngine:
         insights = self.insights.render_for_context("agent improvement lessons")
         reflections = self.reflections.render_for_context("agent improvement lessons")
         return "\n".join(p for p in (insights, reflections) if p)
+
+    def _train_gaps_text(self) -> str:
+        """Train-split failure map for the improver: which train tasks the
+        ACTIVE agent currently fails, so proposals target real gaps instead of
+        exploring blindly [RSIAgent 2609.15364 §3.2/§4.6: the curriculum
+        selects practice from knowledge gaps; untargeted exploration is the
+        paper's top failure mode]. TRAIN ONLY — val stays aggregate, test stays
+        sealed — so the improver never sees the held-out target it is judged on.
+
+        This is a memo lookup: the active snapshot's full-train scorebook was
+        already computed at baseline (or as a promoted candidate's child_train),
+        so no new evaluation or event is emitted here.
+        """
+        suites = self.objective.suites()
+        book = self._evaluate(self._active_snapshot, suites[Split.TRAIN],
+                              PHASE_PROPOSE, "gaps", self._current_gen)
+        failing = [s for s in book.scored if s.score < 1.0]
+        parts = [f"- {s.task_id}: {s.detail[:80] or 'fails'}" for s in failing]
+        if book.n_infra:
+            parts.append(f"- ({book.n_infra} train task(s) timed out or "
+                         f"failed infra — unscored, no verdict)")
+        return "\n".join(parts) if parts else "(no failing train tasks)"
 
     def _scan_patch(self, patch: Patch) -> list[str]:
         violations: list[str] = []

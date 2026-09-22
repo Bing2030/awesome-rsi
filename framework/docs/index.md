@@ -14,7 +14,7 @@ improver's own templates, even the context-assembly policy — is a
 the model's judgment of itself. The engine that enforces this is trusted,
 frozen code; the agent is modifiable data.
 
-- **Status:** 16 milestones (M0–M16), 126 offline deterministic tests +
+- **Status:** 17 milestones (M0–M17), 138 offline deterministic tests +
   live gateway runs; see [plan.md](plan.md).
 - **Core:** Python 3.11+, stdlib-only (providers are optional extras).
 - **Where the mechanisms come from:** every design decision is grounded in
@@ -68,7 +68,7 @@ These are historical/engineering records rather than reference docs:
 - [changes.md](changes.md) — the change register: every change with its
   lifecycle status and lesson sources (paper / code / internal), open
   proposals first.
-- [plan.md](plan.md) — the milestone status table (M0–M16) and the original
+- [plan.md](plan.md) — the milestone status table (M0–M17) and the original
   approved plan.
 - [decision-log.md](decision-log.md) — per-milestone decisions, bugs caught,
   and corrections to earlier claims.

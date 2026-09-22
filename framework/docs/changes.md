@@ -45,9 +45,14 @@ cousin of rsif's design published so far: training-free multi-agent RSI
 verifier isolated from the actor's reasoning, and frozen-memory test-time
 reuse. None of the four adoptions below touch the trust boundary.
 
-### CR-1 — Failure-aware improver context (the "gap map") ⬜
+### CR-1 — Failure-aware improver context (the "gap map") ✅
 
-**Status:** ⬜ proposed (candidate M17; smallest of the four, do first).
+**Status:** ✅ landed (2026-09-22, milestone M17). Train-split failure summary
+injected as the `{gaps}` slot of `meta/improver-template`; train-only, val
+stays aggregate, test sealed. Derived from the memoized active train book
+(no extra evaluation). Verified: `tests/unit/test_m17.py::test_improver_
+build_prompt_renders_gaps`, `test_train_gaps_text_is_train_only` (val/test
+task ids absent; eval-event count unchanged).
 
 **Motivation.** The improver proposes mutations without knowing *where* the
 active agent fails. Its prompt
@@ -88,9 +93,16 @@ verdicts.
   gaps; `docs/ARCHITECTURE.md` role table.
 - internal: `proposer.py` context audit (2026-09-22).
 
-### CR-2 — Infrastructure failures are not behavioral failures ⬜
+### CR-2 — Infrastructure failures are not behavioral failures ✅
 
-**Status:** ⬜ proposed (candidate M17).
+**Status:** ✅ landed (2026-09-22, milestone M17). `TaskScore.infra` +
+infra-aware `ScoreBook.mean` (unscored tasks leave the mean, never read as
+0.0); `code_tasks.evaluate` classifies sandbox timeout / spawn `OSError` /
+signal-kill as infra; `selection.paired_scores` aligns over commonly-scored
+tasks and returns `None` when none compare; the val gate fail-closes when
+inconclusive; EVAL events and persisted scorebooks carry `n_infra`/`infra`.
+Verified: `tests/unit/test_m17.py` CR-2 block; golden regenerated (9 EVAL
+lines gain `"n_infra":0`, verdicts unchanged).
 
 **Motivation.** Today a sandbox timeout, OOM kill, or spawn failure scores
 `TaskScore(task, 0.0, error)` — byte-identical to a wrong answer
@@ -123,9 +135,13 @@ engine).
 - internal: decision-log M15 (clean-abort on provider errors — same
   principle, different layer).
 
-### CR-3 — Scoped insights (memory entries carry their conditions) ⬜
+### CR-3 — Scoped insights (memory entries carry their conditions) ✅
 
-**Status:** ⬜ proposed (candidate M17).
+**Status:** ✅ landed (2026-09-22, milestone M17). `Insight.scope` field
+(round-trips through persistence, defaults ""); `distill` accepts
+`(traj_id, summary, scope)`; `render_for_context` prefixes scoped insights
+with `[applies when: …]`; the accept-path distill records `{surface}/{operator}`
+as scope. Retirement unchanged. Verified: `tests/unit/test_m17.py` CR-3 block.
 
 **Motivation.** RSIAgent's memory-failure audit found **66.7% of unreliable-
 consolidation cases were "rule scope loss"** — a rule learned in one context
@@ -260,6 +276,7 @@ index.
 | M14 | Third objective (regex) via public seams + live gateway run | internal live run (decision-log M14) |
 | M15 | Extraction-contract fix + clean abort on post-run provider errors | internal live run #3 (decision-log M15 — first candidate to clear canary after fix) |
 | M16 | Fourth objective (harness-efficiency) + POLICY artifact bounding injected memory | paper 2609.20519 (SoL-Pi: predeclared capability floor; efficiency gated by non-regression) |
+| M17 | CR-1 train-split gap map in improver prompt · CR-2 infra failures unscored · CR-3 scoped insights | paper 2609.15364 §3.2/§4.1/§4.6; code AetherLabsAI/RSIAgent ARCHITECTURE.md Phase 3; paper 2308.10144; paper 2510.16657 |
 
 ## Maintenance
 

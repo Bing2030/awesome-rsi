@@ -60,9 +60,25 @@ class CodeTasksObjective(Objective):
             from rsif.sandbox.exec import run_python
 
             sandbox = run_python
-        outcome = sandbox(program)
+        try:
+            outcome = sandbox(program)
+        except OSError as e:  # sandbox could not even spawn: no verdict exists
+            return TaskScore(task.id, 0.0, f"sandbox spawn failure: {e}",
+                             infra=True)
         if outcome.ok:
             return TaskScore(task.id, 1.0, "", outcome.wall_s)
+        if outcome.timed_out:
+            # wall/CPU budget hit: the environment failed to deliver a
+            # verdict. Unscored, not an official zero [2609.15364 §4.1].
+            return TaskScore(task.id, 0.0, "sandbox timeout", outcome.wall_s,
+                             infra=True)
+        if outcome.exit_code < 0:
+            # death by signal: in this sandbox that is a resource-limit kill
+            # (RLIMIT_CPU/AS enforcement), i.e. infrastructure — a Python
+            # error exits 1 with a traceback, a signal does not
+            return TaskScore(task.id, 0.0,
+                             f"killed by signal {-outcome.exit_code} "
+                             f"(resource limit)", outcome.wall_s, infra=True)
         return TaskScore(task.id, 0.0, outcome.error_text[:300], outcome.wall_s)
 
     def behavior_descriptors(self, scorebook: ScoreBook) -> tuple:

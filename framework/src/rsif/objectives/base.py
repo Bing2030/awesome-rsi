@@ -37,6 +37,12 @@ class TaskScore:
     score: float  # 0..1
     detail: str = ""
     wall_s: float = 0.0
+    # Infrastructure failure (sandbox timeout / spawn failure / resource-kill):
+    # the environment never delivered a verdict, so the task is *unscored*,
+    # not failed. Gates and means must skip it rather than read it as 0.0
+    # [RSIAgent 2609.15364: "an infrastructure failure is unscored; it is not
+    # an official zero"].
+    infra: bool = False
 
 
 @dataclass
@@ -56,17 +62,35 @@ class TaskSuite:
 class ScoreBook:
     scores: list[TaskScore] = field(default_factory=list)
 
+    @property
+    def scored(self) -> list[TaskScore]:
+        """Tasks with a real verdict — infra failures are unscored, not 0.0."""
+        return [s for s in self.scores if not s.infra]
+
+    @property
+    def n_infra(self) -> int:
+        return sum(1 for s in self.scores if s.infra)
+
+    @property
+    def n_scored(self) -> int:
+        return len(self.scores) - self.n_infra
+
     def mean(self) -> float:
-        if not self.scores:
+        # infra entries carry no verdict: they leave the mean instead of
+        # dragging it toward zero (n_scored == 0 means "no evidence", which
+        # callers must treat as unscored, never as a behavioral 0.0)
+        s = self.scored
+        if not s:
             return 0.0
-        return sum(s.score for s in self.scores) / len(self.scores)
+        return sum(x.score for x in s) / len(s)
 
     def add(self, score: TaskScore) -> None:
         self.scores.append(score)
 
     def to_dict(self) -> dict:
-        return {"mean": self.mean(), "scores": [
-            {"task_id": s.task_id, "score": s.score, "detail": s.detail}
+        return {"mean": self.mean(), "n_infra": self.n_infra, "scores": [
+            {"task_id": s.task_id, "score": s.score, "detail": s.detail,
+             "infra": s.infra}
             for s in self.scores]}
 
 
