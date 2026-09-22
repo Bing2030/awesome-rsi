@@ -1121,5 +1121,32 @@
     ],
     "fits": "Harness-level RSI with an efficiency objective gated by a capability floor — the non-regression discipline rsif encodes as its val gate, now applied to token cost. Complements rsif (which evolves the agent's artifacts) by evolving the harness that runs the agent.",
     "reading": "Read the 7-stage loop and the predeclared capability floor / gate; the four mechanism cards show how narrow harness edits transfer across tasks."
+  },
+  "2609.15364": {
+    "tldr": "Training-free recursive self-improvement for brand-new computer environments: curriculum, actor, and verifier agents explore with a broad-then-deep strategy and consolidate verified experience into a memory that is frozen for test-time reuse — lifting open models (GLM-5.3 + Kimi-K3) past GPT-6 Astra on OSWorld 2.0 and Agents' Last Exam.",
+    "method": "One durable, evolvable memory driven by three coordinated roles: a curriculum agent generates practice tasks from knowledge gaps and decides when practice stops; actor agents execute them code-as-policy and distill their own verified experience back into memory; a verifier agent judges outcomes from environment evidence alone, isolated from the actor's private reasoning to reduce correlated errors. Exploration is broad-then-deep — Broad Recursive Self-exploration (BRS) runs parallel task waves from a shared memory snapshot, consolidated serially per wave with budgets checked at wave boundaries; Deep Recursive Self-exploration (DRS) then does sequential, progressively harder targeted practice, each verified experience committed before the next task is proposed. At test time the memory is frozen and the curriculum agent and memory updates are disabled.",
+    "results": [
+      "OSWorld 2.0 (0808 offline, 82 tasks): partial score 71.97 -> 78.98 and binary accuracy 37.80 -> 42.68 with the same harness and frozen models — above GPT-6 Astra (72.60) and Claude Opus 5 (70.19).",
+      "Agents' Last Exam Near-term (67 tasks): 83.75 -> 84.82 partial, 49.25 -> 50.75 binary — above GPT-6 Astra (82.26).",
+      "Stage ablation on four OSWorld tasks: full broad+deep 74.54 mean vs 65.52 broad-only and 56.50 deep-only; deep-only from empty memory falls below the baseline on two tasks, so starting focused can hurt.",
+      "GameCraft-Bench (40 tasks): improves game quality from both weak and strong base generators, where the Play2Code baseline degrades already-strong games; RSI experience adds further gain on every generator."
+    ],
+    "limitations": [
+      "The headline RSI column is not a matched re-run: only 41/82 OSWorld tasks (19/67 ALE) have recorded RSI entries, baseline scores are retained for the rest, and selected retries/checkpoints with differing budgets are included — the repo's PAPER.md documents this aggregation scope.",
+      "The acceptance signal is an LLM verifier reading environment evidence, not executed tests; the paper's own failure analysis finds verifier PASS without full requirement coverage and incorrect rules persisting in memory — the failure class rsif moves behind programmatic held-out gates.",
+      "Per-environment exploration is expensive (Linux host, Docker/KVM VMs, nominal eight BRS projects per target); gains are demonstrated on two computer-use benchmarks plus one game-development setting."
+    ],
+    "fits": "The closest large-scale cousin of rsif's design: weights frozen, a single artifact (memory) evolves under a trusted outer protocol, verification is separated from acting and isolated from the actor's reasoning, and the result is frozen before evaluation. rsif generalizes the evolving surface (prompt/skill/module/memory/policy/meta), replaces the LLM verifier with executed held-out gates plus canaries, and adds archive/promotion/rollback; RSIAgent shows the pattern surviving at full computer-use scale with open models. Its curriculum actor also mirrors rsif's improver-as-proposal-generator split.",
+    "reading": "Read Sections 3.2-3.3 for the role split and broad/deep staging, then Section 4.6's failure-mode taxonomy (untargeted exploration, incomplete verification, unreliable memory consolidation) as a checklist for any RSI loop; the repo's docs/ARCHITECTURE.md maps paper stages onto runnable phases (BRS/DRS/test-time reuse)."
+  },
+  "rsiagent": {
+    "what": "Official implementation of RSIAgent — a training-free multi-agent framework (curriculum, actor, verifier) that recursively explores a new computer environment and consolidates verified experience into a memory that is frozen and reused at test time.",
+    "architecture": [
+      "Three roles: Curriculum Agent (picks practice tasks from knowledge gaps, decides when practice stops), Actor Agent (code-as-policy execution; distills its own verified experience into memory), Verifier Agent (judges outcomes from environment evidence, isolated from the actor's private reasoning and memory).",
+      "Three runtime phases: Phase 1 BRS — parallel practice waves from a shared memory snapshot, consolidated serially per wave with budget checks at wave boundaries; Phase 2 DRS — sequential, progressively harder targeted practice, each verified experience committed to memory before the next; Phase 3 — frozen-memory task execution with the curriculum agent and memory updates disabled, followed by sealed official evaluation.",
+      "The host harness enforces isolation, records artifacts, commits memory only at valid boundaries (the wave barrier), and keeps benchmark setup and grading outside the learning loop; infra failures stay distinguishable from scored outcomes."
+    ],
+    "run": "Python 3.12 + uv on a Linux host with Docker and /dev/kvm. Clone, `cp .env.example .env` and set OPENROUTER_API_KEY; then per benchmark: pinned OSWorld-V2 v2026.08.08 (tools/prepare_osworld_v2_release.py, smoke_osworld.py) or scripts/setup_ale.py for Agents' Last Exam (~160-170 GiB per OS image). Batches: `python run_osworld.py --arm both --name run_01 --concurrency 1` / `run_ale.py run --arm both`. Credential-free validation: `.venv/bin/python tools/check_rsi_release.py`.",
+    "note": "The most complete open implementation of explore-verify-remember RSI at computer-use scale. Even without the VM rigs, read docs/ARCHITECTURE.md (wave memory barrier, stopping rules, verifier isolation) and docs/PAPER.md (honest aggregation scope of the headline numbers)."
   }
 }
