@@ -1029,14 +1029,20 @@
     "note": "One of the most direct 'harness that modifies itself' products — study the mods mechanism for how self-modification is scoped safely."
   },
   "memento-skills": {
-    "what": "A skill-centric agent runtime where agents design agents — deploying reusable, persistent, extensible skills.",
+    "what": "Memento-S: a skill-centric agent runtime where skills are the unit of capability — retrieved, executed, authored, and repaired in deployment. Agents design agents via guarded skill evolution; the accompanying study shows deployment-time skill learning (frozen weights) improving GAIA and HLE over reflective rounds.",
     "architecture": [
-      "Skill-centric runtime: capabilities are packaged as reusable skills.",
-      "Reflection-based replanning on top of skill calls for multi-step tasks.",
-      "Desktop app (Windows/macOS) plus source build."
+      "Skills as SKILL.md + scripts directories under builtin/skills/ (filesystem, web-search, skill-creator, uv-pip-install), loaded by core/skill/loader/, modeled in core/skill/schema.py (pydantic Skill with JSON-schema parameters, default a single natural-language `request`), persisted through db/file/vector backends in core/skill/store/.",
+      "4-phase pipeline in core/memento_s/phases/: intent.py → planning.py (the *Architect* emits a TaskPlan of PlanSteps at single-skill granularity with input_from dataflow) → execution/ (multi-step ReAct loop split into runner, tool_handler, step_boundary, guarded by hooks/ loop_detector, sandbox_audit, policy/tool_gate) → reflection.py (the *Supervisor* decides continue/replan/finalize/ASK_USER) and finalize.py.",
+      "Agents design agents in two places: core/skill/evolution/engine.py — transactional write phase that attributes a failed trace to one skill (confidence-scored), LLM-rewrites files in an isolated copy, gates it on static/unit/synthetic-judge tests, then deploys atomically or rolls back — plus builtin/skills/skill-creator/ (analyzer/comparator/grader sub-agents, run_eval.py, package_skill.py) for authoring new skills from scratch.",
+      "Routing over the library via core/skill/retrieval/ (local_recall BM25+vector, qwen_recall.py Qwen3/Memento-Qwen embeddings, remote_recall, multi_recall fusion) feeding core/memento_s/skill_dispatch/ (hallucination_guard, post_install); unified tools/registry.py wraps tools/atomics/ + MCP; surfaces: memento agent CLI, Flet memento-gui desktop app, core/skill/market.py cloud catalogue with downloader/github.py, and daemon/dream/ consolidator that mines sessions into skill candidates."
     ],
-    "run": "Desktop app (memento.run/release) or build from source per the README.",
-    "note": "The 'skills as the unit of agent capability' substrate — compare its skill model to Voyager/AgentFactory's code-as-skill."
+    "advantages": [
+      "The only catalog entry where self-modification is transactional: attribution → isolated file-level rewrite → static/unit/synthetic gates → atomic deploy or rollback, with audit history — a worked answer to 'how does an agent safely edit its own capabilities', vs. code-as-skill systems (Voyager, AgentFactory) that write skills without candidate gating.",
+      "Deployment-time learning with frozen parameters (θ frozen, behaviour stored in external skill memory M): the GAIA/HLE round-over-round gains make it a concrete substrate for studying skill-memory growth curves instead of fine-tuning.",
+      "Ships as a real product, not a benchmark script — CLI, Windows/macOS desktop app, IM gateways, Skill Market — so you can test whether learned skills persist and transfer across live sessions, and compare its SKILL.md packaging (Anthropic-compatible, per THIRD_PARTY_NOTICES) against OpenClaw's deployment-first take."
+    ],
+    "run": "git clone https://github.com/Memento-Teams/Memento-Skills.git && cd Memento-Skills && python -m venv .venv && source .venv/bin/activate && pip install -e . && memento doctor && memento agent  # configure ~/memento_s/config.json (llm profile + TAVILY_API_KEY); GUI: memento-gui; or desktop app from memento.run/release",
+    "note": "Open core/skill/evolution/engine.py plus docs/QWEN_ROUTER_AND_SKILL_EVOLUTION.md for the guarded write loop; phases/planning.py vs phases/reflection.py for the replan decision; builtin/skills/skill-creator/ for the meta-skill loop. Compare its transactional skill repair and SKILL.md format with Voyager/AgentFactory code-as-skill."
   },
   "reef": {
     "what": "First open-source infrastructure for continual self-improving agents: an OpenAI/Anthropic-compatible serving layer that records interactions, matches feedback to receipts, trains weights (Slime/SGLang) or evolves harness text (Reefine), and publishes only evaluation-passing updates as versioned releases while serving continues.",
@@ -1085,22 +1091,36 @@
     "note": "The 'LLM + evaluator + evolution' recipe (FunSearch/AlphaEvolve) packaged as a drop-in library — the fastest way to *run* an evolutionary coding loop."
   },
   "agentfactory": {
-    "what": "Code for AgentFactory — self-evolution by accumulating executable subagents.",
+    "what": "Official code for AgentFactory (ACL 2026 System Demo, arXiv 2603.18000) — a self-evolving agent framework that saves successful task solutions as executable Python subagents, refines them from execution feedback, and exports the library to other frameworks.",
     "architecture": [
-      "Successful solutions are saved as executable subagent code, refined by execution feedback.",
-      "The subagent library is reused as composable building blocks for new tasks."
+      "Subagents are plain Python modules with a standardized main(query) entry point returning {answer, summary}, stored under skills/subagents/ with a SKILL.md doc each — pure code, portable to any Python-capable system.",
+      "The Meta-Agent orchestrates via meta-skills: create_subagent → run_subagent → modify_subagent (exact old/new snippet replacement) → finish; finish persists the library and carries a supersedes field so major rewrites delete the old skill.",
+      "Three skill tiers — meta orchestration skills, tool skills (Serper search, Jina reader, Playwright browser, shell), and the growing subagent library — plus a Workspace Manager giving per-task isolated execution so edits can't corrupt the shared library.",
+      "Refinement is feedback-driven and enforces genericity: create prompts ban hardcoded task specifics (all specifics must be extracted from the query via call_llm at runtime), and modify-vs-create rules separate surgical fixes from supersedes rewrites."
     ],
-    "run": "Python; set an LLM API key and run the agent-factory loop (see README).",
-    "note": "Run it after reading the paper to see 'code-as-skill' concretely — watch how subagents accumulate and get refined."
+    "advantages": [
+      "Ships recorded trajectories (trajectory/qq_music, tencent_doc, readme) so you can watch a subagent library accrete without running anything — the third Tencent Docs run directly reuses the audio_transcriber subagent born in the QQ Music runs.",
+      "Executable experience is deployable as-is: prompt4cc.txt exports the saved library into Claude Code, and subagents port to LangChain/AutoGen; README's 30-task eval reports reuse dropping orchestrator output tokens to 2,971 vs ReAct's 7,022 (Opus 4.6, up to 57% savings).",
+      "The whole create→run→modify→save loop is inspectable in eight root-level Python files (meta_agent.py, meta_tools.py, run.py, tools.py...) plus the skills/meta SKILL.md docs — no framework magic hiding the mechanism."
+    ],
+    "run": "`conda create -n agentfactory python=3.12 && pip install openai requests playwright flask flask_cors`; fill .env (MODEL_PROTOCOL, LLM key/url/model, SERPER_API_KEY, JINA_API_KEY) and replace <Absolute_Path_to_AgentFactory> in the question files; then `python run.py --question-file data/questions/questions_round1.jsonl` (flags: --human-confirm, --no-save). Web demo: `python3 web_interface/app.py --port 5050`.",
+    "note": "Cross-read with the 2603.18000 paper card. Read skills/meta/*/SKILL.md for the loop contract, then diff trajectory/*/first_time.json vs second_time.json to see reuse in action. Note the generality mandate: saved subagent code must never hardcode task-specific details."
   },
   "dgm": {
-    "what": "The Darwin Gödel Machine — the self-modifying coding agent with archive-based evolution.",
+    "what": "Official implementation of the Darwin Gödel Machine (arXiv 2505.22954, Sakana AI + UBC): a coding agent that rewrites its own codebase, validates every candidate self-modification on SWE-bench/Polyglot in Docker, and archives each compiled variant as a parent future variants build on.",
     "architecture": [
-      "The agent edits its own source code; only empirically-validated edits are kept.",
-      "A MAP-Elites-style archive stores and evolves past improvements open-endedly."
+      "Outer loop (`DGM_outer.py`): up to `--max_generation 80` generations, each spawning `--selfimprove_size 2` parallel improvement attempts. `choose_selfimproves` picks a parent from the archive plus a target — a 25% roll each for `solve_empty_patches` (only if ≥10% of the parent's eval came back empty), `solve_stochasticity`, or `solve_contextlength`, else a random unresolved SWE-bench instance; an o1 diagnoser (`diagnose_model='o1-2024-12-17'`) converts that parent's failure logs into the `problem_statement` handed to the improver.",
+      "Improvement is a patch, not a commit: each attempt builds a fresh `dgm` Docker container, replays the entire ancestral chain of `model_patch.diff` files (`get_model_patch_paths` walks `parent_commit` links back to `initial`, applying them with `patch -p1`), then runs `coding_agent.py --self_improve` (bash + edit tools, 30-min timeout) whose edits are captured by `diff_versus_commit` as a new `model_patch.diff` against the DGM's own source.",
+      "Archive is a scored phylogenetic tree, not a leaderboard: every node stores accuracy plus `parent_commit`; the default parent sampler `score_child_prop` weights nodes by sigmoid(10·(score−0.5)) × 1/(children+1) — objective quality times novelty pressure. Default `--update_archive keep_all` keeps every child passing `is_compiled_self_improve` (non-empty patch, full subset actually evaluated) even when it didn't improve; `keep_better` (≥ initial score − `--eval_noise 0.1`) and the `--run_baseline` ablations (`no_darwin` = greedy always-latest-commit, `no_selfimprove`) isolate what open-endedness buys.",
+      "Staged empirical gate: children are scored on a small SWE-bench Verified subset, promoted to a medium subset only at ≥0.4 resolution (`test_more_threshold`), and get the full evaluation only above `get_full_eval_threshold` — the second-highest fully-evaluated archive score, floored at 0.4. `--polyglot` swaps in `coding_agent_polyglot.py` and the Aider Polyglot harness."
     ],
-    "run": "Python; provide an LLM API key; the agent runs its edit → evaluate → keep loop on a task (see README).",
-    "note": "The flagship self-modifier — run it to watch the improver-improves-the-improver loop on real code."
+    "advantages": [
+      "The substrate where the object under improvement is the improver's own executable source: the archived patch edits the tool/loop code that produces the next patches, so tool, prompt, and control-flow improvements compound across generations.",
+      "A unusually clean open-endedness control: `--run_baseline no_darwin` ablates exactly the archive-based parent selection while holding the improver fixed, and `keep_all` vs `keep_better` tests whether retaining 'failed but compiled' cousins — not just hill-climbing — drives the gains.",
+      "Ships the full experiment apparatus: `initial/` reference eval logs defining the starting agent's baseline, staged small→medium→full evaluation to keep Dockerized SWE-bench runs affordable, and the paper's complete model-output logs on Google Drive."
+    ],
+    "run": "Docker + Python venv; export OPENAI_API_KEY and ANTHROPIC_API_KEY. `pip install -r requirements.txt`; in `swe_bench/` clone SWE-bench at pinned commit `dc4c087c2b9e4cefebf2e3d201d27e36` and `pip install -e .`; `python -m polyglot.prepare_polyglot_dataset`; then `python DGM_outer.py` (default output `output_dgm/`; `--polyglot` for the Polyglot run).",
+    "note": "Read `choose_selfimproves` and `update_archive` in DGM_outer.py — the score×novelty parent sampler and keep_all archive — against the `no_darwin` baseline, then `self_improve_step.py`'s container-per-attempt patch replay. README warning: it executes untrusted model-generated code."
   },
   "godel-agent": {
     "what": "Gödel Agent — a self-referential agent whose behavior is code it can inspect and rewrite: its actions, prompts and solver are Python it reads, patches at runtime, and re-evaluates in a loop (arXiv 2410.04444).",
@@ -1119,22 +1139,36 @@
     "note": "Read results/*/agent_module/ first — the evolved DROP/MMLU solvers show what the loop actually finds. Then study action_adjust_logic's guardrails and the accuracy-gated store_all_logic checkpoint. Theory-side companion to DGM; here self-reference is literal: the agent is the module it edits."
   },
   "hyperagents": {
-    "what": "HyperAgents — self-improvement where the meta-level (the improver) is itself improvable code.",
+    "what": "HyperAgents (DGM-Hyperagents, DGM-H) — code for arXiv 2603.19461: a task agent and a meta agent live in one editable program, so the improver rewrites both the task-solving code and its own improvement mechanism, generalizing the Darwin Gödel Machine beyond coding.",
     "architecture": [
-      "Meta-level and object-level are both coding tasks, so both are editable.",
-      "Builds on DGM: the improvement mechanism is itself coded and improvable."
+      "meta_agent.py / task_agent.py — the self-referential pair, both subclasses of AgentSystem (agent/base_agent.py): MetaAgent.forward(repo_path, eval_path, iterations_left) issues exactly one instruction — 'Modify any part of the codebase at `{repo_path}`' — via chat_with_agent with all bash/edit tools (agent/tools/); TaskAgent is the object-level agent being improved. run_meta_agent.py then git-resets domains/ back to the base commit (reset_paths_to_commit) so the eval harness can't be gamed, and saves the rest as model_patch.diff.",
+      "generate_loop.py — the evolution driver: per generation it builds a Docker container (image `hyperagents`), replays the parent's full lineage of diffs (get_patch_files → apply_diffs_container), runs the meta agent (6h timeout), requires a non-empty model_patch.diff plus a compilation check (run_commands_to_check_compilation), then staged-evals on a small subset (gate: every domain scores > 0) before the full eval via domains/harness.py + domains/report; accepted nodes append to archive.jsonl with metadata.json per gen_*/.",
+      "Open-ended search over the archive: utils/gl_utils.py::select_parent (default --parent_selection score_child_prop — score-proportional but inversely proportional to children, keeping the space open); --edit_select_parent hands the selection mechanism itself to the meta agent (select_next_parent.py, run inside a container via utils.run_select_next_parent); ensemble.py scores the whole archive as one agent; --meta_patch_files with --reset_task_agent/--reset_meta_agent drive the cross-run, cross-domain transfer experiments.",
+      "domains/ are swappable evaluators with train/val/test splits — paper_review (default in setup_initial.sh), search_arena, balrog_{babyai,babaisai,minihack,nle}, genesis_go2walking/hop/walkback (robot reward-function design), imo_grading, imo_proof, polyglot (SWE-bench, one Docker per task); baselines/ ships dgm/coding_agent.py plus no_selfimprove/no_archive ablations; agent/llm.py wires litellm (default anthropic/claude-sonnet-4-5-20250929)."
     ],
-    "run": "Python (Meta); LLM API key; see README for the hyperagent loop.",
-    "note": "Read DGM first, then run this to see the meta-level made explicit and improvable."
+    "advantages": [
+      "The only substrate in this catalog where the search machinery itself sits inside the search space: parent selection, staged eval and ensembling are plain Python files next to the agents, so you can watch metacognitive improvements (the paper's persistent memory, performance tracking) land as diffs in archive.jsonl and check they transfer across domains and accumulate across runs — evidence DGM's coding-only task/self-mod alignment cannot produce.",
+      "One loop, many domains: the same generate_loop.py improves LLM graders (imo_grading), game agents (Balrog), reward functions (Genesis Go2) and SWE-bench patches (polyglot), with dgm / no_selfimprove / no_archive baselines wired through the identical harness — the cleanest available testbed for whether meta-level gains generalize beyond coding.",
+      "Honesty by construction: the evaluator is quarantined from the improver (domains/ reset after every meta-agent run), candidates must compile before scoring, and staged small-sample evals gate the expensive full evals — a concrete template for safe-ish untrusted-code RSI loops."
+    ],
+    "run": "echo 'OPENAI_API_KEY=...\nANTHROPIC_API_KEY=...\nGEMINI_API_KEY=...' > .env  # README setup\npython3.12 -m venv venv_nat && source venv_nat/bin/activate && pip install -r requirements.txt\ndocker build --network=host -t hyperagents .\nbash ./setup_initial.sh\npython generate_loop.py --domains paper_review  # script documents all args and baselines",
+    "note": "Start at run_meta_agent.py: the domains/ git-reset is what keeps evals honest while everything else is fair game. Then generate_loop.py's staged-eval gate and gl_utils.select_parent's score_child_prop. Watch archive.jsonl grow and read gen_*/agent_output/meta_agent_chat_history.md — the transcript of the improver improving itself. DGM baseline: baselines/dgm/."
   },
   "sia": {
-    "what": "SIA — Self Improving AI with joint harness + weight updates.",
+    "what": "Official implementation of arXiv 2605.27276: a Meta-Agent writes the initial task agent, a Feedback-Agent rewrites it every generation from execution logs, and a separate --focus weights mode RL-tunes the task model's weights via tinker-cookbook.",
     "architecture": [
-      "A Feedback-Agent updates both the harness and the task agent's weights.",
-      "Unifies the harness-update and test-time-training schools."
+      "sia/orchestrator.py (967 lines) runs the loop: setup_run_directory makes runs/run_{id}/venv/ plus gen_{n}/ dirs; the meta-agent writes gen_1/target_agent.py; each generation the target executes (logging agent_execution.json), evaluate.py scores it against data/private/, and the feedback agent reads runs/run_{id}/context.md evolution history before writing target_agent.py + improvement.md into gen_{n+1}/ — weights mode early-stops on a COMPLETED file.",
+      "Two focus modes split the paper's W+H claim: --focus harness (default) has the feedback agent rewrite target_agent.py (prompt/code changes only); --focus weights instead makes the meta-agent emit train.py implementing tinker-cookbook Env/EnvGroupBuilder/RLDataset, executed by tinker_cookbook.rl.train.main() (GRPO via the Tinker API, TINKER_API_KEY required, rollouts sandboxed by --training_sandbox modal|sandboxfusion).",
+      "The improvement policy is literally prompt text in sia/prompts.py: build_meta_prompt / _build_weights_meta_prompt / build_feedback_prompt — including a mandated majority-voting (self-consistency) reward workaround so rewards keep variance when ground truth is hidden, and instructions to read context.md and not repeat failed approaches from earlier generations.",
+      "Tasks are directories, not code: data/public/ (task.md, evaluate.py) vs held-out data/private/; four bundled (gpqa, lawbench, longcot-chess, spaceship-titanic), BYO via --task_dir, or bootstrap any MLE-Bench competition with sia/prepare_mlebench_dataset.py. Agent backends are pluggable in sia/agent_impls/ (claude = Claude Agent SDK, openhands, pydantic-ai), selected with JSON provider/profile files under sia/defaults/{providers,profiles}/ (Tinker, Nebius, OpenRouter, ...)."
     ],
-    "run": "Python; LLM API key + training setup; run the Feedback-Agent loop per README.",
-    "note": "The 'close the loop' system — study how harness edits and weight updates are coordinated in one feedback agent."
+    "advantages": [
+      "The only catalog substrate where one pipeline optimizes harness and weights as switchable arms of the same loop — you can run harness-only, weights-only, and combined on the same task/evaluator and attribute the gains, which the paper's LawBench (45%→70.1%) and TriMul (14x kernel speedup) tables do per-domain.",
+      "Anti-gaming is engineered in, not hoped for: private/public data split enforced by the task layout, docs/evaluator_design.md on metric robustness, finite-timeout rules baked into target-agent prompts, and docker --sandbox (no network) for untrusted generated code.",
+      "Highly reproducible and inspectable: pip-installable (sia-agent on PyPI), per-run venv, a sia web dashboard replaying every generation's code, prompts, improvement.md and accuracy-across-generations chart — the cleanest substrate for studying why each rewrite helped or didn't."
+    ],
+    "run": "python3 -m venv .venv && source .venv/bin/activate && pip install 'sia-agent[claude]' && export ANTHROPIC_API_KEY=\"...\" && sia run --task gpqa --max_gen 5 --run_id 1    # weights mode: export TINKER_API_KEY=... && sia run --task gpqa --max_gen 5 --run_id 1 --focus weights --training_sandbox modal",
+    "note": "Read sia/prompts.py first — the whole improvement policy is prompt text, and the weights-mode meta prompt is a tinker-cookbook RL tutorial that makes the agent author train.py. Then orchestrator.py's run_generation. Study context.md: it is the memory that stops the loop repeating failed edits."
   },
   "ace": {
     "what": "ACE (Agentic Context Engineering) — code for arXiv 2510.04618: treats the whole LLM context as an evolving playbook of ID'd, helpful/harmful-counted bullets, self-improved by a Generator/Reflector/Curator loop making structured incremental delta updates — no weight updates, no full-prompt rewrites.",
@@ -1217,13 +1251,20 @@
     "note": "Start with evolver/experience/prompts.py — the guiding/cautionary duality is the whole design. Then read the 'Reflection Cycle Summary' log line: merges, dedups, DB counts per step. _update_metric_scores() is the trust rule: (success+1)/(usage+2). Note rewards.weights.experience=0 by default — outcome EM does the reinforcing."
   },
   "voyager": {
-    "what": "Voyager — an open-ended embodied agent that builds a growing skill library in Minecraft.",
+    "what": "Voyager — code for arXiv 2305.16291: the first LLM-powered open-ended embodied agent in Minecraft, combining an automatic curriculum, an execution-verified code skill library, and iterative prompting with environment feedback and self-verification to learn continuously without gradients.",
     "architecture": [
-      "An automatic curriculum proposes tasks; execution-verified code skills accumulate in a library.",
-      "Environment feedback refines skills; later tasks reuse earlier skills."
+      "voyager/voyager.py — class Voyager is the orchestrator (docstring maps agents to paper components). learn() is the lifelong loop: CurriculumAgent.propose_next_task() → rollout() of at most action_agent_task_max_retries=4 ActionAgent iterations → if CriticAgent confirms success, SkillManager.add_new_skill() commits the JS program; max_iterations=160 default. decompose_task() + inference() replay a learned library on new tasks; ckpt_dir + resume=True restores completed_tasks, failed_tasks, qa_cache and skills from disk.",
+      "voyager/agents/curriculum.py — CurriculumAgent (GPT-4 task proposer, gpt-3.5-turbo QA sidekick) proposes 'the next task' from an observation whose fields are revealed progressively by a warm_up dict as completed_tasks grows; task 0 is hard-coded 'Mine 1 wood log', and inventory-full (≥33/36 slots) hard-codes deposit-into-chest / place-chest / craft-chest. A two-step run_qa asks and answers Minecraft questions, cached in ckpt_dir/curriculum/qa_cache.json with a Chroma question vectordb (dedup at similarity score < 0.05).",
+      "voyager/agents/skill.py — SkillManager stores each verified skill as {ckpt_dir}/skill/code/<name>.js plus a GPT-written description in description/<name>.txt and skills.json, embedded into a Chroma skill/vectordb; retrieve_skills() injects the top_k=5 description-matched skill sources into the ActionAgent system prompt, and the programs property concatenates every skill with the hand-written mineflayer primitives in voyager/control_primitives/ (exploreUntil.js, craftItem.js, mineBlock.js, killMob.js, smeltItem.js, useChest.js...) that LLM code calls. Re-learning a name versions it (craftIronPickaxeV2.js) rather than overwriting.",
+      "voyager/agents/critic.py + voyager/env/ — CriticAgent.check_task_success() renders the event stream (biome, voxels, health/hunger, equipment, inventory, chest contents) and returns {success, critique}; the critique re-enters the ActionAgent's next prompt (auto mode is GPT-4 self-verification; manual mode asks a human). voyager/env/bridge.py, process_monitor.py and the Node side voyager/env/mineflayer/index.js with lib/observation/{status,voxels,inventory,chests,onChat,onError,onSave}.js run the bot and emit those events; prompt templates live in voyager/prompts/ (action_template.txt, curriculum.txt, critic.txt, skill.txt)."
     ],
-    "run": "Python; needs Minecraft + MineDojo and an OpenAI API key; entry point `voyage.py`.",
-    "note": "The canonical skill-library agent — run it (if you have Minecraft) to watch skills compound."
+    "advantages": [
+      "The canonical execution-verified skill library: admission requires critic-confirmed task success, and skills are compositional, interpretable JS (built on named control primitives) that persist across sessions and transfer to a fresh Minecraft world — the reference design every code-as-skill self-improvement loop in this catalog is measured against.",
+      "Compounding is inspectable in the shipped artifact: skill_library/trial1 holds ~100 learned skills with V2 rewrites (mineFiveIronOresV2.js, craftIronPickaxeV2.js, craftIronHelmetV2.js) showing iterative self-refinement, and the curriculum's warm_up gating plus qa_cache show how task difficulty and world knowledge scale with competence — readable even without running the game.",
+      "Pure in-context lifelong learning: zero gradient updates, blackbox GPT-4 queries only, so skills survive model changes and avoid catastrophic forgetting — a useful counterfactual to weight-update substrates (GRPO/RL substrates in this catalog) for studying what 'improvement' means when only the environment-side artifact grows."
+    ],
+    "run": "git clone https://github.com/MineDojo/Voyager\ncd Voyager\npip install -e .   # Python >= 3.9\n# Node.js >= 16.13.0 deps:\ncd voyager/env/mineflayer\nnpm install -g npx\nnpm install\ncd mineflayer-collectblock\nnpx tsc\ncd ..\nnpm install\n# plus a Minecraft instance + Fabric mods (fabric-loader-0.14.18-1.19) per installation/*.md, then:\n# from voyager import Voyager\n# voyager = Voyager(azure_login=azure_login, openai_api_key=openai_api_key)\n# voyager.learn()          # lifelong learning (open world to LAN: Creative/Peaceful, cheats ON)\n# Voyager(..., ckpt_dir=\"YOUR_CKPT_DIR\", resume=True)   # resume learning\n# Voyager(..., skill_library_dir=\"./skill_library/trial1\") then voyager.decompose_task(task=\"Craft a diamond pickaxe\"); voyager.inference(sub_goals=sub_goals)",
+    "note": "Read voyager.py's learn() loop, then critic.py's check_task_success — library admission is GPT-4 self-verification, not ground truth. Browse skill_library/trial1/skill/code for V2 rewrites showing self-refinement. Without a Minecraft license, study the shipped library and prompts instead of running."
   },
   "adas": {
     "what": "ADAS (Automated Design of Agentic Systems) — Meta Agent Search: a meta agent iteratively programs new agents as executable forward() code, scores each on a validation split, and appends survivors to a growing archive of designs (arXiv 2408.08435, ICLR 2025).",
@@ -1276,13 +1317,20 @@
     "note": "Start at engine/node_selection.py — _piecewise_decay's exploration schedule plus root-node locking is the whole search policy. Then engine/conditions.py: fusion needs >=N successful branches AND global stagnation inside a time window. Compare fusion_agent (cross-branch) vs evolution_agent (intra-branch); the use_fusion/use_evolution flags exist for exactly that ablation."
   },
   "poet": {
-    "what": "POET (Paired Open-Ended Trailblazer) — co-evolves environments and their solutions.",
+    "what": "POET (Paired Open-Ended Trailblazer) — Uber's open-ended algorithm that co-evolves a population of parameterized Box2D environments and the solutions specialized to each, transferring agents between niches so challenges and capabilities bootstrap each other. Master implements Enhanced POET; the original paper code is also in-repo.",
     "architecture": [
-      "Co-evolves a population of environments and their specialized solutions; transfers between niches.",
-      "Endlessly generates harder, more diverse environments."
+      "`master.py` is the entry point: parses ~25 hyperparameters (mc_lower/mc_upper, repro_threshold, steps_before_transfer, max_num_envs) and builds `MultiESOptimizer` in `poet_distributed/poet_algo.py`, which keeps one `ESOptimizer` per niche plus `env_registry`/`env_archive` of `Env_config` + `CppnEnvParams`.",
+      "Environment birth loop `adjust_envs_niches()`: niches whose `self_evals >= repro_threshold` are mutated via `Reproducer` and CPPN parameter mutation, then gated by `pass_dedup`, the minimal-criterion window `pass_mc` (score must fall in [mc_lower, mc_upper]), and novelty ranking via `compute_novelty_vs_archive` (novelty.py) before one child per interval is admitted; `remove_oldest` caps the population.",
+      "Transfer in `transfer()`: every source theta is evaluated on every other niche (direct transfer plus an Adam 'proposal' transfer via `get_step(propose_only=True)`), each niche then calls `pick_proposal` to accept improvements; `update_pata_ec` maintains performance-of-all-tasks rankings for prioritized transfer.",
+      "Domain: `poet_distributed/niches/box2d/` — `Box2DNiche` (box2d.py) rolls a flat policy vector (`Model(bipedhard_custom)`) through `bipedal_walker_custom.py` terrain generated from stump/pit/stair/roughness `Env_config` fields; workers run on Uber Fiber pools (`es.py: initialize_worker_fiber`), orchestrated by `run_poet_local.sh` / `run_poet_remote.sh` (Dockerfile included)."
     ],
-    "run": "Python (legacy TensorFlow era); entry point `es/poet_distributed.py`.",
-    "note": "The canonical 'generate your own problems' system — run the classic to see open-ended curricula in miniature."
+    "advantages": [
+      "The canonical reference implementation of environment/solution co-evolution with an explicit minimal criterion + novelty gate — the clearest codebase for studying how open-ended curricula stay in the 'learnable but new' band instead of collapsing to trivial or impossible tasks.",
+      "The co-evolution skeleton is domain-agnostic: swap `Box2DNiche` for any parametric environment family and the registry/archive/transfer/PATA-EC bookkeeping in poet_algo.py carries over.",
+      "Unlike single-curriculum generators, solutions migrate between niches, so capabilities compound across the archive — the mechanism POET's authors showed can solve domains blockable from a fixed starting point."
+    ],
+    "run": "Enhanced POET (master branch): install deps per requirements.txt — `fiber`, `neat-python`, `gym[box2d]` — then `./run_poet_local.sh final_test` locally or `./run_poet_remote.sh final_test` on Kubernetes (via Fiber + persistent volume); logs with `fiber cp nfs:/persistent/logs/final_test .`. Original POET: the `original_poet` branch.",
+    "note": "Read poet_algo.py first — the whole algorithm is ~300 lines and both loops (transfer, adjust_envs_niches) fit on one screen. Master is Enhanced POET (ES over flat policy vectors; no TensorFlow); expect 2020-vintage Fiber/gym pinning friction to actually execute."
   },
   "2609.20519": {
     "tldr": "Runs auto-research loops over the coding-agent harness itself under a token-efficiency objective: 152 proposed mechanisms, four survive — ~45% fewer tokens and ~1/3 lower cost while retaining ~94% of Pi's score.",

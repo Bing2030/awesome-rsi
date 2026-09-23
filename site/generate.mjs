@@ -221,7 +221,7 @@ for (const e of E) {
     abstract = meta.abstract || '';
   } else {
     authors = EXTRA_AUTHORS[slug] || '';
-    const pdfKey = { 'nature-funsearch-2024': 'nature-funsearch-2024.pdf', 'nature-ai-scientist-v2-2026': 'nature-ai-scientist-v2-2026.pdf', 'frontiers-quality-diversity-2016': 'frontiers-quality-diversity-2016.pdf', 'openreview-higher-order-evolution-2024': 'openreview-higher-order-evolution-2024.pdf' }[slug];
+    const pdfKey = { 'nature-funsearch-2024': 'nature-funsearch-2024.pdf', 'nature-ai-scientist-v2-2026': 'nature-ai-scientist-v2-2026.pdf', 'frontiers-quality-diversity-2016': 'frontiers-quality-diversity-2016.pdf' }[slug];
     abstract = pdfKey ? pdfAbstract(path.join(RES, pdfKey), slug) : OPENREVIEW_ABSTRACT;
   }
   pages.push({ slug, title, repo, url: e.u, venue: e.v, year, section: e.s, subsection: e.ss, stage: e.ph, depth, desc: e.desc, note: e.note, authors, abstract, method: METHODS[e.u] || null, curated: curated[slug] || null });
@@ -246,7 +246,7 @@ function linksFor(p) {
   if (!p.repo) {
     const pdf = p.url.startsWith('https://arxiv.org/abs/')
       ? `../../resources/${p.url.split('/abs/')[1]}.pdf`
-      : ({ 'nature-funsearch-2024': '../../resources/nature-funsearch-2024.pdf', 'nature-ai-scientist-v2-2026': '../../resources/nature-ai-scientist-v2-2026.pdf', 'frontiers-quality-diversity-2016': '../../resources/frontiers-quality-diversity-2016.pdf', 'openreview-higher-order-evolution-2024': '../../resources/openreview-higher-order-evolution-2024.pdf' }[p.slug] || null);
+      : ({ 'nature-funsearch-2024': '../../resources/nature-funsearch-2024.pdf', 'nature-ai-scientist-v2-2026': '../../resources/nature-ai-scientist-v2-2026.pdf', 'frontiers-quality-diversity-2016': '../../resources/frontiers-quality-diversity-2016.pdf' }[p.slug] || null);
     if (pdf) out.push({ label: 'Local PDF', href: pdf, cls: '' });
     out.push({ label: 'Online', href: p.url, cls: 'alt' });
     for (const [rs, ps] of Object.entries(REPO_TO_PAPER)) if (ps === p.slug) out.push({ label: 'Code', href: `${rs}.html`, cls: 'alt' });

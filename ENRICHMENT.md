@@ -104,28 +104,28 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 70 | 9 | paper | nature-funsearch-2024 | Mathematical Discoveries from Program Search with Large Language Models | had | yes | ☐ |  |
 | 71 | 9 | paper | 2506.13131 | AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery | had | yes | ☐ |  |
 | 72 | 9 | paper | 2601.10657 | PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution | had | yes | ✓ |  |
-| 73 | 9 | paper | openreview-higher-order-evolution-2024 | Higher Order and Self-Referential Evolution for Population-based Methods | had | no | ☐ |  |
+| 73 | 9 | paper | openreview-higher-order-evolution-2024 | Higher Order and Self-Referential Evolution for Population-based Methods | had | no | ✗ | PDF challenge-blocked — not enriched this pass; see failures.json |
 | 74 | 9 | paper | 1901.01753 | Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions | had | yes | ☐ |  |
 | 75 | 10 | repo | agent-zero | Agent Zero | had | - | ☐ |  |
 | 76 | 10 | repo | deepseek-harness | DeepSeek Harness | had | - | ☐ |  |
 | 77 | 10 | repo | openclaw | OpenClaw | had | - | ☐ |  |
 | 78 | 10 | repo | pi | Pi | had | - | ☐ |  |
-| 79 | 10 | repo | agentfactory | AgentFactory (code) | had | - | ☐ |  |
-| 80 | 10 | repo | dgm | Darwin Gödel Machine (code) | had | - | ☐ |  |
+| 79 | 10 | repo | agentfactory | AgentFactory (code) | had | - | ✓ |  |
+| 80 | 10 | repo | dgm | Darwin Gödel Machine (code) | had | - | ✓ |  |
 | 81 | 10 | repo | godel-agent | Gödel Agent (code) | had | - | ✓ |  |
 | 82 | 10 | repo | hermes-agent | Hermes Agent | had | - | ☐ |  |
-| 83 | 10 | repo | hyperagents | HyperAgents (code) | had | - | ☐ |  |
+| 83 | 10 | repo | hyperagents | HyperAgents (code) | had | - | ✓ |  |
 | 84 | 10 | repo | seal | SEAL | had | - | ☐ |  |
-| 85 | 10 | repo | sia | SIA (code) | had | - | ☐ |  |
+| 85 | 10 | repo | sia | SIA (code) | had | - | ✓ |  |
 | 86 | 10 | repo | ace | ACE (code) | had | - | ✓ |  |
 | 87 | 10 | repo | alma | ALMA (code) | had | - | ✓ |  |
 | 88 | 10 | repo | continual-harness | Continual Harness (code) | had | - | ✓ |  |
 | 89 | 10 | repo | evoagentx | EvoAgentX (code) | had | - | ✓ |  |
 | 90 | 10 | repo | evolver | EvolveR (code) | had | - | ✓ |  |
 | 91 | 10 | repo | letta-code | Letta Code | had | - | ☐ |  |
-| 92 | 10 | repo | memento-skills | Memento-Skills | had | - | ☐ |  |
+| 92 | 10 | repo | memento-skills | Memento-Skills | had | - | ✓ |  |
 | 93 | 10 | repo | reef | Reef | had | - | ✓ |  |
-| 94 | 10 | repo | voyager | Voyager (code) | had | - | ☐ |  |
+| 94 | 10 | repo | voyager | Voyager (code) | had | - | ✓ |  |
 | 95 | 10 | repo | rsiagent | RSIAgent (code) | had | - | ☐ |  |
 | 96 | 10 | repo | harness-zero | Harness-Zero (code) | had | - | ☐ |  |
 | 97 | 10 | repo | rrsi | RRSI (code) | had | - | ☐ |  |
@@ -136,7 +136,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 102 | 10 | repo | funsearch | FunSearch (code) | had | - | ☐ |  |
 | 103 | 10 | repo | mlevolve | MLEvolve (code) | had | - | ✓ |  |
 | 104 | 10 | repo | openevolve | OpenEvolve | had | - | ☐ |  |
-| 105 | 10 | repo | poet | POET (code) | had | - | ☐ |  |
+| 105 | 10 | repo | poet | POET (code) | had | - | ✓ |  |
 <!-- END STATUS TABLE -->
 
 ## Progress log
