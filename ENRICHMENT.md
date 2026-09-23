@@ -34,13 +34,13 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 |---|-------|------|------|-------|------|-----|--------|-------|
 | 1 | 1 | paper | 1606.04474 | Learning to Learn by Gradient Descent by Gradient Descent | had | yes | ☐ |  |
 | 2 | 1 | paper | 2410.04444 | Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement | had | yes | ☐ |  |
-| 3 | 1 | paper | 2003.03384 | AutoML-Zero: Evolving Machine Learning Algorithms From Scratch | had | yes | ☐ |  |
+| 3 | 1 | paper | 2003.03384 | AutoML-Zero: Evolving Machine Learning Algorithms From Scratch | had | yes | ✓ |  |
 | 4 | 1 | paper | 1905.10985 | AI-GAs: AI-Generating Algorithms, an Alternate Paradigm for Producing General Artificial Intelligence | had | yes | ☐ |  |
 | 5 | 1 | paper | frontiers-quality-diversity-2016 | Quality Diversity: A New Frontier for Evolutionary Computation | had | yes | ☐ |  |
 | 6 | 1 | paper | 1504.04909 | Illuminating Search Spaces by Mapping Elites | had | yes | ☐ |  |
 | 7 | 1 | paper | 1112.5309 | POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem | had | yes | ☐ |  |
 | 8 | 2 | paper | 2310.03714 | DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines | had | yes | ☐ |  |
-| 9 | 2 | paper | 2406.07496 | TextGrad: Automatic "Differentiation" via Text | had | yes | ☐ |  |
+| 9 | 2 | paper | 2406.07496 | TextGrad: Automatic "Differentiation" via Text | had | yes | ✓ |  |
 | 10 | 2 | paper | 2309.03409 | Large Language Models as Optimizers | had | yes | ☐ |  |
 | 11 | 2 | paper | 2309.16797 | Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution | had | yes | ☐ |  |
 | 12 | 2 | paper | 2310.04406 | Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models | had | yes | ☐ |  |
@@ -60,7 +60,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 26 | 4 | paper | 2604.15097 | From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution | had | yes | ☐ |  |
 | 27 | 4 | paper | 2602.07755 | Learning to Continually Learn via Meta-learning Agentic Memory Designs | had | yes | ✓ |  |
 | 28 | 4 | paper | 2607.14159 | MemoHarness: Agent Harnesses That Learn from Experience | had | yes | ☐ |  |
-| 29 | 4 | paper | 2607.26784 | SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution | had | yes | ☐ |  |
+| 29 | 4 | paper | 2607.26784 | SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution | had | yes | ✓ |  |
 | 30 | 4 | paper | 2605.23904 | SkillOpt: Executive Strategy for Self-Evolving Agent Skills | had | yes | ☐ |  |
 | 31 | 4 | paper | 2512.18746 | MemEvolve: Meta-Evolution of Agent Memory Systems | had | yes | ☐ |  |
 | 32 | 4 | paper | 2607.05297 | MetaSkill-Evolve: Recursive Self-Improvement of LLM Agents via Two-Timescale Meta-Skill Evolution | had | yes | ☐ |  |
@@ -79,7 +79,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 45 | 5 | paper | 2603.18000 | AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse | had | yes | ✓ |  |
 | 46 | 5 | paper | 2604.20133 | EvoAgent: An Evolvable Agent Framework with Skill Learning and Multi-Agent Delegation | had | yes | ✓ |  |
 | 47 | 5 | paper | 2507.03616 | EvoAgentX: An Automated Framework for Evolving Agentic Workflows | had | yes | ✓ |  |
-| 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ☐ |  |
+| 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ✓ |  |
 | 49 | 5 | paper | 2402.17574 | Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization | had | yes | ✓ |  |
 | 50 | 5 | paper | 2409.00872 | Self-evolving Agents with Reflective and Memory-Augmented Abilities | had | yes | ✓ |  |
 | 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ☐ |  |
@@ -90,14 +90,14 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ✓ |  |
 | 57 | 6 | paper | 2403.08715 | SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents | had | yes | ✓ |  |
 | 58 | 7 | paper | 2505.22954 | Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents | had | yes | ☐ |  |
-| 59 | 7 | paper | 2504.15228 | A Self-Improving Coding Agent | had | yes | ☐ |  |
+| 59 | 7 | paper | 2504.15228 | A Self-Improving Coding Agent | had | yes | ✓ |  |
 | 60 | 7 | paper | 2412.21139 | Training Software Engineering Agents and Verifiers with SWE-Gym | had | yes | ☐ |  |
 | 61 | 7 | paper | 2304.05128 | Teaching Large Language Models to Self-Debug | had | yes | ☐ |  |
 | 62 | 7 | paper | 2312.13010 | AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation | had | yes | ✓ |  |
 | 63 | 8 | paper | 2408.06292 | The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery | had | yes | ☐ |  |
 | 64 | 8 | paper | nature-ai-scientist-v2-2026 | Towards End-to-End Automation of AI Research (The AI Scientist-v2) | had | yes | ☐ |  |
 | 65 | 8 | paper | 2601.14525 | Towards Execution-Grounded Automated AI Research | had | yes | ☐ |  |
-| 66 | 8 | paper | 2608.17906 | AutoResearch: Insight In, Hallucination Out | had | yes | ☐ |  |
+| 66 | 8 | paper | 2608.17906 | AutoResearch: Insight In, Hallucination Out | had | yes | ✓ |  |
 | 67 | 8 | paper | 2607.28568 | Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering | had | yes | ☐ |  |
 | 68 | 8 | paper | 2603.01712 | FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents | had | yes | ✓ |  |
 | 69 | 8 | paper | 2606.06473 | MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery | had | yes | ✓ |  |
@@ -115,7 +115,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 81 | 10 | repo | godel-agent | Gödel Agent (code) | had | - | ✓ |  |
 | 82 | 10 | repo | hermes-agent | Hermes Agent | had | - | ✓ |  |
 | 83 | 10 | repo | hyperagents | HyperAgents (code) | had | - | ✓ |  |
-| 84 | 10 | repo | seal | SEAL | had | - | ☐ |  |
+| 84 | 10 | repo | seal | SEAL | had | - | ✓ |  |
 | 85 | 10 | repo | sia | SIA (code) | had | - | ✓ |  |
 | 86 | 10 | repo | ace | ACE (code) | had | - | ✓ |  |
 | 87 | 10 | repo | alma | ALMA (code) | had | - | ✓ |  |
@@ -135,7 +135,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 101 | 10 | repo | evolutionary-model-merge | Evolutionary Model Merge | had | - | ✓ |  |
 | 102 | 10 | repo | funsearch | FunSearch (code) | had | - | ✓ |  |
 | 103 | 10 | repo | mlevolve | MLEvolve (code) | had | - | ✓ |  |
-| 104 | 10 | repo | openevolve | OpenEvolve | had | - | ☐ |  |
+| 104 | 10 | repo | openevolve | OpenEvolve | had | - | ✓ |  |
 | 105 | 10 | repo | poet | POET (code) | had | - | ✓ |  |
 <!-- END STATUS TABLE -->
 
