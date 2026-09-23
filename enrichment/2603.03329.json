@@ -1,0 +1,26 @@
+{
+  "tldr": "Gemini-2.5-Flash synthesizes its own Python harness by tree-searching code refinements against environment feedback, eliminating all illegal moves across 145 TextArena games and letting the small model beat Gemini-2.5-Pro.",
+  "method": "Code-as-harness frames the agent as an LLM plus a harness the LLM writes itself. Search keeps a tree of Python code hypotheses; Thompson sampling (weight 1.0) selects which node to refine, scoring nodes by mean legal-action accuracy. A Refiner (Gemini-2.5-Flash, prompted in App. B.2 with the game description, board traces and error feedback) mutates the code, while a Critic consolidates errors from up to 5 failed steps. Rollouts run 10 parallel environments to at most 1000 steps, terminating on an illegal move or code failure. Three templates exist: harness-as-action-filter (propose_action() enumerates moves, the LLM ranks them), harness-as-action-verifier (the LLM proposes, is_legal_action() verifies, and rejection re-prompts with an 'illegal action' warning), and harness-as-policy (pure Python, no LLM at test time). Refinement is asymmetric: when is_legal_action() returns True but the action is illegal both functions are refined; when it returns False only propose_action() is.",
+  "results": [
+    "Legal-action harness across 145 TextArena games (all 1P/2P games minus 9 free-form-dialog ones, with 'Available Moves' hints stripped from observations): a 1.0 legal-action rate on every game, measured on 1000-step rollouts over 10 seeds each (App. Table 1). Training averaged 14.5 tree-search iterations, with 19/32 eval games finishing under 10.",
+    "2P play (16 games, 40 matches each): Gemini-2.5-Flash+Harness wins 9/16 against Gemini-2.5-Pro, a 56.3% win rate to Pro's 38.2%, and 12/16 against vanilla Flash, 64.8%.",
+    "1P play (16 games, 20 matches each): 0.745 average reward versus 0.707 for Gemini-2.5-Pro and 0.673 for Gemini-2.5-Flash; higher than Pro in 8/16 games, tied in 5/16.",
+    "Harness-as-policy (16 1P games): pure-code policies trained with H = 0 if illegal else 0.5 + 0.5r average 0.870 reward, above GPT-5.2-High (0.844), Gemini-2.5-Pro (0.707) and GPT-5.2 (0.635), in 89.4 iterations on average (cap 256, final heuristic 0.939), at near-zero test-time cost against roughly $640 for the GPT-5.2 runs.",
+    "Motivating failure: in the Kaggle GameArena chess competition, 78% of Gemini-2.5-Flash losses were attributed to illegal moves rather than strategic blunders."
+  ],
+  "advantages": [
+    "Small-model synthesis beats scale: a harness written by Gemini-2.5-Flash lets it outplay Gemini-2.5-Pro on 2P win rate and 1P reward, and the pure-code policy variant beats GPT-5.2-High.",
+    "The legality checker is learned from board text plus execution feedback with hints removed, so no hand-written per-game validity rule is needed and one loop covers 145 games.",
+    "Gradient-free and cheap: no fine-tuning, the artifact is searchable source code, and the policy variant removes LLM calls from inference entirely.",
+    "The search is explicit rather than one-shot: tree search over code hypotheses with Thompson sampling is designed to trade exploration of distinct logic structures against refining a partly working harness."
+  ],
+  "limitations": [
+    "One harness per environment: no transfer or reuse across games is demonstrated; distilling harnesses back into the base LLM and building a reusable library are left as future work.",
+    "Harness-as-policy is only shown on 1P games; the paper states 2P play would need MCTS-like runtime search plus a learned code world model, which it does not attempt.",
+    "Evaluation is TextArena text games with one model family (Gemini-2.5-Flash), and end-to-end agent results use 16 + 16 games rather than all 145.",
+    "No ablation isolates the Thompson-sampled tree search from plain iterative refinement, and the policy variant's final heuristic is 0.939 rather than fully legal."
+  ],
+  "fits": "Stage 5 (Harness-level RSI), the named successor to ADAS in that stage's card: the evolving artifact is the agent's code harness, mutated by an LLM over environment feedback. Pairs with ADAS and STOP on what environment-feedback gates add, DGM on population-level archives, and Continual Harness and Harness-Zero.",
+  "reading": "Section 3 for the three harness templates and the asymmetric refinement rule, Section 4.1-4.3 for the training loop and win-rate/reward results, Figure 2 for legal-move curves, and Appendix B.2 for the Refiner prompt.",
+  "_source_note": "Read the local PDF resources/2603.03329.pdf end to end via pdftotext: abstract, Sections 1-3, 4.1-4.3, Section 5 conclusion and future work, and appendices A.1 (Table 1 legal-action rates), A.4/A.5 (hint-removal example), B.1/B.2 (prompts), C.1 (function signatures). The paper has no explicit Limitations section, so the limitations are drawn from its own conclusion/future-work statements plus scope statements in Sections 4 and 4.3; every number was checked against the text. High confidence."
+}

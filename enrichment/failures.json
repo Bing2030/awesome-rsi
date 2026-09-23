@@ -1,0 +1,3 @@
+{
+  "openreview-higher-order-evolution-2024": "PDF unreachable 2026-09-23: openreview.net serves a JS challenge page to curl (UA spoofing and /attachment both return HTML); no arXiv mirror under this title; web.archive.org and api.semanticscholar.org timed out or rate-limited. Existing card + OPENREVIEW_ABSTRACT fallback remain in place. Retry later, or export the PDF manually from a browser into resources/openreview-higher-order-evolution-2024.pdf and re-run the enrichment agent."
+}

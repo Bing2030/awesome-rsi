@@ -1,0 +1,26 @@
+{
+  "tldr": "Having multiple LLM instances propose, critique, and revise answers over debate rounds reliably beats single-agent generation and self-reflection — e.g. GSM8K 77.0 to 85.0% — and the resulting debate transcripts can be distilled back, creating a model self-improvement loop.",
+  "method": "Multiple copies of gpt-3.5-turbo-0301 independently answer the same prompt (zero-shot chain-of-thought) — only black-box generations, no weights or likelihoods. Each debate round, every agent receives the other agents' full responses concatenated as context plus a consensus prompt (\"using the solutions from other agents as additional information, can you provide your answer?\") and revises. Main configuration: 3 agents, 2 rounds; accuracy rises monotonically with agents and rounds (gains plateau past 4 rounds; 5+ agents need peers' responses summarized to fit context). \"Stubborn\" long-form prompts slow consensus and improve final answers; convergence is not guaranteed (debate is a multi-agent game) but agents almost always settle on one shared answer. Unlike majority voting, the model itself integrates the responses.",
+  "results": [
+    "Arithmetic: 81.8±2.3% vs 67.0±4.7% single agent; self-reflection 72.1%, majority voting only 69.0% (3 agents, 2 rounds)",
+    "GSM8K: 85.0±3.5% vs 77.0±4.2% single agent (majority voting 81.0%); helps with and without zero-shot CoT",
+    "Chess move optimality (Stockfish pawn-score delta): 122.9±7.6 vs 91.4±10.6 single agent",
+    "Factuality: new 524-computer-scientist biography benchmark 73.8±2.3 vs 66.0±2.2; MMLU 71.1±4.6 vs 63.9 single — self-reflection drops MMLU to 57.7; chess move validity 45.2 vs 29.3",
+    "chatGPT+Bard debate solves 17/20 GSM8K vs 14 (chatGPT) and 11 (Bard) alone; persona initialization lifts MMLU 71.1 to 74.2"
+  ],
+  "advantages": [
+    "Makes debate between model copies a practical inference-time gain on black-box APIs: identical prompts and procedure across all six tasks, no gradient or likelihood access",
+    "Beats majority voting (the model integrates answers rather than tallying them) and peer critique beats self-reflection — which actually hurt factuality on MMLU (57.7 vs 63.9)",
+    "Not just answer amplification: many cases show all agents initially wrong yet converging on the correct answer; agents disagree on uncertain facts and drop them, and ease of persuasion may itself signal factual confidence",
+    "Explicitly frames debate transcripts as training data to distill back into the base model — a self-improvement loop — and introduces the biography factuality benchmark"
+  ],
+  "limitations": [
+    "Computationally expensive: every round needs a full generation per agent, multiplying cost (paper's own §5), though framed as data generation for distillation",
+    "Convergence is not correctness: debates settle on single answers that can be wrong while agents confidently affirm them — models cannot express uncertainty, so shared errors survive (§5)",
+    "Long debates overflow attention: models \"only focused on the most recent generations\" of a long debate history",
+    "Small eval sets (~100 problems per task) and the biography metric uses chatGPT itself as judge; agents' agreeableness may be an artifact of RLHF instruction tuning"
+  ],
+  "fits": "The canonical multi-agent debate paper — the social, quorum-based alternative to single-model self-correction at stage 6. Pairs with the Divergent Thinking paper (2305.19118): that motivates why diverse self-attempts help, this supplies the consensus mechanism later RSI pipelines reuse to generate training data.",
+  "reading": "Sections 2.1–2.2 (protocol, prompt-controlled consensus), Tables 1–2 with Figure 10 (agents/rounds scaling), and §5 Limitations; Figure 3 plus §3.3 for short vs long debate prompts.",
+  "_source_note": "Read full pdftotext extraction of arXiv:2305.14325v1 (Du, Li, Torralba, Tenenbaum, Mordatch): abstract, §1–5, Tables 1–2, Figures 3/10/12, appendix eval details and prompt table. All numbers quoted verbatim from Tables 1–2, §3.3, and §5. High confidence."
+}

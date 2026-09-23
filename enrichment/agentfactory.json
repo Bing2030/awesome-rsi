@@ -1,0 +1,17 @@
+{
+  "what": "Official code for AgentFactory (ACL 2026 System Demo, arXiv 2603.18000) — a self-evolving agent framework that saves successful task solutions as executable Python subagents, refines them from execution feedback, and exports the library to other frameworks.",
+  "architecture": [
+    "Subagents are plain Python modules with a standardized main(query) entry point returning {answer, summary}, stored under skills/subagents/ with a SKILL.md doc each — pure code, portable to any Python-capable system.",
+    "The Meta-Agent orchestrates via meta-skills: create_subagent → run_subagent → modify_subagent (exact old/new snippet replacement) → finish; finish persists the library and carries a supersedes field so major rewrites delete the old skill.",
+    "Three skill tiers — meta orchestration skills, tool skills (Serper search, Jina reader, Playwright browser, shell), and the growing subagent library — plus a Workspace Manager giving per-task isolated execution so edits can't corrupt the shared library.",
+    "Refinement is feedback-driven and enforces genericity: create prompts ban hardcoded task specifics (all specifics must be extracted from the query via call_llm at runtime), and modify-vs-create rules separate surgical fixes from supersedes rewrites."
+  ],
+  "advantages": [
+    "Ships recorded trajectories (trajectory/qq_music, tencent_doc, readme) so you can watch a subagent library accrete without running anything — the third Tencent Docs run directly reuses the audio_transcriber subagent born in the QQ Music runs.",
+    "Executable experience is deployable as-is: prompt4cc.txt exports the saved library into Claude Code, and subagents port to LangChain/AutoGen; README's 30-task eval reports reuse dropping orchestrator output tokens to 2,971 vs ReAct's 7,022 (Opus 4.6, up to 57% savings).",
+    "The whole create→run→modify→save loop is inspectable in eight root-level Python files (meta_agent.py, meta_tools.py, run.py, tools.py...) plus the skills/meta SKILL.md docs — no framework magic hiding the mechanism."
+  ],
+  "run": "`conda create -n agentfactory python=3.12 && pip install openai requests playwright flask flask_cors`; fill .env (MODEL_PROTOCOL, LLM key/url/model, SERPER_API_KEY, JINA_API_KEY) and replace <Absolute_Path_to_AgentFactory> in the question files; then `python run.py --question-file data/questions/questions_round1.jsonl` (flags: --human-confirm, --no-save). Web demo: `python3 web_interface/app.py --port 5050`.",
+  "note": "Cross-read with the 2603.18000 paper card. Read skills/meta/*/SKILL.md for the loop contract, then diff trajectory/*/first_time.json vs second_time.json to see reuse in action. Note the generality mandate: saved subagent code must never hardcode task-specific details.",
+  "_source_note": "Read the full README (via gh api repos/zzatpku/AgentFactory/readme), the complete file tree, skills/meta/create_subagent + modify_subagent + finish SKILL.md, skills/subagents/audio_transcriber/SKILL.md, meta_tools.py (run contract, timeout, workspace logic), and run.py. Evaluation numbers transcribed directly from the README table (30 tasks, 2 batches, Opus/Sonnet 4.6). High confidence."
+}

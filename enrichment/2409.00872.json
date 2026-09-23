@@ -1,0 +1,26 @@
+{
+  "tldr": "A training-free three-agent loop (User/Assistant/Checker) plus Ebbinghaus-style MemorySyntax memory management roughly doubles Reflexion's long-context QA F1 and yields up to 2.26x AgentBench gains, with the largest improvements on the smallest models.",
+  "method": "Three roles: a User supplies the task description d_U and reference instance i_U; an Assistant samples outputs o_t ~ pi_theta(o_t | s_t, R_t, f_t); a Checker compares each output to the expected result and returns feedback f_t, looping until the Checker validates or an iteration cap N is hit. Two memories: STM keeps the recent trajectory (o_t, a_t); LTM accumulates reflections r_t = ref(o_1:t, R_1:t) — insight text over sparse binary rewards — appended via M^L <- M^L U {r_t}. MemorySyntax scores each item's retention R(I_t, tau) = e^(-tau/S) with strength S tied to information entropy; a linguistic rewriter produces I*_t with raised strength, then thresholds theta1 > theta2 gate three outcomes: keep in STM (R >= theta1), promote to LTM (theta2 <= R < theta1), discard (R < theta2). Despite policy-gradient-flavored formalism, the implementation is prompt-level with no weight updates.",
+  "results": [
+    "AgentBench (6 tasks): GPT-3.5 Database 15.7 -> 35.6 (the abstract's 2.26x headline); Qwen-7B KG 0.0 -> 48.0; ChatGLM2-6B OS 0.0 -> 15.2; claimed relative gains of 57.7%-100% across five open-source models.",
+    "Multi-task evaluation: HotpotQA answer accuracy GPT-3.5 54.1% -> 74.9% (+20.8) and GPT-4 61.2% -> 78.4% (+17.2); Mistral-7b ALFWorld step completion 56.5% -> 73.8% (+17.3).",
+    "Head-to-head on long-context tasks vs Reflexion and Beam Search: HotpotQA F1 22.06 vs 11.26/10.26 and TriviaQA F1 22.76 vs 11.23/12.13 (roughly 2x), while code completion is near-parity (LCC F1 79.29 vs 79.28/79.12; RepoBench-P 81.22 vs 80.25/79.87).",
+    "RAG comparison: beats Fusion-in-Decoder on HotpotQA 74.8 vs 70.1 (+4.7), Natural Questions 73.6 (+3.8), TriviaQA 75.5 (+3.6), cutting memory 456 -> 231 MB (-50%) at similar latency.",
+    "Ablation (memory optimization on/off): CodeLlama-7B DB 2.7 -> 41.3 and WS 14.3 -> 58.7; Qwen-1.8B KG 6.8 -> 45.3 and ALF 0.0 -> 10.5."
+  ],
+  "advantages": [
+    "The same reflection-plus-memory recipe lifts both API models and 1.8-7B open models with zero training: Qwen-1.8B goes from near-floor (2.7 OS, 0.6 M2W) to 18.7/13.6, approaching GPT-3.5 on several AgentBench tasks — the strongest evidence that harness-level memory/reflection can substitute for scale.",
+    "On long multi-document QA, structured memory management roughly doubles Reflexion's F1 (11.26 -> 22.06 HotpotQA; 11.23 -> 22.76 TriviaQA), isolating the memory-lifecycle contribution beyond Reflexion's verbal retry.",
+    "MemorySyntax replaces FIFO eviction (MemGPT) and time-only decay (MemoryBank) with an entropy-strength score plus a three-way retain/promote/discard threshold gate, and measurably cuts RAG memory footprint ~50%.",
+    "Error analysis ties the mechanism to concrete failure modes: Context-Limit-Exceeded and invalid-format errors are nearly eliminated on OS/DB tasks, with invalid-action errors reduced."
+  ],
+  "limitations": [
+    "No limitations section, no variance or significance reported, and numbers are internally inconsistent: Table 5's 'with memory' CodeLlama-7B KG/WS scores (48.0/58.7) exceed Table 1's SAGE values for the same model/tasks (27.0/40.2).",
+    "The Checker derives feedback from the expected output of the reference instance i_U, so the loop presumes an available ground truth; thresholds theta1/theta2, the iteration cap N, and retention parameters are never assigned values in the paper.",
+    "The Nash-equilibrium convergence theorem (Thm 3.1) assumes policy-gradient and convex-optimization updates on compact strategy spaces, while the system is explicitly training-free prompting — the formalism is not connected to the actual mechanism.",
+    "Iterative checker loops cost wall-clock time: the paper's own Table 6 shows SAGE-ChatGPT-4 at 10.6-10.9 min per task vs 6.5-8.7 for BabyAGI/AutoGPT/HuggingGPT/LangChain/TaskMatrix.AI, unremarked despite the RAG section's 'without increasing latency' claim."
+  ],
+  "fits": "A Harness-level RSI entry that is an explicit hybrid of stage-3 reflection (Reflexion-style verbal self-critiques written to long-term memory) and stage-4 memory (MemoryBank's Ebbinghaus decay, hardened into a three-way retain/promote/discard gate), all wrapped in a Checker-driven iteration loop. Adds multi-agent feedback and error-rate reduction rather than single-agent retry; pairs with Reflexion and MemoryBank as their synthesis.",
+  "reading": "Read Sec 3.1-3.2 (checker loop, reflection, MemorySyntax), then Tables 1-3 (AgentBench, HotpotQA/MultiWOZ/ALFWorld, Reflexion comparison) and the Table 5 ablation. Appendix A is formal game theory — skimmable.",
+  "_source_note": "Read the full pdftotext extraction of arXiv v2 (2409.00872v2, Apr 2025): abstract, Sec 1-4, conclusion, Appendices A-D. All cited numbers verified against Tables 1-6 and the abstract. High confidence in quoted figures; the paper has no limitations section, so limitations 2-4 are inferences from gaps/inconsistencies visible in the text."
+}

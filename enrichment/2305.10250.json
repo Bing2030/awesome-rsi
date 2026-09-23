@@ -1,0 +1,26 @@
+{
+  "tldr": "MemoryBank adds persistent long-term memory to frozen LLMs: timestamped dialogue logs with LLM-written event summaries and user portraits, FAISS dense retrieval, and an Ebbinghaus forgetting curve that decays unreinforced memories — demonstrated in SiliconFriend, an empathetic companion chatbot.",
+  "method": "Storage has three tiers: timestamped multi-turn dialogue logs; LLM-generated daily event summaries rolled up into a global summary; and daily personality insights aggregated into a global user portrait (fixed prompts, e.g. \"Summarize the events and key information in the content [dialog/events]\"). Each dialogue turn and summary is a memory piece, embedded (MiniLM for English, Text2vec for Chinese) and indexed in FAISS via LangChain, DPR-style dual-tower retrieval. At interaction time the current conversation is the query; retrieved memories plus the global portrait and event summary are packed into the prompt. Updating applies the Ebbinghaus curve R = e^(−t/S): retention R decays with elapsed time t; strength S starts at 1 on first mention, and each recall increments S by 1 and resets t to 0, so re-accessed memories persist longer. Open-source variants add LoRA tuning (rank 16, 3 epochs, one A100) on 38k psychological dialogues.",
+  "results": [
+    "Quantitative eval: 194 hand-written probing questions (97 English, 97 Chinese) over a simulated 10-day memory store of 15 ChatGPT-role-played users; human annotators scored retrieval accuracy, response correctness, coherence, and ranking (s = 1/rank).",
+    "SiliconFriend_ChatGPT is best overall: English retrieval 0.763, correctness 0.716, coherence 0.912, ranking 0.818 (Chinese: 0.711 / 0.655 / 0.675 / 0.758).",
+    "Open-source variants match or beat retrieval (BELLE 0.814 EN / 0.856 ZH; ChatGLM 0.809 / 0.84) but lag sharply on correctness (0.418–0.603) and coherence — attributed to weaker base models, not the memory layer.",
+    "Qualitatively, an online SiliconFriend platform collected real user conversations; the paper shows it recalling a recommended book and a quicksort request days later and correctly denying an undiscussed heap-sort session.",
+    "The forgetting curve itself is never quantified: no ablation or number isolates its effect, and the paper flags the model as exploratory."
+  ],
+  "advantages": [
+    "Early (May 2023) mechanism giving both closed-source (ChatGPT) and open-source (ChatGLM 6.2B, BELLE 7B) LLMs persistent, evolving memory with no weight changes — the memory layer alone, plus optional LoRA for empathy tuning.",
+    "Forgetting-as-feature: time-decayed retention with reinforcement on recall (spacing effect) replaces append-only logs or fixed-window truncation with an anthropomorphic update policy.",
+    "Memory is more than retrieval: hierarchical daily-to-global summaries plus a user portrait let the bot adapt to personality, not just look up facts.",
+    "Practical and bilingual: swappable embedders and backbones, released as working SiliconFriend code."
+  ],
+  "limitations": [
+    "The paper itself calls the Ebbinghaus update \"exploratory and highly simplified\": S is a bare integer counter, and no experiment measures whether forgetting helps or hurts.",
+    "Quantitative evaluation is fully simulated — ChatGPT role-plays all 15 users and generates the dialog history — with only 194 probing questions scored by annotators.",
+    "Summary-based storage discards detail: correctness for open-source backbones falls to 0.42–0.60, so specific recall is unreliable even when retrieval succeeds.",
+    "Scoped to companion/counseling interactions of 10 simulated days; far shorter than real long-horizon deployment."
+  ],
+  "fits": "Stage 4's \"memory as database with decay\" baseline: an external store passively written, densely retrieved, and decayed by a hand-set curve — the update policy is fixed by design, never learned. A-MEM makes memory agentic (LLM organizes and links notes into a graph); MemEvolve evolves the memory system's own architecture.",
+  "reading": "§2 covers the three components (storage 2.1, FAISS retrieval 2.2, Ebbinghaus update 2.3 — the R = e^(−t/S) rules); §3.1 for the 38k-dialogue LoRA tuning; Table 2 for all numbers. §4.1 examples are skippable.",
+  "_source_note": "Read the full paper via pdftotext from resources/2305.10250.pdf (arXiv v3, 21 May 2023): abstract, §2 mechanism, §3 SiliconFriend, §4 experiments including Table 2, related work, references; all numbers grepped and verified against the text. SillyTavern does not appear in the paper (repo-level only); deployment evidence is the online SiliconFriend platform with real user conversations. High confidence."
+}

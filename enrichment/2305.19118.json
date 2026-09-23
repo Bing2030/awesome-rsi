@@ -1,0 +1,26 @@
+{
+  "tldr": "Names and measures the Degeneration-of-Thought (DoT) failure of single-agent self-reflection — confidence locks in wrong answers — and fixes it with Multi-Agent Debate (MAD): two 'tit-for-tat' debaters plus a judge with adaptive break, lifting GPT-3.5-Turbo past GPT-4 on commonsense MT.",
+  "method": "The paper names DoT: once an LLM is confident in an answer, self-reflection stops generating novel thoughts even when the initial stance is wrong, quantified as adjacent-iteration opposition over 5 forced rounds (Fig. 1): self-reflection's disagreement stays low while debate keeps it high. MAD runs three agents: an affirmative debater, a negative debater prompted to 'disagree with the affirmative side's points', and a judge. Debaters speak in fixed order, each conditioned on the full debate history H. The judge has two modes: discriminative (is a correct solution on the table? True ends the debate early, the adaptive break) and extractive (pull the final answer from H at the iteration limit, set to 3). All roles share one backbone LLM (vicuna-7b/13b-v1.5-16k, GPT-3.5-Turbo-0301, GPT-4-0314), zero-shot at temperature 0; tasks are Common MT (Chinese⇒English commonsense ambiguity) and the authors' 200-question Counter-Intuitive AR set.",
+  "results": [
+    "Common MT human direct assessment (1-5), GPT-3.5-Turbo baseline → +MAD vs GPT-4: lexical 3.14 → 3.78 (GPT-4 3.41), contextless 3.43 → 3.67 (3.63), contextual 3.57 → 3.67 (3.65) — MAD on Turbo beats GPT-4 on all three, and on COMET/BLEURT it matches or edges GPT-4 (contextual COMET 85.3 vs 85.0); Self-Reflect reaches only 3.43 lexical",
+    "Counter-Intuitive AR accuracy: 26.0% (Turbo) → 37.0% with MAD, vs Self-Reflect 27.5%, CoT 28.0%, Self-Consistency 29.5%; GPT-4 stays ahead at 51.0%",
+    "DoT mitigation vs Self-Reflect: human-labeled ambiguity-error (bias) 29.0 → 24.8 and output diversity (100 - Self-BLEU) 19.3 → 49.7",
+    "Math/symbolic transfer (Turbo, Appendix C): MAD vs CoT — GSM8K 73.8 vs 70.2, AddSub 92.1 vs 87.3, BBH Date 65.2 vs 56.4, Penguin 63.7 vs 58.9; cost 2.46x CoT's generated tokens (Self-Reflect 1.83x)",
+    "Ablations (Sec 4): debater quality dominates judge quality (Turbo debaters: 3.47 HUMAN with a vicuna-13b judge vs 3.69 with a Turbo judge); the judge favors its own backbone (GPT-4 judging GPT-4-vs-Turbo picks the GPT-4 side 120/200 vs 77); more debaters hurt (2 → 3 → 4: COMET 84.4 → 83.1 → 82.9); modest level-2 'tit for tat' beats full consensus (HUMAN 3.00 → 3.81) and forced total disagreement (0.988 disagreement, 3.72)"
+  ],
+  "advantages": [
+    "First to name and operationally measure DoT (adjacent-iteration disagreement), turning 'self-reflection plateaus' into a diagnosable failure with a causal account — bias, rigidity, missing external feedback — each mapped to a mechanism of the fix",
+    "Divergence by construction rather than hope: the negative debater is instructed to oppose, so the loop cannot quietly agree with itself the way Self-Reflect does (diversity 49.7 vs 19.3)",
+    "The judge's adaptive break ends most debates after one round and outperforms forcing any fixed iteration count (Fig. 5), keeping overhead at 2.46x CoT tokens",
+    "Reports the negative results later debate work leans on — adding debaters hurts, forced disagreement backfires, LLM judges favor their own backbone — and states the mitigations (modest tit-for-tat, one LLM for all roles) in the limitations"
+  ],
+  "limitations": [
+    "Time/compute cost of multi-round interaction: 2.46x CoT's generated tokens on Counter-Intuitive AR, vs 1.83x for Self-Reflect (Sec. Limitations, Appendix E)",
+    "Long-context degradation: with more debaters, 'LLM-based debaters tend to forget the views of other debaters' and judge extraction degrades — 2 debaters beat 3 and 4 (Table 7)",
+    "LLM judges are not impartial across backbones (self-preference, Table 6); the authors recommend identical LLMs for judge and debaters",
+    "Counter-Intuitive AR is the authors' own 200-question set (elicitation questionnaires + web puzzles), and MAD does not close the gap to GPT-4 there (37.0 vs 51.0)"
+  ],
+  "fits": "Stage 6: the diagnostic companion to Du et al.'s debate paper (2305.14325) — debate instrumented against self-reflection with a named failure mode (DoT) and a judge-plus-adaptive-break control loop. Its 'other agents beat self-feedback' argument underwrites the multi-agent arc toward debate-generated training data; pair with Reflexion as the single-agent foil.",
+  "reading": "Sec 1-2 (DoT definition, MAD loop, judge modes), Table 1 + Sec 3.3 (Turbo+MAD vs GPT-4), Table 3 (CIAR), Sec 4.1-4.3 (DoT mitigation, judge fairness, tit-for-tat levels), Table 12 (token cost).",
+  "_source_note": "Read the full local PDF (arXiv:2305.19118v4, 9 Oct 2024) via pdftotext: abstract, Sec 1-6, Tables 1-7, and Appendices A-F including full debate transcripts. All numbers verified against Tables 1/3/4/5/6/7/10/12 and the Sec 4 text; Figure 3/5 curves are read off plots, with only the 0.988 forced-disagreement value quoted from text. High confidence. Note: the prior card's reading pointer ('DoT analysis S3, debate setup S4') was inverted — the framework is Sec 2, experiments Sec 3, analysis Sec 4."
+}

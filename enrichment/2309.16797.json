@@ -1,0 +1,26 @@
+{
+  "tldr": "Promptbreeder evolves a population of task-prompts by binary-tournament selection on training accuracy and, self-referentially, evolves the mutation-prompts that mutate them — beating Chain-of-Thought and Plan-and-Solve on arithmetic and commonsense reasoning.",
+  "method": "A unit of evolution holds two task-prompts plus one mutation-prompt (and, in the few-shot case, a context list of correct workings out). Initialization concatenates a randomly drawn thinking-style and mutation-prompt onto the domain problem description and lets the LLM continue, producing diverse starting task-prompts; each mutation-prompt stays bound 1:1 to its task-prompt. Fitness is accuracy on a freshly sampled batch of 100 training Q&A pairs. A binary tournament GA samples two individuals, mutates the fitter, and overwrites the loser, with P' = LLM(M + P). Nine operators across five classes drive exploration: zero-/first-order generation, EDA and EDA rank-and-index and lineage-based mutation, zero-/first-order hyper-mutation (M' = LLM(H + M)), Lamarckian reverse-engineering of a task-prompt from a correct working out, plus prompt crossover (10%) and context shuffling. Population 50, run 20-30 generations.",
+  "results": [
+    "Zero-shot with PaLM 2-L: PB beats Plan-and-Solve PS+ on every benchmark — GSM8K 60.5→83.9, MultiArith 92.5→99.7, SingleEq 94.7→96.4, AddSub 74.4→87.8, SVAMP 86.3→90.2, CommonsenseQA 73.3→85.4, StrategyQA 50.1→71.8, AQuA-RAT 39.4→62.2.",
+    "PB's best zero-shot GSM8K prompt was the bare string \"SOLUTION\" at 83.9%, versus OPRO's optimized \"Take a deep breath and work on this problem step-by-step\" at 80.2% and APE at 77.9%.",
+    "Few-shot run improves further on commonsense: StrategyQA 71.8→80.2, AQuA-RAT 62.2→64.6, MultiArith 99.7→100.0 (few-shot GSM8K 83.5).",
+    "ETHOS hate-speech classification: PB evolved two sequentially applied long prompts scoring 89%, over the hand-designed \"Determine whether a text contains hate speech\" at 80%; under the deliberately under-specified spec \"Solve the Problem\" it still reached 81.6%.",
+    "Operator effectiveness on GSM8K (share of offspring fitter than parent): zero-order hyper-mutation 42%, lineage-based 26%, first-order hyper-mutation 23%, EDA rank/index 12.7%, direct 12%, EDA 10.7%, Lamarckian 6.3%; the single best evolved mutation-prompt (\"Please summarise and improve the following instruction\") improved its task-prompt 24.13% of the time."
+  ],
+  "advantages": [
+    "Demonstrates the self-referential step concretely: the mutation-prompt is itself a genotype under selection, so the system raises its own evolvability rather than only its prompts — evoPrompt and OPRO use fixed mutators.",
+    "Directly answers APE's reported diminishing returns: fitness keeps climbing across generations (Appendix B), attributed to the diversity-maintaining population, BERT-cosine 0.95 filter, elite-lineage and EDA operators.",
+    "Ablations isolate each self-referential piece rather than asserting the whole: removing any operator hurts on nearly every dataset, with thinking-style-guided initialization the largest single contributor — only random mutation-prompt sampling hurt, and only on GSM8K.",
+    "Entirely gradient-free and parameter-free: no LLM weights change, so it scales with whatever model sits behind the API."
+  ],
+  "limitations": [
+    "Paper's own account: the topology of prompting stays fixed — only prompt content adapts, not the prompting algorithm or the conditional application of prompts.",
+    "Cost: fitness needs repeated evaluation of batches of 100 questions per generation over populations of 50 across 20-30 generations, i.e. thousands of LLM calls per domain.",
+    "Ablations run at shrunken scale (population 10, 200 evaluations) and the headline accuracy numbers come from a single sizable LLM (PaLM 2-L) on mostly small benchmark test splits.",
+    "Evaluation only on text/language tasks; the paper notes human thought is multimodal and hierarchical, which this single-level prompt evolution does not model."
+  ],
+  "fits": "Stage 2, prompt/context optimization — the self-referential sibling of OPRO (2309.03409) and APE, and a peer of DSPy and TextGrad. Its evolve-the-mutator idea is the seed of the later 'improve the improver' harness-level thread (stages 5-6).",
+  "reading": "Read §3.1 initialization and §3.2's five mutation-operator classes, then §5 Results and Appendix L ablations. Appendix J.3-J.4 for evolved mutation-prompts and operator effectiveness.",
+  "_source_note": "Read the local PDF (resources/2309.16797.pdf) via pdftotext, including abstract, intro, §2 related work, §3 method (all five mutation-operator classes), §4 experiments, §5 results, §6 limitations, Table 1 (full accuracy table, layout-extracted), Table 7 and Table 8 (mutation-prompt and mutation-operator effectiveness), and Appendix L ablations plus the ETHOS ablation numbers. All figures in the card are verbatim from these sections. High confidence."
+}

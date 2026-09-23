@@ -279,6 +279,7 @@ function detailPage(p) {
     const c = p.curated;
     body += `<section class="block"><h2>What it does</h2><p>${esc(c?.what || p.desc)}</p></section>`;
     if (c?.architecture && c.architecture.length) body += `<section class="block"><h2>How it works</h2><ul>${c.architecture.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
+    if (c?.advantages && c.advantages.length) body += `<section class="block"><h2>Key advantages</h2><ul>${c.advantages.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
     const paper = REPO_TO_PAPER[p.slug] ? bySlug[REPO_TO_PAPER[p.slug]] : null;
     if (paper) body += `<section class="block"><h2>Related paper</h2><p><a href="${paper.slug}.html">${esc(paper.title)}</a></p></section>`;
     if (c?.run) body += `<section class="block"><h2>Install & run</h2><pre class="readme">${esc(c.run)}</pre></section>`;
@@ -296,6 +297,7 @@ function detailPage(p) {
     if (c?.method || p.method) body += `<section class="block"><h2>Method</h2><p>${esc((c?.method) || p.method)}</p></section>`;
     if (c) {
       if (c.results && c.results.length) body += `<section class="block"><h2>Key results</h2><ul>${c.results.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
+      if (c.advantages && c.advantages.length) body += `<section class="block"><h2>Key advantages</h2><ul>${c.advantages.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
       if (c.limitations && c.limitations.length) body += `<section class="block"><h2>Limitations</h2><ul>${c.limitations.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
       if (c.fits) body += `<section class="block"><h2>Where it fits the RSI arc</h2><p>${esc(c.fits)}</p></section>`;
       if (c.reading) body += `<section class="block"><h2>How to read it</h2><p>${esc(c.reading)}</p></section>`;
@@ -319,7 +321,7 @@ function searchText(p) {
   const c = p.curated;
   if (c) {
     for (const k of ['tldr', 'method', 'fits', 'reading', 'what', 'run']) if (typeof c[k] === 'string') parts.push(c[k]);
-    for (const k of ['results', 'limitations', 'architecture']) if (Array.isArray(c[k])) parts.push(c[k].join(' '));
+    for (const k of ['results', 'advantages', 'limitations', 'architecture']) if (Array.isArray(c[k])) parts.push(c[k].join(' '));
   }
   return parts.filter(Boolean).join(' ');
 }
