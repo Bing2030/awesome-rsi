@@ -643,16 +643,29 @@
     "reading": "Read the policy-level reflection/optimization (§3)."
   },
   "2409.00872": {
-    "tldr": "Self-evolving Reflective Memory: combine iterative feedback, reflection, and an Ebbinghaus memory optimizer for multi-task, long-span agents.",
-    "method": "Integrates iterative feedback, reflective mechanisms, and an Ebbinghaus-forgetting-curve memory optimizer to improve continuous decision-making across multi-task, long-span settings.",
+    "tldr": "A training-free three-agent loop (User/Assistant/Checker) plus Ebbinghaus-style MemorySyntax memory management roughly doubles Reflexion's long-context QA F1 and yields up to 2.26x AgentBench gains, with the largest improvements on the smallest models.",
+    "method": "Three roles: a User supplies the task description d_U and reference instance i_U; an Assistant samples outputs o_t ~ pi_theta(o_t | s_t, R_t, f_t); a Checker compares each output to the expected result and returns feedback f_t, looping until the Checker validates or an iteration cap N is hit. Two memories: STM keeps the recent trajectory (o_t, a_t); LTM accumulates reflections r_t = ref(o_1:t, R_1:t) — insight text over sparse binary rewards — appended via M^L <- M^L U {r_t}. MemorySyntax scores each item's retention R(I_t, tau) = e^(-tau/S) with strength S tied to information entropy; a linguistic rewriter produces I*_t with raised strength, then thresholds theta1 > theta2 gate three outcomes: keep in STM (R >= theta1), promote to LTM (theta2 <= R < theta1), discard (R < theta2). Despite policy-gradient-flavored formalism, the implementation is prompt-level with no weight updates.",
     "results": [
-      "Enhanced multi-tasking and long-span information handling over fixed-memory baselines."
+      "AgentBench (6 tasks): GPT-3.5 Database 15.7 -> 35.6 (the abstract's 2.26x headline); Qwen-7B KG 0.0 -> 48.0; ChatGLM2-6B OS 0.0 -> 15.2; claimed relative gains of 57.7%-100% across five open-source models.",
+      "Multi-task evaluation: HotpotQA answer accuracy GPT-3.5 54.1% -> 74.9% (+20.8) and GPT-4 61.2% -> 78.4% (+17.2); Mistral-7b ALFWorld step completion 56.5% -> 73.8% (+17.3).",
+      "Head-to-head on long-context tasks vs Reflexion and Beam Search: HotpotQA F1 22.06 vs 11.26/10.26 and TriviaQA F1 22.76 vs 11.23/12.13 (roughly 2x), while code completion is near-parity (LCC F1 79.29 vs 79.28/79.12; RepoBench-P 81.22 vs 80.25/79.87).",
+      "RAG comparison: beats Fusion-in-Decoder on HotpotQA 74.8 vs 70.1 (+4.7), Natural Questions 73.6 (+3.8), TriviaQA 75.5 (+3.6), cutting memory 456 -> 231 MB (-50%) at similar latency.",
+      "Ablation (memory optimization on/off): CodeLlama-7B DB 2.7 -> 41.3 and WS 14.3 -> 58.7; Qwen-1.8B KG 6.8 -> 45.3 and ALF 0.0 -> 10.5."
+    ],
+    "advantages": [
+      "The same reflection-plus-memory recipe lifts both API models and 1.8-7B open models with zero training: Qwen-1.8B goes from near-floor (2.7 OS, 0.6 M2W) to 18.7/13.6, approaching GPT-3.5 on several AgentBench tasks — the strongest evidence that harness-level memory/reflection can substitute for scale.",
+      "On long multi-document QA, structured memory management roughly doubles Reflexion's F1 (11.26 -> 22.06 HotpotQA; 11.23 -> 22.76 TriviaQA), isolating the memory-lifecycle contribution beyond Reflexion's verbal retry.",
+      "MemorySyntax replaces FIFO eviction (MemGPT) and time-only decay (MemoryBank) with an entropy-strength score plus a three-way retain/promote/discard threshold gate, and measurably cuts RAG memory footprint ~50%.",
+      "Error analysis ties the mechanism to concrete failure modes: Context-Limit-Exceeded and invalid-format errors are nearly eliminated on OS/DB tasks, with invalid-action errors reduced."
     ],
     "limitations": [
-      "Generic framework; gains are incremental and task-dependent."
+      "No limitations section, no variance or significance reported, and numbers are internally inconsistent: Table 5's 'with memory' CodeLlama-7B KG/WS scores (48.0/58.7) exceed Table 1's SAGE values for the same model/tasks (27.0/40.2).",
+      "The Checker derives feedback from the expected output of the reference instance i_U, so the loop presumes an available ground truth; thresholds theta1/theta2, the iteration cap N, and retention parameters are never assigned values in the paper.",
+      "The Nash-equilibrium convergence theorem (Thm 3.1) assumes policy-gradient and convex-optimization updates on compact strategy spaces, while the system is explicitly training-free prompting — the formalism is not connected to the actual mechanism.",
+      "Iterative checker loops cost wall-clock time: the paper's own Table 6 shows SAGE-ChatGPT-4 at 10.6-10.9 min per task vs 6.5-8.7 for BabyAGI/AutoGPT/HuggingGPT/LangChain/TaskMatrix.AI, unremarked despite the RAG section's 'without increasing latency' claim."
     ],
-    "fits": "A compact synthesis of stage-3 reflection and stage-4 memory for long-horizon agents.",
-    "reading": "Read the reflection + memory-optimization integration (§3)."
+    "fits": "A Harness-level RSI entry that is an explicit hybrid of stage-3 reflection (Reflexion-style verbal self-critiques written to long-term memory) and stage-4 memory (MemoryBank's Ebbinghaus decay, hardened into a three-way retain/promote/discard gate), all wrapped in a Checker-driven iteration loop. Adds multi-agent feedback and error-rate reduction rather than single-agent retry; pairs with Reflexion and MemoryBank as their synthesis.",
+    "reading": "Read Sec 3.1-3.2 (checker loop, reflection, MemorySyntax), then Tables 1-3 (AgentBench, HotpotQA/MultiWOZ/ALFWorld, Reflexion comparison) and the Table 5 ablation. Appendix A is formal game theory — skimmable."
   },
   "2305.19118": {
     "tldr": "Divergent Thinking: self-reflection alone degenerates ('degeneration of thought'); multi-agent *debate* preserves divergent, higher-quality reasoning.",
@@ -667,16 +680,29 @@
     "reading": "Read the DoT analysis (§3) and the debate setup (§4)."
   },
   "2305.14325": {
-    "tldr": "Multiagent Debate: multiple model instances propose and debate their answers, iteratively converging on more factual reasoning.",
-    "method": "Multiple LLM instances propose answers and reasoning, then iterate — each sees the others' responses and refines — converging toward a more truthful/factual answer.",
+    "tldr": "Having multiple LLM instances propose, critique, and revise answers over debate rounds reliably beats single-agent generation and self-reflection — e.g. GSM8K 77.0 to 85.0% — and the resulting debate transcripts can be distilled back, creating a model self-improvement loop.",
+    "method": "Multiple copies of gpt-3.5-turbo-0301 independently answer the same prompt (zero-shot chain-of-thought) — only black-box generations, no weights or likelihoods. Each debate round, every agent receives the other agents' full responses concatenated as context plus a consensus prompt (\"using the solutions from other agents as additional information, can you provide your answer?\") and revises. Main configuration: 3 agents, 2 rounds; accuracy rises monotonically with agents and rounds (gains plateau past 4 rounds; 5+ agents need peers' responses summarized to fit context). \"Stubborn\" long-form prompts slow consensus and improve final answers; convergence is not guaranteed (debate is a multi-agent game) but agents almost always settle on one shared answer. Unlike majority voting, the model itself integrates the responses.",
     "results": [
-      "Improves factuality (truthfulness, arithmetic, reasoning) over single-model baselines."
+      "Arithmetic: 81.8±2.3% vs 67.0±4.7% single agent; self-reflection 72.1%, majority voting only 69.0% (3 agents, 2 rounds)",
+      "GSM8K: 85.0±3.5% vs 77.0±4.2% single agent (majority voting 81.0%); helps with and without zero-shot CoT",
+      "Chess move optimality (Stockfish pawn-score delta): 122.9±7.6 vs 91.4±10.6 single agent",
+      "Factuality: new 524-computer-scientist biography benchmark 73.8±2.3 vs 66.0±2.2; MMLU 71.1±4.6 vs 63.9 single — self-reflection drops MMLU to 57.7; chess move validity 45.2 vs 29.3",
+      "chatGPT+Bard debate solves 17/20 GSM8K vs 14 (chatGPT) and 11 (Bard) alone; persona initialization lifts MMLU 71.1 to 74.2"
+    ],
+    "advantages": [
+      "Makes debate between model copies a practical inference-time gain on black-box APIs: identical prompts and procedure across all six tasks, no gradient or likelihood access",
+      "Beats majority voting (the model integrates answers rather than tallying them) and peer critique beats self-reflection — which actually hurt factuality on MMLU (57.7 vs 63.9)",
+      "Not just answer amplification: many cases show all agents initially wrong yet converging on the correct answer; agents disagree on uncertain facts and drop them, and ease of persuasion may itself signal factual confidence",
+      "Explicitly frames debate transcripts as training data to distill back into the base model — a self-improvement loop — and introduces the biography factuality benchmark"
     ],
     "limitations": [
-      "Compute multiplies with agents; agreement can still converge on shared errors."
+      "Computationally expensive: every round needs a full generation per agent, multiplying cost (paper's own §5), though framed as data generation for distillation",
+      "Convergence is not correctness: debates settle on single answers that can be wrong while agents confidently affirm them — models cannot express uncertainty, so shared errors survive (§5)",
+      "Long debates overflow attention: models \"only focused on the most recent generations\" of a long debate history",
+      "Small eval sets (~100 problems per task) and the biography metric uses chatGPT itself as judge; agents' agreeableness may be an artifact of RLHF instruction tuning"
     ],
-    "fits": "The canonical multi-agent debate — the social alternative to single-model self-correction.",
-    "reading": "Read the debate protocol (§3) and how disagreement drives convergence."
+    "fits": "The canonical multi-agent debate paper — the social, quorum-based alternative to single-model self-correction at stage 6. Pairs with the Divergent Thinking paper (2305.19118): that motivates why diverse self-attempts help, this supplies the consensus mechanism later RSI pipelines reuse to generate training data.",
+    "reading": "Sections 2.1–2.2 (protocol, prompt-controlled consensus), Tables 1–2 with Figure 10 (agents/rounds scaling), and §5 Limitations; Figure 3 plus §3.3 for short vs long debate prompts."
   },
   "2511.16043": {
     "tldr": "Agent0: evolve agents from *zero human data* via tool-integrated reasoning and self-play RL.",
@@ -924,13 +950,20 @@
     "note": "The 'skills as the unit of agent capability' substrate — compare its skill model to Voyager/AgentFactory's code-as-skill."
   },
   "reef": {
-    "what": "Continual-learning infrastructure for self-improving agents.",
+    "what": "First open-source infrastructure for continual self-improving agents: an OpenAI/Anthropic-compatible serving layer that records interactions, matches feedback to receipts, trains weights (Slime/SGLang) or evolves harness text (Reefine), and publishes only evaluation-passing updates as versioned releases while serving continues.",
     "architecture": [
-      "Infrastructure for agents that continually learn and self-improve.",
-      "Python 3.12+, Apache-2.0, published as `reef-infra` on PyPI."
+      "Serve-Observe-Grow-Commit loop mapped to real modules (README table): reef/service/ takes OpenAI- and Anthropic-compatible requests (/v1/chat/completions, /v1/messages) and records interactions; reef/storage/records.py stores AgentRecords; reef/train/processors/ match reported feedback to eligibility; reef/recipe/ + reef/train/ produce the update; reef/train/evaluation/ + reef/artifact/ gate and publish it.",
+      "Feedback is receipt-based: every response carries an x-reef-agent-record-id header; POST /reef/report attaches {score, feedback, references:[receipt]} validated against schemas in reef/core/reports/ (scored_rollout, teacher_context); the x-reef-scenario request header creates or selects the scenario whose recipe decides what evolves — requests never pick recipes.",
+      "Backends are pluggable: reef/train/slime_backend/ (Megatron LoRA adapters, Ray executors, weight_updaters) and tinker_backend/ train weights; reef/train/cordis_backend/ proposes harness Mutations; recipes (sao, tttd, gepa, meta_harness, openclawrl, skillclaw) live in the recipes/ cookbook, selected by dotted class reference and not shipped in the wheel.",
+      "Versioned delivery: reef/artifact/ keeps an immutable parent-linked release chain (fork, publish with expected_parent, staged commit_release, git+LFS) and rejected candidates never move the serving release; reef/train/evaluation/evaluators.py ships RegressionCheckMixin — select only while the metric stays within margin of the best so far, so serving holds last selected weights — and reef/surface/ delivers accepted artifacts to harness adapters (pi, claude, codex, opencode, terminus)."
     ],
-    "run": "`pip install reef-infra` (Python 3.12+).",
-    "note": "Infrastructure rather than a single agent — the plumbing (experience collection, updates, evaluation) a self-improving agent needs to run continuously."
+    "advantages": [
+      "The only substrate here that learns under live traffic: serving and training share the deployment, updated weights sync in without a restart, and a rejected candidate leaves the current release serving — unlike offline search loops (RRSI) or batch RL frameworks, both of which stop the world to improve.",
+      "One receipt/report plumbing over two artifacts: model weights (SAO continual learning; TTT-Discover test-time training with measured TriMul, circle-packing and Erdos minimum-overlap results) or harness text (Reefine writes a change as a skill, rules entry, agent command, or pi extension and test-runs it under bwrap/pasta sandboxing) — weight-level and harness-level RSI in one deployment.",
+      "Non-regression is a first-class policy, not a convention: each candidate-evaluation plugin implements evaluate() and decide() in one contract, with best-checkpoint selection running online against the deployment's own traffic."
+    ],
+    "run": "Python 3.12+, git-lfs required for artifacts. `uv venv && source .venv/bin/activate && uv pip install reef-infra`, then a pure inference server: `uv run reef serve --inference.model-path Qwen/Qwen2.5-1.5B-Instruct`. Harness evolution (no GPUs): `reef serve --recipe reefine --inference.upstream-url http://127.0.0.1:11434 --inference.upstream-model gemma4:26b`, then `reef-pi evolve \"...\"`. Weight training adds `uv pip install -e \".[slime]\" && uv pip install --no-deps --group runtime`.",
+    "note": "Trace the core loop from reef/service/app.py through reef/artifact/release_chain.py; read train/evaluation/evaluators.py (RegressionCheckMixin is the online non-regression gate) and compare recipes/sao/ (weights) with reef/recipe/reefine/evolution.py (harness) — the same loop over two artifact types."
   },
   "autoresearch": {
     "what": "Karpathy's experiment: hand an agent a small but real LLM-training setup and let it improve it autonomously overnight.",
@@ -981,13 +1014,20 @@
     "note": "The flagship self-modifier — run it to watch the improver-improves-the-improver loop on real code."
   },
   "godel-agent": {
-    "what": "Gödel Agent — a self-referential agent whose behavior is code it can inspect and rewrite.",
+    "what": "Gödel Agent — a self-referential agent whose behavior is code it can inspect and rewrite: its actions, prompts and solver are Python it reads, patches at runtime, and re-evaluates in a loop (arXiv 2410.04444).",
     "architecture": [
-      "Prompts + tools form the agent's 'code', which it can read and modify.",
-      "Self-modification loop with heuristic validation."
+      "src/agent_module.py is the whole agent (~724 lines): Agent(AgentBase) plus its own tool schema list agent.action_functions — action_read_logic (inspect.getsource on itself), action_adjust_logic (exec + setattr on the live module/class, keeping a __source__ map so rewritten methods stay readable), action_run_code, action_evaluate_on_task.",
+      "Loop in src/main.py: reinit() feeds the agent its own solver source, then evolve() prompts o3 with tools=agent.action_functions, tool_choice='required' — the model must act; action_counter['evolve'] >= 100 hard-exits the run.",
+      "Validation is accuracy-gated checkpointing: action_evaluate_on_task calls task.evaluate(solver); only when accuracy beats task_mgsm.last_test_acc does logic.store_all_logic() dump the current in-memory agent to results/<task>/agent_module/ (drop_80.892.txt, gpqa_0.3494.txt, mmlu_0.7087.txt, mgsm_0.6425.txt).",
+      "Eval harnesses src/task_{mgsm,mmlu,gpqa,drop}.py are adapted from ADAS; src/goal_prompt.md tells the model literally that it is the self_evolving_agent instance of Agent in module agent_module — self-reference by address, not metaphor."
     ],
-    "run": "Python; LLM API key; run the self-modification loop per README.",
-    "note": "The theory-side companion to DGM — run it to see self-reference as code-as-identity in practice."
+    "advantages": [
+      "Purest code-as-identity artifact in this catalog: no outer harness owns the improvement loop — the agent edits the very module it executes from, so monkey-patching, runtime guardrails and self-inspection are all directly observable in one readable file.",
+      "results/ ships the evolved agent per benchmark, so you can diff what a run actually changed (e.g. the DROP solver it grew from a one-shot gpt-4o-mini prompt into a 5-sample self-consistency ensemble) before spending API money.",
+      "Edit-time safety is explicit and small: what the framework forbids (rewriting action_call_llm / action_call_json_format_llm, time.sleep in solver, logging) is exactly the guardrail-boundary question RRSI cares about."
+    ],
+    "run": "git clone https://github.com/Arvid-pku/Godel_Agent.git && cd Godel_Agent && pip install -r requirements.txt  # deps: numpy, tqdm, pandas, openai==1.2.0, backoff; put an OpenAI key in src/key.env\npython src/main.py  # README: 'You can adjust the task in the agent_module.py file.'",
+    "note": "Read results/*/agent_module/ first — the evolved DROP/MMLU solvers show what the loop actually finds. Then study action_adjust_logic's guardrails and the accuracy-gated store_all_logic checkpoint. Theory-side companion to DGM; here self-reference is literal: the agent is the module it edits."
   },
   "hyperagents": {
     "what": "HyperAgents — self-improvement where the meta-level (the improver) is itself improvable code.",
@@ -1008,49 +1048,84 @@
     "note": "The 'close the loop' system — study how harness edits and weight updates are coordinated in one feedback agent."
   },
   "ace": {
-    "what": "ACE — Agentic Context Engineering; evolves the whole context as a playbook.",
+    "what": "ACE (Agentic Context Engineering) — code for arXiv 2510.04618: treats the whole LLM context as an evolving playbook of ID'd, helpful/harmful-counted bullets, self-improved by a Generator/Reflector/Curator loop making structured incremental delta updates — no weight updates, no full-prompt rewrites.",
     "architecture": [
-      "Context as an evolving playbook: generation, reflection, curation.",
-      "Structured incremental edits avoid context collapse."
+      "ace/ace.py — the ACE orchestrator class with run(mode='offline'|'online'|'eval_only'); instantiates the three roles from ace/core/: Generator, Reflector, Curator, plus an optional BulletpointAnalyzer (embedding-similarity dedup, threshold 0.90) over providers sambanova/together/openai/commonstack (default model DeepSeek-V3.1).",
+      "playbook_utils.py — deterministic merge layer: each bullet is a parseable line '[str-00001] helpful=5 harmful=0 :: advice' under 7 fixed ## sections (STRATEGIES & INSIGHTS, FORMULAS & CALCULATIONS, COMMON MISTAKES TO AVOID, ...); apply_curator_operations() applies ADD-only deltas with system-assigned global IDs (UPDATE/MERGE/DELETE/CREATE_META are documented stubs), update_bullet_counts() maintains the counters.",
+      "ace/prompts/curator.py — CURATOR_PROMPT / CURATOR_PROMPT_NO_GT emit pure-JSON operation lists (type/section/content/reasoning); a second CURATOR_OPERATIONS_AGGREGATION_PROMPT pass synthesizes overlapping ADDs into fewer, more specific ones before application — the grow-and-refine mechanism that prevents context collapse.",
+      "eval/finance/run.py (FiNER, XBRL formula), eval/mind2web/ and eval/mind2web2/, ace-appworld as a git submodule; CLI: uv run python -m eval.finance.run --task_name finer --mode offline --playbook_token_budget 80000 --use_bulletpoint_analyzer; each run writes results/ace_run_<ts>_<task>_<mode>/ with best_playbook.txt, bullet_usage_log.jsonl, curator_operations_diff.jsonl."
     ],
-    "run": "Python; LLM API key; run the context-evolution loop per README.",
-    "note": "Watch how the *whole context* evolves (vs. Voyager's code skills) — prompt-space self-improvement."
+    "advantages": [
+      "The one repo in this catalog where the self-improved artifact is the context itself, not code or harness — a direct open-source baseline against GEPA and Dynamic Cheatsheet (+10.6% AppWorld, +8.6% finance, ~86.9% lower adaptation latency), and the working complement to Voyager's code-skill library in prompt space.",
+      "Cleanest available reference implementation of collapse-resistant memory growth: JSON delta ops applied by deterministic non-LLM code (apply_curator_operations), system-assigned bullet IDs, helpful/harmful counters, then LLM aggregation + similarity dedup for pruning — the exact discipline any RSI harness with unboundedly growing notes needs.",
+      "Self-supervised by construction: reflector works from execution feedback alone (CURATOR_PROMPT_NO_GT, --no_ground_truth), and the same loop runs offline (train/val epochs) or online (update every --online_eval_frequency samples) with only 3 DataProcessor methods required to port a new domain."
+    ],
+    "run": "git clone https://github.com/ace-agent/ace.git && cd ace && curl -LsSf https://astral.sh/uv/install.sh | sh && uv sync && cp .env.example .env  # add a provider key, then:\nuv run python -m eval.finance.run --task_name finer --mode offline --save_path results   # or --mode online / eval_only --initial_playbook_path results/ace_run_.../best_playbook.txt",
+    "note": "Read ace/prompts/curator.py next to playbook_utils.apply_curator_operations and a run's curator_operations_diff.jsonl: the delta-op discipline (ADD-only, system-assigned IDs, aggregation pass) is what stops context collapse. Contrast bullet helpful/harmful counters with Voyager's skill library — prompt-space evolution, not code-space."
   },
   "alma": {
-    "what": "ALMA — meta-learned agentic memory designs.",
+    "what": "ALMA (Automated meta-Learning of Memory designs for Agentic systems) — a Meta Agent searches open-endedly over memory designs expressed as executable Python, evaluating each in AlfWorld/TextWorld/BabaisAI/MiniHack and archiving winners by reward, replacing hand-engineered agent memory (G-Memory, ReasoningBank, Dynamic Cheatsheet) with domain-specialized learned designs.",
     "architecture": [
-      "Meta-learning over the memory design (what to store, update, retrieve).",
-      "Memory adapts to task diversity and non-stationarity instead of being fixed."
+      "core/meta_agent.py — MetaAgent.forward() is the search loop: analyze_memo_structure() reflects on a sampled design's source + eval logs, generate_new_code() implements the proposal, examine_new_code() verifies with up to 3 reflect-and-repair trials (build_reflection_prompt on the error), then the design is evaluated and its reward/parentage logged; run_main.py drives it with --meta_model gpt-5 --execution_model gpt-5-nano --status train.",
+      "core/memo_manager.py — Memo_Manager keeps the archive as memo_archive/{task_type}/memo_structure_{SHA}.py files keyed by an 8-char SHA in memo_db; update_reward() sigmoid-normalizes against the measured no_mem baseline, and select_structure() samples up to 5 parents per step via softmax(final_score/tau=0.5) minus alpha*log(visit_time) — a quality/diversity bandit with parent + improve_score lineage per design.",
+      "evals/agents/memo_structure.py — a design subclasses MemoStructure / Sub_memo_layer: a database plus arbitrary layers each implementing retrieve()/update(), composed freely via general_retrieve(recorder)/general_update(recorder); learned designs ship real machinery (langchain_chroma vector stores, FINCH clustering, networkx graphs), while memo_archive/baseline/ holds the human baselines it must beat (g_memory, pure_insights, insights_traj_sim, similarity, no_mem).",
+      "eval_in_container.py + envs_docker/ — every rollout executes model-generated memory code inside Docker: one ALFWorld image (envs_docker/alfworld/image_build.sh) and one shared BALROG image for TextWorld/BabaisAI/MiniHack (envs_docker/BALROG/image_build.sh); per-domain adapters live in envs_archive/{task}_envs.py + prompts/ + configs/. README reports the learned design beating all manual baselines on all four domains (12.3 vs 6.1 no-memory; 53.9 vs 41.1), with ICLR 2026 workshop orals (RSI + MemAgents)."
     ],
-    "run": "Python; meta-learning setup; see README.",
-    "note": "Run to see memory *architecture* learned rather than hand-crafted — the meta level over memory."
+    "advantages": [
+      "The searched object is the memory architecture itself — schema, retrieval keys, and update policy as one evolvable Python file — not prompts or harness code: it is the meta-level above this catalog's memory baselines (G-Memory, Dynamic Cheatsheet, ACE playbooks), and it discovers which of those abstractions to re-invent per domain.",
+      "Learned designs are portable artifacts: a winning memory is a single memo_structure_{SHA}.py plus downloadable logs, so --memo_SHA g-memory or a learned SHA re-evaluates a design without re-running the expensive search (gpt-5 meta-agent over gpt-5-nano executors).",
+      "Purpose-built continual-learning testbed: --status eval_in_distribution vs eval_out_of_distribution measures whether a learned design transfers under task shift, against a measured no-memory baseline — the cleanest setup here for asking whether learned memory generalizes or overfits its training tasks."
+    ],
+    "run": "git clone https://github.com/zksha/alma.git && cd alma && conda create -n alma python=3.11 && conda activate alma && pip install -r requirements.txt && add OPENAI_API_KEY to .env; build an env image: cd envs_docker/alfworld && bash image_build.sh  (or envs_docker/BALROG/image_build.sh once, shared by TextWorld/BabaisAI/MiniHack); then:\npython run_main.py --rollout_type batched --meta_model gpt-5 --execution_model gpt-5-nano --batch_max_update_concurrent 10 --batch_max_retrieve_concurrent 10 --task_type alfworld --status train --train_size 30   # testing.sh / training.sh hold per-domain configs",
+    "note": "Read core/meta_agent_prompt.py's build_analysis_prompt and build_reflection_prompt — they show how eval logs and stack traces become concrete design edits. Then diff memo_archive/baseline/memo_structure_g_memory.py (Chroma + FINCH + networkx) against a learned design from the Drive link to see what search actually changed. README warns: it executes model-generated code — sandbox it."
   },
   "continual-harness": {
-    "what": "Continual Harness — reset-free online self-improvement (the Gemini Plays Pokémon lineage).",
+    "what": "Continual Harness — reset-free online self-improvement (arXiv 2605.09998, Gemini Plays Pokémon lineage): one continuous Pokémon episode where an LLM Refiner rewrites the agent's own prompt, sub-agents, skills, and memory in place, mid-episode.",
     "architecture": [
-      "The agent alternates acting and refining its prompt, sub-agents, skills, and memory.",
-      "Single continuous trajectory, no resets."
+      "agents/utils/harness_evolver.py — the HarnessEvolver class runs four failure-isolated passes (_evolve_prompt / _evolve_subagents / _evolve_skills / _evolve_memory) over the recent trajectory window, exposed to the agent as a single evolve_harness tool (--scaffold continualharness --enable-prompt-optimization); adaptive cadence: 25-step warmup, every 25 steps for the first 200, then every 100.",
+      "Component stores with per-entry mutation history — utils/stores/{memory,skills,subagents}.py; the repo ships a real evolved artifact (PokemonRed-GBC/bootstrap_source/: EVOLVED_ORCHESTRATOR_POLICY.md, memory.json, skills.json — its navigate_to BFS-pathfinding skill carries a mutation_history of self-authored code diffs across generations).",
+      "Headless client/server: run.py starts a FastAPI game server on --port plus a frame-stream server on port+1, over mGBA (Emerald) or PyBoy (Red); run_cli.py adds an MCP proxy on port+2 so Dockerized Claude Code / Gemini CLI / Codex / Hermes agents play through restricted get_game_state / press_buttons tools.",
+      "Four --scaffold tiers matching the paper: simplest and simple (H_min ablations), hand-engineered pokeagent (H_expert: subagent_reflect/verify/battler/planner, A* pathfinding, damage calculator), and continualharness (H_CH); --bootstrap-from resumes a prior run's evolved harness frozen or still-updating, and the same loop extends to weights via an online DAgger + process-reward-model pipeline."
     ],
-    "run": "Python; embodied/Pokémon environment + LLM API; see README.",
-    "note": "Run if you want the reset-free, embodied flavor of harness self-improvement."
+    "advantages": [
+      "The only substrate in this catalog where self-improvement happens mid-episode with no resets — gains come from in-context CRUD edits on prompt/sub-agents/skills/memory, not retraining or fresh episodes, cleanly isolating harness-level learning.",
+      "Built-in capability-scaling evidence: in the paper it is strictly Pareto-dominant on Gemini 3 Pro, high-variance on Flash, and below the minimalist baseline on Flash-Lite — a ready-made testbed for 'when does refinement help at all?'",
+      "Ships a completed run's evolved harness as a bootstrap artifact, so you can study a real mutation history (skill code diffs, prompt self-corrections like the trash-can-puzzle lesson) without running anything."
+    ],
+    "run": "git clone https://github.com/sethkarten/continual-harness && cd continual-harness && uv sync  (Python 3.10–3.11; legally-obtained PokemonRed-GBC/pokered.gbc or Emerald-GBAdvance/rom.gba; backend API key). Then: python run.py --game red --scaffold continualharness --enable-prompt-optimization --optimization-window-length 50 --backend gemini --model-name gemini-3-pro-preview --port 8000 --agent-auto",
+    "note": "Read EVOLVED_ORCHESTRATOR_POLICY.md first — the prompt a Refiner actually converged to, full of learned lessons. Then trace one evolve() generation in harness_evolver.py against skills.json's mutation_history. Note the capability floor: refinement hurt Flash-Lite."
   },
   "evoagentx": {
-    "what": "EvoAgentX — a platform to generate, execute, and optimize agentic workflows.",
+    "what": "Open-source Python framework (code for arXiv 2507.03616) that generates multi-agent workflows from a natural-language goal, executes them, then optimizes them with pluggable evolution algorithms — TextGrad, AFlow (MCTS), MIPRO, EvoPrompt, SEW, MAP-Elites — scored against built-in benchmarks.",
     "architecture": [
-      "Automates workflow generation + execution + optimization.",
-      "Integrates evolution/optimization algorithms in one unified framework."
+      "Generation pipeline in evoagentx/workflow/: WorkFlowGenerator (workflow_generator.py) composes a TaskPlanner (goal to subtasks), an AgentGenerator (assign or create the agent for each subtask) and a WorkFlowReviewer over num_turns refinement iterations, emitting a WorkFlowGraph of nodes/edges (workflow_graph.py); AgentManager.add_agents_from_workflow() instantiates it and WorkFlow.execute() runs it; graphs persist via save_module()/from_file(). Siblings: action_graph.py, controller.py, environment.py, operators.py, workflow_manager.py.",
+      "Optimizers in evoagentx/optimizers/, all off a shared optimizer.py base: AFlowOptimizer (ported from MetaGPT's AFlow, MIT) runs MCTS-style rounds where each round_N/ directory holds a candidate graph.py+prompt.py, samples parents from top scores, and checks convergence via ConvergenceUtils; SEWOptimizer (Self-Evolving Workflows) converts a SequentialWorkFlowGraph into python/yaml/code/core/bpmn representations, then mutates them zero- or first-order with mutation prompts from SimplePromptBreeder under optimize_mode structure|prompt|all; plus textgrad, mipro, evoprompt and map_elites optimizers.",
+      "Evaluation is first-class: evoagentx/benchmark/ ships loaders for GSM8K, HotPotQA, MBPP, HumanEval, LiveCodeBench, BigBenchHard, NQ, WorfBench and Real-MM-RAG feeding evoagentx/evaluators/ (aflow_evaluator.py); the README reports TextGrad/AFlow/MIPRO deltas on HotPotQA F1, MBPP pass@1 and MATH, and GAIA prompt-optimization of Open Deep Research and OWL.",
+      "Execution substrate: evoagentx/tools/ (~30 toolkits — Python/Docker interpreters, BrowserToolkit and LLM-driven BrowserUseToolkit, Google/DDGS/Serper search, ArxivToolkit, FAISS/MongoDB/PostgreSQL, MCP via mcp.py); evoagentx/hitl/ (HITLManager, HITLInterceptorAgent with HITLMode.PRE_EXECUTION approve/reject gating mid-workflow); evoagentx/memory/ (short- and long-term, memory_manager.py, context_manager.py); evoagentx/models/ (OpenAI native plus LiteLLM/openrouter/siliconflow/Qwen)."
     ],
-    "run": "Python; pip-installable; see README quickstart.",
-    "note": "The tooling for *running* workflow evolution — pair with the paper to see the search algorithms concretely."
+    "advantages": [
+      "The only substrate in this catalog where the search algorithm is a swappable argument rather than the contribution: TextGrad, AFlow-MCTS, MIPRO, EvoPrompt, SEW and MAP-Elites all optimize the same WorkFlowGraph through one Optimizer interface over one benchmark harness, so you can benchmark evolution algorithms head-to-head instead of re-implementing each paper.",
+      "Closes the loop from blank page to evolved artifact: natural-language goal to generated WorkFlowGraph to executed workflow to optimizer rounds that literally rewrite graph.py/prompt.py per round (AFlow) or mutate a serialized graph scheme (SEW) — the runnable counterpart to the workflow-evolution papers this catalog otherwise treats as read-only.",
+      "Optimizes other people's deployed agents, not just its own: the README demonstrates prompt-optimizing HuggingFace's Open Deep Research and camel-ai's OWL on GAIA, and Wonderful_workflow_corpus/ ships executable workflow.json+tools.json apps (arXiv digest, stock analysis) you can feed straight to the optimizers."
+    ],
+    "run": "pip install evoagentx  (or pip install git+https://github.com/EvoAgentX/EvoAgentX.git). Core loop from the README: WorkFlowGenerator(llm).generate_workflow(goal) → AgentManager().add_agents_from_workflow(graph, llm_config) → WorkFlow(graph, agent_manager, llm).execute(). For evolution: examples/optimization/aflow/aflow_mbpp.py (also hotpotqa/humaneval/math variants), Colab notebooks docs/ColabNotebook/tutorial_notebooks/aflow_optimizer.ipynb and textgrad_optimizer.ipynb.",
+    "note": "Read evoagentx/optimizers/sew_optimizer.py (scheme round-tripping + mutation prompts) against aflow_optimizer.py (round directories, experience, convergence) — the clearest side-by-side of two workflow-evolution search strategies; then benchmark/ to see how scoring wires in. Pair with the paper's Section 3 for the generation-execution-optimization architecture."
   },
   "evolver": {
-    "what": "EvolveR — self-evolving agents via an experience-driven lifecycle.",
+    "what": "EvolveR — self-evolving LLM agents via an experience-driven lifecycle: rollout trajectories are distilled into guiding/cautionary principles in a Milvus experience DB, retrieved at task time via a <search_experience> action, and outcome scores reinforce a GRPO-trained Qwen2.5-3B policy (arXiv 2510.16079, ICML 2026).",
     "architecture": [
-      "Trajectories are distilled into abstract strategic principles.",
-      "Offline distillation + online retrieval + outcome-reinforced policy."
+      "evolver/experience/experience_manager.py — ExperienceManager.reflection() runs every training step (experience.organize_interval=1): it flushes the trajectory buffer to the VDB, re-scores each retrieved principle with Laplace-smoothed success (success_count+1)/(usage_count+2) in _update_metric_scores(), then _distill_new_experiences() summarizes each trajectory via SUMMARIZE_SUCCESSFUL/FAILED_TRAJECTORY_PROMPT into a [DESCRIPTION] sentence plus [STRUCTURE] (subject, predicate, object) triplets — typed 'guiding' on success, 'cautionary' on failure — dedups candidates with pairwise MATCH_PRINCIPLE_PROMPT yes/no LLM votes over connected components, then merges into an existing principle (embedding-similarity gate + LLM match, linking the source trajectory as a positive/negative example) or creates a new one; principles scoring under clean_low_metric_threshold=0.3 are purged, as are 'collapsed' ('!!!!!') and special-token-contaminated ones caught at retrieval time.",
+      "evolver/experience/milvusdb/ — the 'Experience VDB': a FastAPI server (routers/principles.py, trajectories.py, search.py, export_import.py; start_server.sh) over a single-file Milvus DB; scripts/train_grpo-3b.sh installs a trap that POSTs /export/ of the principles+trajectories collections to data/evolver/result/<experiment>/db_exports as jsonl on exit, and scripts/test-3b.sh restores a prior run via VDB_IMPORT_DB_FILE — the evolved memory is a checkpointable, transferable artifact, not transient context.",
+      "evolver/llm_agent/generation.py — the multi-turn rollout (max_turns=10) over <think>/<search>/<search_experience>/<answer> actions: a <search_experience> query calls ExperienceManager.retrieve(top_k=3), returning RetrievedExperiencePackage(principle, similarity_score, positive_examples, negative_examples); _build_prompt_with_experience() packs packages into the token budget with priorities 1. principle description + metric_score, 2. structure subgraph, 3. example trajectories; actor state_masking masks the <information>/<experience> observation blocks out of the policy loss.",
+      "evolver/rewards/ + vendored verl/ and LLaMA-Factory/ — outcome_reward_fn (exact match for closed QA; weighted F1 + an LLM 'independence/diversity' score for open-ended) drives GRPO via verl.trainer.main_ppo (algorithm.adv_estimator=grpo; default weights format=0.1, outcome=1.0, experience=0); experience_reward_fn can additionally pay merit_score × embedding-similarity for used principles; scripts/cold_start_sft.sh produces the qwen-3b-instruct-cold_start starting checkpoint, and evolver/search/ serves an e5_Flat.index over the wiki-18 corpus (explicit Search-R1 lineage)."
     ],
-    "run": "Python; LLM API key; run the lifecycle loop per README.",
-    "note": "The end-to-end 'experience → principle → policy' loop — run to see *strategy* (not fact) memory."
+    "advantages": [
+      "Memory with a trust ledger: every principle carries usage_count/success_count and a smoothed metric_score that decides both survival (purged below 0.3) and retrieval merit — you can watch individual strategies earn and lose the system's trust across training, which prompt-only memory banks (ACE playbooks, Dynamic Cheatsheet) never measure.",
+      "Principles are dual-representation and example-grounded: a natural-language description for embedding retrieval plus SPO-triplet structure, each shipping linked successful AND failed trajectories as few-shot evidence at retrieval time — the most concrete artifact in this catalog for studying strategy (not fact) memory.",
+      "The lifecycle closes inside the RL loop itself — distill every step, retrieve during rollouts, reinforce from outcomes — rather than wrapping a frozen model; and jsonl export/import lets one experiment's grown memory seed another (VDB_IMPORT_DB_FILE), making memory evolution itself reproducible."
+    ],
+    "run": "conda create -n evolver python=3.10 && conda activate evolver\npip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121\npip3 install vllm==0.6.3\npip install -e .   # installs the vendored verl\npip3 install flash-attn --no-build-isolation\n# plus two side envs: `vllm` (embedding server) and `retriever` (faiss-gpu=1.8.0, pyserini)\n# data: HF dataset Edaizi/EvolveR-NQ-HotpotQA -> data/nq_hotpotqa_train/{train,test}.parquet\nconda activate vllm && bash scripts/vllm_server.sh\nconda activate retriever && python scripts/download.py --save_path data/Wiki-corpus-embedd && cat data/Wiki-corpus-embedd/part_* > data/Wiki-corpus-embedd/e5_Flat.index && gzip -d data/Wiki-corpus-embedd/wiki-18.jsonl.gz && bash scripts/retrieval_launch.sh\nbash scripts/train_grpo-3b.sh   # GPU_NUM=8 by default; or skip training with pretrained HF Edaizi/EvolveR (EvolveR-3B, Qwen2.5-3B)",
+    "note": "Start with evolver/experience/prompts.py — the guiding/cautionary duality is the whole design. Then read the 'Reflection Cycle Summary' log line: merges, dedups, DB counts per step. _update_metric_scores() is the trust rule: (success+1)/(usage+2). Note rewards.weights.experience=0 by default — outcome EM does the reinforcing."
   },
   "voyager": {
     "what": "Voyager — an open-ended embodied agent that builds a growing skill library in Minecraft.",

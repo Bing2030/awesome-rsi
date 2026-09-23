@@ -81,10 +81,10 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 47 | 5 | paper | 2507.03616 | EvoAgentX: An Automated Framework for Evolving Agentic Workflows | had | yes | ☐ |  |
 | 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ☐ |  |
 | 49 | 5 | paper | 2402.17574 | Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization | had | yes | ☐ |  |
-| 50 | 5 | paper | 2409.00872 | Self-evolving Agents with Reflective and Memory-Augmented Abilities | had | yes | ☐ |  |
+| 50 | 5 | paper | 2409.00872 | Self-evolving Agents with Reflective and Memory-Augmented Abilities | had | yes | ✓ |  |
 | 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ☐ |  |
 | 52 | 6 | paper | 2305.19118 | Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate | had | yes | ☐ |  |
-| 53 | 6 | paper | 2305.14325 | Improving Factuality and Reasoning in Language Models through Multiagent Debate | had | yes | ☐ |  |
+| 53 | 6 | paper | 2305.14325 | Improving Factuality and Reasoning in Language Models through Multiagent Debate | had | yes | ✓ |  |
 | 54 | 6 | paper | 2505.15734 | DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning | had | yes | ☐ |  |
 | 55 | 6 | paper | 2511.16043 | Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning | had | yes | ☐ |  |
 | 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ☐ |  |
@@ -112,19 +112,19 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 78 | 10 | repo | pi | Pi | had | - | ☐ |  |
 | 79 | 10 | repo | agentfactory | AgentFactory (code) | had | - | ☐ |  |
 | 80 | 10 | repo | dgm | Darwin Gödel Machine (code) | had | - | ☐ |  |
-| 81 | 10 | repo | godel-agent | Gödel Agent (code) | had | - | ☐ |  |
+| 81 | 10 | repo | godel-agent | Gödel Agent (code) | had | - | ✓ |  |
 | 82 | 10 | repo | hermes-agent | Hermes Agent | had | - | ☐ |  |
 | 83 | 10 | repo | hyperagents | HyperAgents (code) | had | - | ☐ |  |
 | 84 | 10 | repo | seal | SEAL | had | - | ☐ |  |
 | 85 | 10 | repo | sia | SIA (code) | had | - | ☐ |  |
-| 86 | 10 | repo | ace | ACE (code) | had | - | ☐ |  |
-| 87 | 10 | repo | alma | ALMA (code) | had | - | ☐ |  |
-| 88 | 10 | repo | continual-harness | Continual Harness (code) | had | - | ☐ |  |
-| 89 | 10 | repo | evoagentx | EvoAgentX (code) | had | - | ☐ |  |
-| 90 | 10 | repo | evolver | EvolveR (code) | had | - | ☐ |  |
+| 86 | 10 | repo | ace | ACE (code) | had | - | ✓ |  |
+| 87 | 10 | repo | alma | ALMA (code) | had | - | ✓ |  |
+| 88 | 10 | repo | continual-harness | Continual Harness (code) | had | - | ✓ |  |
+| 89 | 10 | repo | evoagentx | EvoAgentX (code) | had | - | ✓ |  |
+| 90 | 10 | repo | evolver | EvolveR (code) | had | - | ✓ |  |
 | 91 | 10 | repo | letta-code | Letta Code | had | - | ☐ |  |
 | 92 | 10 | repo | memento-skills | Memento-Skills | had | - | ☐ |  |
-| 93 | 10 | repo | reef | Reef | had | - | ☐ |  |
+| 93 | 10 | repo | reef | Reef | had | - | ✓ |  |
 | 94 | 10 | repo | voyager | Voyager (code) | had | - | ☐ |  |
 | 95 | 10 | repo | rsiagent | RSIAgent (code) | had | - | ☐ |  |
 | 96 | 10 | repo | harness-zero | Harness-Zero (code) | had | - | ☐ |  |

@@ -1,0 +1,17 @@
+{
+  "what": "Gödel Agent — a self-referential agent whose behavior is code it can inspect and rewrite: its actions, prompts and solver are Python it reads, patches at runtime, and re-evaluates in a loop (arXiv 2410.04444).",
+  "architecture": [
+    "src/agent_module.py is the whole agent (~724 lines): Agent(AgentBase) plus its own tool schema list agent.action_functions — action_read_logic (inspect.getsource on itself), action_adjust_logic (exec + setattr on the live module/class, keeping a __source__ map so rewritten methods stay readable), action_run_code, action_evaluate_on_task.",
+    "Loop in src/main.py: reinit() feeds the agent its own solver source, then evolve() prompts o3 with tools=agent.action_functions, tool_choice='required' — the model must act; action_counter['evolve'] >= 100 hard-exits the run.",
+    "Validation is accuracy-gated checkpointing: action_evaluate_on_task calls task.evaluate(solver); only when accuracy beats task_mgsm.last_test_acc does logic.store_all_logic() dump the current in-memory agent to results/<task>/agent_module/ (drop_80.892.txt, gpqa_0.3494.txt, mmlu_0.7087.txt, mgsm_0.6425.txt).",
+    "Eval harnesses src/task_{mgsm,mmlu,gpqa,drop}.py are adapted from ADAS; src/goal_prompt.md tells the model literally that it is the self_evolving_agent instance of Agent in module agent_module — self-reference by address, not metaphor."
+  ],
+  "advantages": [
+    "Purest code-as-identity artifact in this catalog: no outer harness owns the improvement loop — the agent edits the very module it executes from, so monkey-patching, runtime guardrails and self-inspection are all directly observable in one readable file.",
+    "results/ ships the evolved agent per benchmark, so you can diff what a run actually changed (e.g. the DROP solver it grew from a one-shot gpt-4o-mini prompt into a 5-sample self-consistency ensemble) before spending API money.",
+    "Edit-time safety is explicit and small: what the framework forbids (rewriting action_call_llm / action_call_json_format_llm, time.sleep in solver, logging) is exactly the guardrail-boundary question RRSI cares about."
+  ],
+  "run": "git clone https://github.com/Arvid-pku/Godel_Agent.git && cd Godel_Agent && pip install -r requirements.txt  # deps: numpy, tqdm, pandas, openai==1.2.0, backoff; put an OpenAI key in src/key.env\npython src/main.py  # README: 'You can adjust the task in the agent_module.py file.'",
+  "note": "Read results/*/agent_module/ first — the evolved DROP/MMLU solvers show what the loop actually finds. Then study action_adjust_logic's guardrails and the accuracy-gated store_all_logic checkpoint. Theory-side companion to DGM; here self-reference is literal: the agent is the module it edits.",
+  "_source_note": "Read the full README (method overview, installation, project structure, configuration, development tips, citation) and source via gh api (raw curl timed out): src/agent_module.py complete, src/main.py, src/goal_prompt.md complete, src/logic.py (get_source_code/store_all_logic), requirements.txt, results/drop/agent_module/solver.py and the four results/* score filenames from the git tree. High confidence."
+}
