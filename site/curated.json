@@ -86,16 +86,29 @@
     "reading": "Read the three components (§3–4) and the automatic-curriculum mechanism; then run the repo (stage 10)."
   },
   "2510.04618": {
-    "tldr": "Treats context as an evolving 'playbook' that accumulates and organizes strategies via generation, reflection, and curation — using structured incremental edits to avoid context collapse.",
+    "tldr": "Treats an LLM's entire context as an evolving playbook of ID'd, helpful/harmful-counted bullets, self-improved by a Generator/Reflector/Curator loop applying structured incremental delta updates with deterministic non-LLM merging — fixing the brevity bias and context collapse of monolithic prompt rewriting.",
+    "method": "Context is a structured playbook of itemized bullets, each with metadata (unique ID, helpful/harmful counters) and content (a strategy, concept, or failure mode). Three same-model roles (DeepSeek-V3.1 non-thinking throughout, to isolate context effects) loop: the Generator solves a query while flagging which bullets helped or misled; the Reflector diagnoses the trace — up to 5 refinement rounds — extracting key insights and tagging each bullet helpful/harmful/neutral; the Curator emits compact JSON delta operations (ADD-only in the shipped prompts, IDs system-assigned) merged by deterministic non-LLM logic, so deltas batch in parallel. Grow-and-refine controls growth: counters update in place and semantic-embedding dedup prunes redundancy, either proactively after each delta or lazily when the context window is exceeded. Offline mode runs up to 5 epochs over training queries (system prompts); online mode updates after each test sample (agent memory).",
     "results": [
-      "+10.6% over strong baselines on agent benchmarks and +8.6% on finance/domain tasks.",
-      "Works both offline (system prompts) and online (agent memory), scaling with long-context models."
+      "AppWorld (DeepSeek-V3.1, ReAct base avg 42.4): offline ACE 59.4 (+17.0) with GT labels, 57.2 (+14.8) without; beats ICL by 12.3 and GEPA by 11.9 offline, and Dynamic Cheatsheet by 7.6 online (online ACE 59.5, +17.1) — the headline +10.6% agent average.",
+      "AppWorld leaderboard (09/2025): 59.4% avg matches top-ranked IBM CUGA (60.3%, GPT-4.1-powered) using smaller open-source DeepSeek-V3.1; online ACE surpasses CUGA by 8.4% TGC / 0.7% SGC on test-challenge.",
+      "Finance (FiNER+Formula, base 69.1 avg): offline ACE with GT 81.9 (+12.8), beating ICL/MIPROv2/GEPA by 10.9 avg; DDXPlus medical 75.2→90.2 (+15.0, vs GEPA's 76.4); BIRD-SQL 47.8→52.9 (+5.1) — the headline +8.6% domain average.",
+      "Cost: vs GEPA offline AppWorld −82.3% latency (53,898→9,517s), −75.1% rollouts (1,434→357); vs DC online FiNER −91.5% latency (65,104→5,503s), −83.6% token cost ($17.7→$2.9); 86.9% average latency reduction; 91.8% cache hit rate cuts billed input cost 82.6%.",
+      "Ablation: removing incremental delta updates drops test-normal TGC 76.2→67.3 and SGC 64.3→46.4 (−11.7%/−27.8% relative); gains hold across GPT-OSS-120B, GPT-5.1, and Llama-3.3-70B without algorithm changes."
+    ],
+    "advantages": [
+      "First to name and quantify context collapse — a Dynamic Cheatsheet rewrite on AppWorld shrank 18,282 tokens to 122 in one step, accuracy 66.7→57.1, below the 63.7 no-adaptation baseline — and to fix it structurally via deterministic localized deltas rather than just scoring higher.",
+      "Self-supervised by construction: +14.8% on AppWorld offline with no GT labels, learning purely from execution feedback; the Reflector is separable and weak reflectors still gain (+5.9 with GPT-OSS-120B), with noise tolerated unless adversarial every single step.",
+      "The ADD-only, system-ID'd, helpful/harmful-counted bullet playbook merged by non-LLM code is directly portable discipline for any RSI harness with unboundedly growing notes — hyperparameters prove forgiving (dedup 50–90%, pruning trigger 10K–100K tokens, all stable).",
+      "Reframes long-context cost: richer playbooks don't scale billed cost linearly because KV/prompt caching amortizes reused context (91.8% of eval input tokens served from cache on GPT-5.1)."
     ],
     "limitations": [
-      "Still bounded by context capacity; the brevity-bias vs. detail tradeoff is managed, not eliminated."
+      "Feedback quality is load-bearing — the paper's own caveat: without GT labels or reliable execution signals, ACE degrades (FiNER online no-GT 67.3, −3.4) as spurious reflections pollute the playbook, and it drops below base under adversarial reflections every step (66.7 vs 70.7).",
+      "Relies on a reasonably strong Reflector: weak models show smaller gains (Llama-3.3-70B reflects noisily), and over-reflection hurts — 10 rounds degrade to 65.2 avg vs 67.6 at 5 ('overthinking' injects noisy updates).",
+      "Not for concise-context tasks: the paper concedes HotPotQA-style retrieval QA and fixed-strategy games like Game of 24 benefit more from terse instructions than comprehensive playbooks — detail-heavy domains are where it wins.",
+      "Context capacity is managed by dedup/pruning thresholds, not eliminated; leader-board comparison to IBM CUGA is explicitly a rough contextual reference, not a controlled baseline."
     ],
-    "fits": "The 'evolve the whole context, not just a skill' generalization of stage 4. Contrasts with Voyager (which evolves *code skills*) by evolving the *prompt/context itself*.",
-    "reading": "Read the generation/reflection/curation loop (§3) and how incremental updates prevent collapse."
+    "fits": "Stage 4's context-as-evolving-artifact anchor: generalizes Dynamic Cheatsheet's test-time memory and GEPA's prompt evolution into structured playbook evolution with collapse resistance. The prompt-space complement to Voyager's code-skill library; its ADD-only delta discipline pairs with A-MEM's agentic memory organization.",
+    "reading": "§2.2 for the collapse case study (Fig 2), §3.1–3.2 for delta updates and grow-and-refine, Tables 1–2, §4.6 + Appendix A.5 for the incremental-update ablation, Appendix C for ACE-vs-GEPA/DC mechanism contrasts."
   },
   "2510.16079": {
     "tldr": "EvolveR closes the experience loop inside RL training: the agent distills its own trajectories into guiding/cautionary principles kept in a scored, deduplicated, pruned base, retrieves them via a learned <search experience> action, and GRPO-trains on experience-conditioned rollouts — beating Search-R1 across seven QA benchmarks.",
@@ -194,16 +207,29 @@
     "reading": "§3.2–3.3 (Feedback-Agent inputs, trajectory), §5.1–5.3 (lever selection), Table 3 and §6.3 per-task numbers, §7.3 (the six-algorithm menu and when each fires), §8 (coupled Goodhart)."
   },
   "2505.15734": {
-    "tldr": "Ground-truth-free self-training: generate multi-agent debate traces (with a Reflect-Critique-Refine prompt), fine-tune on the model's own improved traces, and repeat.",
+    "tldr": "No-label self-evolution: run RCR-prompted multi-agent debate, keep the consensus answer plus a consolidated rationale, GRPO-train the single model on them, then swap the evolved policy back into the debate team and repeat. +8.92 pts average on GSM-Plus after one round.",
+    "method": "Agents A={a1..aN} debate a query for up to T rounds under the RCR prompt, which enforces three phases per round: Reflect (self-critique of own rationale), Critique (exactly two peers), Refine (update the answer, and any changed answer must add a novel reasoning step absent from all prior traces). Debate stops on unanimous consensus, else majority vote. Traces are compressed into one consolidated rationale R by keeping steps that recur across agents or introduce novel symbolic manipulation, yielding (q, y*, R). Training is GRPO on that instance with reward r = 2.0·1[y=y*] + 0.5·f_format(y) + 0.5·exp(−|y|/120) — the correctness term is agreement with the debate consensus, not ground truth. G=8 samples/query, clip 0.2, KL β=0.02, LoRA r=128 on attention/MLP projections, AdamW lr 5e-6. After each round the evolved policy replaces its own predecessor in the debate pool.",
     "results": [
-      "+8.92% on GSM-PLUS and ~+5.8% average across six other reasoning benchmarks.",
-      "Cross-domain generalization suggests it captures general reasoning, not task overfitting."
+      "One DTE round (Table 1, GSM-Plus): Qwen-1.5B 42.00 → 55.92 (+13.92), Qwen-3B 61.75 → 69.50, Qwen-7B 68.62 → 74.71, Qwen-14B 71.79 → 78.88, Llama-3B 45.67 → 53.79, Llama-8B 55.62 → 66.17 — mean +8.92 pts over the base model at one forward pass. GSM8K gains average only +0.84 (models near ceiling) and ARC-Challenge is mixed: +3.67 Qwen-7B, +8.88 Llama-8B, but −0.85 Qwen-1.5B and −0.42 Qwen-3B. Across all five Table 1 benchmarks the evolved single model averages +3.06 pts over the base model and +1.09 pts over the 3-agent RCR committee that generated its traces.",
+      "Cross-domain transfer (Table 2): evolving on GSM8K gives +5.8 pts average on the unseen GSM-Plus, +2.5 on ARC-Challenge, and CommonsenseQA gains for 5/6 models; models ≥7B never lose more than 0.2 pts on any transfer task, while Qwen-1.5B drops 1.60 on ARC-Easy and 2.23 on CommonsenseQA. Evolving on GSM-Plus and testing on GSM8K is symmetric (+3.7 avg), which the authors read as learning heuristics (numeric decomposition, unit tracking) rather than dataset patterns.",
+      "The RCR prompt alone (ablation 1, eight models) beats the original MAD@3 prompt by +1.9 pts GSM8K, +3.7 GSM-Plus, +0.7 ARC-Challenge — up to +7.9 (Qwen-1.5B) and +6.1 (Qwen-7B) on GSM-Plus. It halves the mean sycophancy rate (0.28 → 0.13 on GSM-Plus) and narrows the verbosity gap by 43%, versus standard MAD where small-model sycophancy exceeds 28% on average.",
+      "GRPO beats both alternatives at fixed compute (Table 3, GSM-Plus, 10K steps): Qwen-1.5B 42.00 → SFT 47.31 / DPO 51.34 / GRPO 55.92; Qwen-3B 61.75 → SFT 58.33 (regression) / DPO 64.32 / GRPO 69.50; Qwen-7B 68.62 → 67.89 / 69.88 / 74.71. GRPO holds KL < 0.24 across sizes where DPO averages 0.43.",
+      "Effort scaling: 3 agents capture 85–95% of the achievable debate gain (ARC-Easy saturates at 2, GSM-Plus sometimes prefers 4–5; Qwen-7B peaks at 76.0% with 7 agents, +1.04 over 3). GRPO saturates near 8K steps (+0.32 pts average from 8K → 10K while wall-clock grows 25%). A second evolution round gives ≥7B at most +0.8 pts and often loses 0.4–1.4 (mean forgetting Fgt2 = 0.92 pts ≥7B, 1.6 smaller). Trace coverage is monotonic (Table 4): All-Traces beats Debate-Only by 4.43 pts and Random-2K by 9.17."
+    ],
+    "advantages": [
+      "Self-referential where fixed-judge self-training is not: after each round the evolved policy replaces its own predecessor inside the debate ensemble (Algorithm 2, step 18), so trace generator and trace consumer improve together — and the evolved single model then beats the very committee (+1.09 pts on average across Table 1's five benchmarks) that produced its training data.",
+      "RCR is diagnosed before it is proposed: the paper first measures standard MAD's failure modes (sycophancy above 28% average for small models, verbosity bias, [correct → incorrect] transitions) and then fixes them mechanically — a fixed two-peer critique quota and a mandatory novel reasoning step on any answer change — halving sycophancy and cutting the verbosity gap 43%.",
+      "Design choices are ablated with a mechanism rather than asserted: GRPO over SFT/DPO at fixed compute with measured KL drift (< 0.24 vs 0.43), trace coverage shown monotonic across three sampling schemes, and temperature annealing justified by measured KL evolution (0.37 → 0.19 → 0.11 as T goes 1.0 → 0.4 → 0.0).",
+      "Operationally label-free: the reward's correctness term is exact-string agreement with the debate consensus, so no dataset labels and no external judge enter training; the generalization evidence (symmetric GSM8K↔GSM-Plus transfer, ≥7B losing ≤0.2 pts on any transfer task) is the paper's case that this is real reasoning gain, not overfitting."
     ],
     "limitations": [
-      "Debate quality ceilings the improvement; requires multiple forward passes per sample during trace generation."
+      "Catastrophic forgetting under iteration, which the paper's own Limitations concedes it cannot eliminate ('potential model collapse' below 3B): at T=1.0, Round 2 loses 2.0 pts on GSM8K and gains only 13.5 pts on GSM-Plus, and Figure 2 shows Qwen-1.5B giving back 0.9 pts on GSM8K and 2.8 on GSM-Plus; Llama-3B at temperature 0.8 and 10K steps collapses to 2.73% on GSM8K and to 35.63 / 23.02 after two rounds. Temperature annealing 0.7 → 0.3 for ≤3B is a mitigation, not a fix — at T=0.4 Round-2 GSM-Plus is still 0.9 pts below Round 1.",
+      "The ceiling is the debate, not the data: the paper's Limitations says efficacy 'may degrade if debates are of poor quality or if initial agent performance is weak', and one round captures nearly all available gain — Round 2 adds at most +0.8 pts for ≥7B and more often loses 0.4–1.4 (mean forgetting Fgt2 0.92 pts ≥7B, 1.6 for smaller).",
+      "Scope is structured reasoning only (math, science MC-QA, commonsense); the paper flags open-ended generation and dialogue as unstudied, and states DTE still costs more to train than plain single-model fine-tuning.",
+      "Consensus errors propagate: correctness is agreement with the debate's majority answer, so a confident wrong consensus is a wrong training target — visible in Table 1 where Qwen-7B loses 2.35 pts on GSM8K and Qwen-7B / 1.5B lose on ARC-Challenge, with the paper attributing Round-1 Qwen-7B's GSM8K drop to traces that over-emphasised shortcut heuristics."
     ],
-    "fits": "Closes the loop that inference-time debate (stage 6) leaves open — it *persists* debate gains into weights, with no labels.",
-    "reading": "Read the Reflect-Critique-Refine strategy (§3) and the debate→train loop (§4)."
+    "fits": "Stage 6 Co-Evolution, the weight-persisting arm of debate: inference-time MAD (Du et al., Liang et al.) supplies the signal and GRPO writes it into the policy, replacing a per-query committee with one forward pass. Pairs with Agent0 and SOTOPIA-π as the three routes from a multi-agent signal to one trained model.",
+    "reading": "§3.1 (measured MAD failure modes), §3.2 (RCR's three phases and the novel-step constraint), §3.3 (reward design, GRPO), §4.2 Tables 1–2, §4.3 ablations 1, 4, 5, 7 (RCR, GRPO vs SFT/DPO, trace selection, temperature)."
   },
   "2505.22954": {
     "tldr": "The flagship empirical self-modifier: a coding agent edits its own source code, keeps only empirically-validated improvements, and archives them open-endedly.",
@@ -402,16 +428,29 @@
     "reading": "Read the tool-interactive critique loop (§3) and one tool's results (§4)."
   },
   "2203.11171": {
-    "tldr": "Self-Consistency: sample many chain-of-thought paths and take the majority answer — reliability through diversity, not refinement.",
-    "method": "Sample a diverse set of reasoning paths (instead of greedy decoding), then select the most consistent final answer by marginalizing over the sampled paths (majority vote).",
+    "tldr": "Sampling many diverse chain-of-thought paths and taking a majority vote over their final answers lifts accuracy by roughly 3-24 points over greedy CoT, with no training, no verifier and no extra data.",
+    "method": "Prompt the LM with the same few-shot chain-of-thought exemplars as Wei et al. (8 for arithmetic, 4-7 for commonsense), then replace greedy decoding with \"sample-and-marginalize\". Sample m reasoning paths (r_i, a_i) independently - T=0.5 with top-k=40 for UL2-20B and LaMDA-137B, T=0.7, k=40 for PaLM-540B, T=0.7 with no top-k for GPT-3 - and parse each final answer a_i after \"The answer is\". Marginalize out the latent paths by majority vote, argmax_a sum_i 1(a_i=a); main results average 10 runs of 40 paths. No training, verifier, re-ranker or annotation - a \"self-ensemble\" over a single model. Aggregation was ablated: unweighted majority vote (74.4 GSM8K) matches length-normalized probability weighting (74.1), because normalized path probabilities are too close to discriminate; unnormalized weighting collapses to 59.9.",
     "results": [
-      "Large accuracy gains over greedy decoding on arithmetic and commonsense reasoning, with no extra training."
+      "PaLM-540B: GSM8K 56.5 -> 74.4 (+17.9), AQuA 35.8 -> 48.3 (+12.5), SVAMP 79.0 -> 86.6 (+7.6), MultiArith 94.7 -> 99.3 (+4.6); commonsense StrategyQA 75.3 -> 81.6 (+6.3) and ARC-c 85.2 -> 88.7 (+3.5), over greedy CoT.",
+      "GPT-3 code-davinci-002: GSM8K 60.1 -> 78.0 (+17.9), SVAMP 75.8 -> 86.8 (+11.0), AQuA 39.8 -> 52.0 (+12.2), MultiArith 96.2 -> 100.0, CSQA 79.0 -> 81.5 - new SoTA without any supervised fine-tuning.",
+      "Gains scale with model size: UL2-20B only +3.2 to +6.8 points (GSM8K 4.1 -> 7.3) vs LaMDA-137B +9.1 to +23.9 (MultiArith 51.8 -> 75.7, GSM8K 17.1 -> 27.7), and GPT-3 code-davinci-001 +6.7 to +23.2.",
+      "Beats other uses of the same compute at matched budget: vs beam search on UL2-20B AQuA (beam-40 = 10.2, beam-1 = 23.6 vs self-consistency 26.9 +/- 0.5 over 40 sampled paths); vs prompt ensembles on LaMDA-137B GSM8K (3 prompt sets 18.6, 40 prompt permutations 19.2 vs 27.7); vs multi-model ensembles (LaMDA-137B + PaLM-540B = 36.9 vs 74.4 for PaLM-540B alone).",
+      "Robust and re-usable elsewhere: holds across three prompt sets (PaLM GSM8K 74.4 / 72.1 / 70.4), across sampling parameters (T, top-k, nucleus p), on imperfect CoT prompts (LaMDA-137B GSM8K 14.9 -> 23.4, above the 17.1 of a correct prompt with greedy decode), equation-only rationales, and zero-shot CoT (PaLM 43.0 -> 69.2)."
+    ],
+    "advantages": [
+      "Establishes inference-time diversity plus answer agreement as a training-free accuracy lever: new SoTA on GSM8K, SVAMP, AQuA and StrategyQA with no additional training, annotation or auxiliary model - beating prior work that required fine-tuning on 7.5k examples plus a second 175B verifier (GSM8K 55 vs 74.4).",
+      "Shows the gain comes from diversity of reasoning paths, not merely from more samples: it dominates beam search (which degrades as beams grow, 23.6 -> 10.2 AQuA), sample-and-rank, prompt-order and multi-prompt ensembles, and cross-model ensembles, at equal sample count.",
+      "Turns agreement into a usable uncertainty signal: the share of decodes agreeing with the majority answer correlates strongly with accuracy, giving a calibration / \"know when it doesn't know\" estimate for free.",
+      "The primitive is portable and cheap: compatible with any sampling scheme, with zero-shot CoT and with non-natural-language rationales (equations); majority-vote-over-self-samples is the mechanism later RSI pipelines inherit for aggregating debate (stage 6) and for filtering self-generated data."
     ],
     "limitations": [
-      "Pure inference-time ensemble — multiplies compute and only helps when errors are independent."
+      "Cost multiplies with the number of paths (40 in the main results) for one final answer; the paper's own advice is to start with 5-10 paths, since the accuracy curve saturates quickly.",
+      "It only applies where the final answer comes from a fixed answer set that can be parsed and counted; open-ended generation needs an externally defined consistency metric.",
+      "The model cannot distinguish good reasoning from bad: normalized path probabilities cluster closely enough that probability weighting adds nothing over vote counting, and the paper notes models still emit incorrect or nonsensical rationales (the StrategyQA population figures in Table 4), leaving rationale grounding to future work.",
+      "No correctness guarantee - agreement is only a proxy, and the premise that correct reasoning is more consistent than incorrect reasoning is argued by intuition rather than proved, so a confidently wrong majority survives the vote."
     ],
-    "fits": "The 'variance reduction' cousin of self-improvement; complements Self-Refine (diversity vs. refinement).",
-    "reading": "Read the sampling/marginalization idea (§3); the mechanism is one short section."
+    "fits": "Stage 3's founding inference-time result and the baseline the stage's papers argue against: nothing is revised, reliability comes from aggregating diverse samples of one frozen model. Debate aggregation (stage 6) and consistency filtering of self-generated data inherit the primitive. Pairs with Self-Refine; the negative result targets revision, not voting.",
+    "reading": "§2 (sample-and-marginalize and why majority vote matches probability weighting - Table 1) and §3.2 Table 2 for the headline numbers; §3.4 Tables 6-7 for the beam-search and ensemble baselines. Skim §4 and the appendix figures."
   },
   "2305.20050": {
     "tldr": "Let's Verify Step by Step: reward *each reasoning step* (process supervision), not just the final answer — and show it beats outcome supervision.",
@@ -426,16 +465,29 @@
     "reading": "Read the process vs. outcome supervision contrast (§2–3) and the MATH result."
   },
   "2310.01798": {
-    "tldr": "The counterweight: LLMs often *can't* reliably self-correct their own reasoning without external feedback — and trying can make them worse.",
-    "method": "Systematic measurement: test whether intrinsic self-correction helps; show that when the model can't detect its own errors, self-correction frequently degrades accuracy relative to the initial answer.",
+    "tldr": "The counterweight: LLMs cannot reliably self-correct reasoning without external feedback. Intrinsic self-correction lowers accuracy on GSM8K, CommonSenseQA and HotpotQA across GPT-3.5, GPT-4, GPT-4-Turbo and Llama-2, and multi-agent debate loses to self-consistency at equal inference cost.",
+    "method": "A measurement protocol, not a method. Each trial uses a three-step prompt: (1) initial generation, (2) review that answer and emit feedback, (3) re-answer the question conditioned on the feedback — capped at two correction rounds. Two conditions are contrasted: oracle-guided, where a ground-truth stop check prevents the model from altering an already-correct answer, and intrinsic, where the model alone decides whether to revise. Benchmarks: GSM8K (1,319 problems), CommonSenseQA dev (1,221), HotpotQA closed-book exact match (100). Models: GPT-3.5-Turbo-0613 and GPT-4 (temperature 1), GPT-4-Turbo-1106 and Llama-2-70b-chat (temperature 0). Two follow-up controls: replicating multi-agent debate (3 agents, 2 rounds, gpt-3.5-turbo-0301, Du et al.'s own prompts) against self-consistency at matched response counts, and re-running Self-Refine's constrained-generation setup with the task constraint moved into the initial prompt.",
     "results": [
-      "Intrinsic self-correction often hurts; reliable gains appear only with external feedback or ground-truth signals."
+      "Oracle labels are what made prior work look good (Table 2): GPT-3.5 GSM8K 75.9 -> 84.3, CommonSenseQA 75.8 -> 89.7, HotpotQA 26.0 -> 29.0; GPT-4 95.5 -> 97.5, 82.0 -> 85.5, 49.0 -> 59.0.",
+      "Intrinsic self-correction degrades every model (Tables 3-4). GPT-3.5: GSM8K 75.9 -> 75.1 -> 74.7, CommonSenseQA 75.8 -> 38.1 -> 41.8, HotpotQA 26.0 -> 25.0 -> 25.0. GPT-4: 95.5 -> 91.5 -> 89.0 and 82.0 -> 79.5 -> 80.0 and 49.0 -> 49.0 -> 43.0. GPT-4-Turbo: 91.5 -> 88.0 -> 90.0 (GSM8K), 84.0 -> 81.5 -> 83.0 (CSQA). Llama-2-70b-chat collapses: 62.0 -> 43.5 -> 36.5 and 64.0 -> 37.5 -> 36.5. Three alternative feedback prompts do not rescue it (Tables 5-6): every variant still ends below its single-call baseline (GPT-4-Turbo GSM8K 91.5 -> 88.0/90.0/91.0; Llama-2 GSM8K 62.0 -> down to 30.5-58.0).",
+      "Multi-agent debate is self-consistency in disguise (Table 7, GSM8K): standard prompting 76.7 (1 response); debate 82.5 at 3 responses vs self-consistency 83.2; debate 83.0 at 9 responses vs self-consistency 88.2 — debate loses outright once response counts are matched.",
+      "The Self-Refine gain was a bad initial prompt (Table 8, CommonGen-Hard concept coverage): Madaan et al. standard 44.0 -> 67.0 with 7 calls, but adding 'includes *ALL* of the above concepts' to the initial prompt gives 81.8 with 1 call — and self-correction on top of that drops it to 75.1.",
+      "Why it degrades (Section 3.3, Figure 1): GPT-3.5 keeps its GSM8K answer unchanged 74.7% of the time, and among the rest, correct -> incorrect flips outnumber incorrect -> correct fixes; GPT-4 and GPT-4-Turbo retain their initial answers more often than the weaker models."
+    ],
+    "advantages": [
+      "Isolates the label leak that inflated the whole self-correction literature: it reproduces RCI's and Reflexion's reported gains, then shows they vanish the moment the oracle correctness label used as a stopping criterion is removed (Table 1 gives the per-paper taxonomy).",
+      "Establishes the equal-inference-cost baseline as a norm — self-consistency at the same number of responses — and shows multi-agent debate only matches it at 3 responses and falls 5.2 points behind at 9, so the improvement is selection, not correction.",
+      "Falsifies the Self-Refine improvement by construction rather than argument: folding the feedback prompt's missing constraint into the initial prompt beats 7 self-correction calls using 1 call, identifying prompt asymmetry as the source of the claimed gain.",
+      "The negative result is not a sampling artifact of one model or decoding scheme: it replicates across four models, two temperatures (0 and 1), three benchmarks, and four different feedback prompts."
     ],
     "limitations": [
-      "A cautionary measurement paper, not a method; conclusions reflect then-current models."
+      "The paper's own Section 7 scope limit: this evaluates reasoning only, and the authors expect self-correction to remain useful where the model can actually assess the response, e.g. preference, style or safety alignment — the failure is specific to judging reasoning correctness.",
+      "Coverage is a fixed menu: four 2023-2024 models, at most two correction rounds, one three-step prompt template family, and 200 sampled questions per dataset for every model except GPT-3.5 (HotpotQA only 100, a size the authors themselves call too small for the Section 3.3 answer-change statistics, footnote 1). No variance or significance is reported anywhere.",
+      "The Section 4 debate replication is a re-implementation: same prompts but gpt-3.5-turbo-0301 on the full 1,319-question test set instead of the original's 100 examples, so the head-to-head is not bit-identical to Du et al.",
+      "Aim is measurement, not repair: it names external feedback (code executors, search, trained verifiers, humans) as the escape route but proposes and evaluates no new self-correction method of its own."
     ],
-    "fits": "The essential check on the whole stage-3 arc — self-correction is not free. Read it to know *when* loops help vs. hurt.",
-    "reading": "Read the experiments contrasting intrinsic vs. extrinsic feedback (§4)."
+    "fits": "Stage-3 negative control — the measurement discipline every self-correction claim in this catalog has to survive. Pairs directly with Reflexion and RCI (whose gains it traces to oracle labels), Self-Refine (its prompt-design critique), Du et al. multi-agent debate (the equal-cost baseline), and stage-4 verifier work, which is the external-feedback escape route it recommends.",
+    "reading": "Read Section 3 (Tables 2-4 plus Figure 1's answer-change analysis), Section 4 (Table 7, debate vs self-consistency), Section 5 (Table 8, prompt design), and Section 7. Appendix A has the verbatim prompts."
   },
   "2308.10144": {
     "tldr": "ExpeL: distill successful trajectories into an insight rule-base, reflect on failures to revise it, and retrieve insights at inference — no weight updates.",
@@ -500,16 +552,29 @@
     "reading": "Read the skill-package vs. strategy-gene comparison (§3) and the controlled-trial design."
   },
   "2602.07755": {
-    "tldr": "ALMA: meta-learn the memory *design* itself — learning to continually learn, instead of hand-crafting a fixed memory.",
-    "method": "Instead of a hand-crafted fixed memory, meta-learn the memory design (what to store, how to update/retrieve) so it adapts to task diversity and non-stationarity — learning-to-continually-learn.",
+    "tldr": "ALMA meta-learns the memory design itself: a GPT-5 Meta Agent searches memory designs written as executable Python, reflecting on archived designs and their eval logs, and the discovered designs beat Trajectory Retrieval, ReasoningBank, Dynamic Cheatsheet and G-Memory on all four sequential-decision benchmarks.",
+    "method": "The Meta Agent (GPT-5) runs open-ended exploration over memory designs expressed as executable Python — code is the search space, so Turing completeness theoretically admits any design. Designs implement two abstract classes: MemoStructure with general_update/general_retrieve orchestrating sub-module layers, and Sub_memo_layer with its own update/retrieve and optional database; layers chain, so one sub-module's output feeds the next. Each step samples up to 5 archived designs without replacement (probability set by success rate and inverse visit count, tau=0.5, alpha=0.5 visit penalty, all probabilities non-zero), reflects on the sampled design's source, success rate and interaction logs to plan, implements a new design in code, trial-runs it (up to 3 debugger reflections on runtime errors), then evaluates and archives it with metrics and logs. 11 steps discover 43 designs. Evaluation is two-phase: memory is collected from memory-free trajectories, then deployment success rate is measured (static mode during learning, dynamic mode for distribution shift).",
     "results": [
-      "Outperforms fixed, human-designed memory on continual-learning/adaptation tasks."
+      "GPT-5-nano agentic system, four benchmarks: overall success 6.1% (no memory) to 12.3% (+6.2) for the best-learned design, above every human baseline (G-Memory 7.7, Trajectory Retrieval 8.6, ReasoningBank 7.5, Dynamic Cheatsheet 7.2); ALFWorld 2.9% to 12.4% (+9.5), Baba Is AI 9.5% to 19.0% (+9.5).",
+      "Transferred unchanged to a stronger GPT-5-mini agentic system: overall 41.1% (no memory) to 53.9% (+12.8), again above all human baselines; ALFWorld 67.6% to 87.1% (+19.5). The 12.8 vs 6.2 delta of 6.6% exceeds that of every human-designed memory, i.e. learned designs help stronger models more.",
+      "Ablation, greedy search on ALFWorld at the same 43-design budget: best-learned 11.9% (GPT-5-nano) and 77.1% (GPT-5-mini) versus 12.4% and 87.1% from open-ended exploration — the archive's stepping-stone sampling is what buys the gain.",
+      "Task distribution shift (memory collected from 70 valid-seen ALFWorld tasks, deployed in dynamic mode on valid unseen, GPT-5-mini): learned design 84.1%, outperforming all human baselines; Fig. 4 shows it also reaches higher success sooner as collection task count grows (better sample efficiency).",
+      "Cost (Fig. 6): 53.9% average success at $0.09 end-to-end memory cost, lower than all handcrafted baselines, with 1,319 retrieved tokens per task versus 9,149 (Trajectory Retrieval), 6,095 (G-Memory) and 2,258 (Dynamic Cheatsheet)."
+    ],
+    "advantages": [
+      "The searched object is the memory architecture itself — which databases exist (embedding, graph, dictionary), what is stored, how it is retrieved and updated — as one evolvable Python file, so it sits a meta-level above this catalog's fixed memory designs (ACE playbooks, G-Memory, Dynamic Cheatsheet) rather than tuning them.",
+      "It specializes per domain instead of reusing one recipe: Fig. 3 shows learned ALFWorld/TextWorld designs built on spatial relations, affordance graphs and trajectory schemas, while Baba Is AI and MiniHack designs converge on abstract strategy libraries and plan synthesis.",
+      "Open-ended archive search is shown to beat greedy selection at equal exploration budget (Appendix C.2, Fig. 14), and the resulting code plus logs are the artifact — the learned design transfers across evaluator FMs without retuning.",
+      "Efficiency falls out without being optimized for: no cost term in the objective, yet the best-learned design is cheaper per memory than every handcrafted baseline, which the authors read as an argument for adding multi-objective Pareto search as future work."
     ],
     "limitations": [
-      "Meta-learning adds a training loop; learned memory designs are task-distribution-specific."
+      "Memory designs are learned offline against a fixed learning set; the authors deliberately skip online learning of designs because evaluating each candidate needs many rollouts and would blow the compute budget — an adaptive continual learner should discover designs from dynamic data.",
+      "Scope is token-level memory only: parametric and latent memory are explicitly out of scope, chosen because explicit token memory evaluates faster without extra model training and is more interpretable and transferable.",
+      "Model-generated memory code executes inside the agentic loop, so designs are run in isolated sandboxes and human-inspected for harmful behavior such as prompt injection; the paper calls for systematic inspection as the system scales.",
+      "Evidence is four text-based sequential decision-making benchmarks (ALFWorld, TextWorld, Baba Is AI, MiniHack) with one fixed agentic system per run; each domain needs its own 11-step, 43-design search."
     ],
-    "fits": "Memory whose *architecture* is learned, not engineered — the same target MemEvolve reaches via evolution, here via meta-learning.",
-    "reading": "Read the meta-learning-over-memory formulation (§3) and how it differs from fixed memory."
+    "fits": "Stage 4 (Harness-level RSI), Context & Memory Evolution: the memory-design-as-search-space counterpart to ACE's context playbooks and MemEvolve's meta-evolution of memory systems — ALMA's related work names MemEvolve as the concurrent work, contrasting open-ended archive search with MemEvolve's handcrafted initializations plus greedy selection. It replaces the fixed memory loops of Reflexion and ExpeL.",
+    "reading": "§3.1–3.3 (code search space, two-phase evaluation, archive sampling); §4.1–4.4 with Table 1 for the numbers; Appendix A.1 for the MemoStructure/Sub_memo_layer classes, A.6 pseudocode, C.2 greedy ablation, Fig. 6 cost."
   },
   "2607.14159": {
     "tldr": "MemoHarness: optimize the whole agent *harness* (context, tools, orchestration, memory, decoding) — and learn it from the agent's own executions.",
@@ -596,28 +661,54 @@
     "reading": "Read the harness-synthesis loop (§3) and the chess case study."
   },
   "2608.05446": {
-    "tldr": "EvoHarness-RL: learn the runtime harness with RL — forming state from noisy traces and controlling access to external state.",
-    "method": "RL trains a runtime harness to (1) form state from noisy interaction traces and (2) control access to external state, replacing prompt/heuristic/convention-based workspace management.",
+    "tldr": "EvoHarness-RL makes harness use a learned policy: a BPE workspace (Belief/Progress/Experience) with four meta-actions (track/commit/recall/note) is taught by SFT then cost-aware GRPO, lifting Qwen3-8B on ALFWorld from 47.9% to 96.9% seen, 86.6% unseen.",
+    "method": "EvoHarness-RL externalizes the workspace into BPE state Ht=(Bt,Pt,Et): Belief (ALFWorld: a rule-based world-state tracker updated after each environment step), Progress (a bounded committed-subgoal list), Experience (a four-category skill bank — general, task-specific, common mistakes, object→location search priors — with keyword-overlap recall, LFU eviction, 80 entries/category). The policy interleaves four meta-actions with environment actions under one shared step budget: track [object|world], commit [subgoal], recall [query], note [insight]. Stage 1, supervised harness fine-tuning: SFT Qwen3-8B on 87 successful Claude-Opus teacher trajectories (1,153 next-action pairs from 500 games; teacher makes 405 harness calls, ~18% of turns), whose accumulated store seeds the skill bank. Stage 2, cost-aware GRPO from that checkpoint: R = 10·1[solved] + success-gated efficiency term max(0,1−|τ|/70) + cosine-annealed action-diversity bonus − spam/invalid-format penalties, KL β=0.01 to the SFT reference. At epoch boundaries an external consolidation model merges buffered notes into the bank via add/update/remove.",
     "results": [
-      "Learned harness state + policy improves long-horizon agent execution over hand-crafted conventions."
+      "ALFWorld seen split, Qwen3-8B (140-task validation): ReAct 47.9% → prompt-time BPE 56.4% → SFT 68.6% → GRPO 96.9% (+49.0 over ReAct); beats trainable baselines GRPO 65.6%, SkillOS 80.2%, SkillRL 89.9%, and matches Claude Opus 4.5 ReAct (96.4%; 98.5% with the prompt-time BPE harness)",
+      "Unseen split: 50.0% (ReAct) → 77.6% (prompt-time BPE) → 69.4% (SFT, a drop) → 86.6% (RL) — cost-aware GRPO recalibrates harness access that imitation over-fits to seen tasks",
+      "Prompt-time BPE alone lifts frontier models: GPT-4.1 47.9 → 70.0 (+22.1), GPT-5 60.7 → 85.0 (+25.7), Claude Opus 4.5 96.4 → 98.5",
+      "Component ablation (frozen Qwen3-8B, prompt-time BPE): removing any of Belief/Progress/Experience drops 56.4% into the 48.6–50.7% range, with Experience removal the lowest (48.6%, §3.3)",
+      "Two dynamics: harness annealing — mean harness calls fall from the SFT scaffold's frequent use to ≈1 per episode, recall persisting while commit/note decay to ~0 (Figs. 3, 5); harness evolution — add/update/remove consolidation plus LFU eviction keep the skill bank compact while training reward stays above standard GRPO throughout (Fig. 6)"
+    ],
+    "advantages": [
+      "Makes harness access a first-class learnable decision: harness actions spend the same step budget as environment actions, so the policy learns when external state is worth its cost — the mechanism behind both the SFT→RL seen jump (68.6→96.9) and the unseen recovery (69.4→86.6, where SFT alone underperforms the 77.6 prompt-time harness)",
+      "Unifies within-episode state tracking (Belief, Progress) and cross-episode skill curation (Experience) under one policy-facing interface and one four-action protocol; the paper's position is that prior self-evolving agents keep these two separated",
+      "Names and evidences two co-evolutionary dynamics — harness annealing (the policy internalizes routine scaffold calls, with action-specific decay rates in Fig. 5) and harness evolution (consolidation plus LFU eviction yield a compact, revisable skill bank rather than append-only memory) — while Fig. 6 rules out policy collapse as the explanation for fewer calls",
+      "Cheap, inspectable grounding: the ALFWorld harness is deterministic where possible (rule-based belief parser, keyword-overlap recall, LFU eviction); no LLM calls sit inside the rollout loop, and consolidation runs outside it at epoch boundaries"
     ],
     "limitations": [
-      "RL over harness actions needs a task-outcome reward; state formation from noisy traces is hard."
+      "Single-environment evidence: everything is ALFWorld, and Appendix A concedes the learned action mix is environment-dependent — it 'should not be interpreted as learning a fixed universal harness-action distribution'; Belief/Progress/Experience emphasis would shift in SWE or visually grounded settings",
+      "SFT alone generalizes worse than the prompt-time harness (69.4% vs 77.6% unseen): supervised imitation copies teacher harness-use patterns without learning when access is worthwhile; only GRPO fixes it",
+      "Dense reward shaping is load-bearing: with success as a sparse 10·1[solved] gate, the time-annealed diversity bonus, spam/format penalties, and cosine curriculum are all needed to keep the policy from ignoring harness actions or falling into repetition loops",
+      "Frontier-model dependence in the loop's periphery: Claude Opus supplies all 87 SFT trajectories (kept from 500 games) and every consolidation add/update/remove decision; the belief tracker is also only a rule-based parser, adequate for ALFWorld's text state"
     ],
-    "fits": "Harness evolution *as reinforcement learning* — the workspace and its policy are learned, not engineered.",
-    "reading": "Read the state-formation + runtime-control formulation (§3–4)."
+    "fits": "Stage 5 (Harness-level RSI), the RL flavor: rather than searching or rewriting scaffold code (AutoHarness, SoL-Pi, Continual Harness) or distilling a harness into weights (Harness-Zero), it keeps the harness implementation fixed and trains the policy to construct and access its state while the experience store co-evolves. Pairs with ACE (evolving context) and the SkillOS/SkillRL baselines it beats.",
+    "reading": "§2 end-to-end (BPE, action protocol, Eqs. 1–6); §3.2–3.4 with Tables 1–3 for numbers; §4 + Appendix A for annealing/evolution dynamics; Appendix B case study; Appendix C for implementation and Table 4 hyperparameters."
   },
   "2603.19461": {
-    "tldr": "Hyperagents: the meta-level mechanism that improves the agent is itself code, so it too can be improved — self-improvement without a fixed handcrafted meta-layer.",
-    "method": "Builds on the Darwin Gödel Machine: since evaluation and self-modification are both coding tasks, the meta-level (the improvement mechanism) is coded and improvable — hyperagents improve their own improvement.",
+    "tldr": "Hyperagents merge the task agent and the agent that improves it into one editable program, so the improvement mechanism itself evolves — metacognitive self-modification — removing the DGM's fixed handcrafted instruction-generation layer and its coding-only task/self-modification alignment assumption.",
+    "method": "A hyperagent is one editable Python program containing a task agent (solves the task; initially a single FM call) and a meta agent, whose only job is to modify any part of the codebase given the repo path, past evaluation results, and remaining iterations. DGM-H wraps this in DGM's open-ended loop: sample a parent from the archive (probability proportional to performance, inversely proportional to successfully compiled children — score-child-prop), let it metacognitively self-modify, stage-eval the child (small task subset first; zero on any failed domain), and add survivors to the archive. Because the instruction-generation mechanism, memory, and tooling are all code inside the search space, the meta agent rewrites how future improvements are generated (e.g., performance tracking, persistent memory). Only the outer loop — parent selection and evaluation protocol — stays handcrafted in the main experiments; Appendix E.5 relaxes parent selection.",
     "results": [
-      "Demonstrates improvable meta-levels, removing the fixed handcrafted meta-mechanism that bounds ordinary self-improvement."
+      "Polyglot (80 iterations, DGM's exact setup, 5 runs): training 50-task subset 0.140 → 0.340 (CI 0.300–0.380), full benchmark 0.084 → 0.267 (CI 0.231–0.280) — comparable to DGM's 0.380/0.307 despite not being handcrafted for coding",
+      "Beyond coding (100 iterations, joint paper-review + robotics runs): paper-review test 0.0 → 0.710 (CI 0.590–0.750), beating the AI-Scientist-v2 reviewer baseline (0.630); robotics reward design 0.060 → 0.372 (CI 0.355–0.436) vs the directly-optimizing default reward (0.348), discovering jumping gaits over the standing-tall local optimum",
+      "Baselines (test, both domains): unmodified DGM 0.0/0.0; manually customized DGM-custom 0.590/0.348 (still p<0.05 below DGM-H); DGM-H w/o self-improve — a fixed meta agent, i.e. ADAS — 0.0/0.213; w/o open-ended exploration 0.0/0.116; all significantly worse (Wilcoxon p<0.05)",
+      "Transfer, measured by imp@50 on held-out IMO-level math grading: hyperagents transferred from paper-review/robotics runs reach 0.630 (CI 0.540–0.630), vs imp@50 = 0.0 for the initial meta agent (both DGM and DGM-H variants) and 0.0 (CI 0.0–0.010) for DGM-custom transfer agents — the meta improvements (performance tracker, persistent memory) are general, not domain-specific",
+      "Compounding and the outer loop: 200 iterations from transfer hyperagents score 0.640 vs 0.610 from scratch (n.s., higher median); initialized from ProofAutoGrader it lifts full IMO-GradingBench accuracy 0.561 → 0.601 (MAE 0.178 → 0.175); Appendix E.5's evolved parent selection (rediscovered UCB, adaptive-temperature softmax) reaches 0.491 vs 0.428 random, still below handcrafted score-child-prop 0.532"
+    ],
+    "advantages": [
+      "First demonstration that the improvement mechanism itself can be left to evolve, with the gains shown transferable (imp@50 0.630 vs 0.0 for DGM-custom transfers) and attributable to named acquired machinery — a PerformanceTracker over performance_history.json and a persistent memory of insights/hypotheses/plans shown as real evolved code and memory entries (Appendix E.3)",
+      "Drops DGM's load-bearing assumption that task-solving skill and self-modification skill coincide (true only in coding): one unmodified loop improves Polyglot, paper review, Genesis reward design, and IMO grading, matching DGM where DGM is native and beating it everywhere else without per-domain handcrafting",
+      "Cleanest ablation design in the RSI literature: every run starts from the same deliberately trivial single-FM-call agent, and the fixed-meta (ADAS-replicating) and no-archive baselines isolate exactly how much comes from meta-level self-improvement and open-ended search rather than task-level optimization",
+      "Honest hard-to-verify evaluation: paper review scores agreement with observed human accept/reject decisions rather than claimed quality, and the E.5 experiment honestly reports that evolved parent selection loses to the handcrafted mechanism"
     ],
     "limitations": [
-      "Framework + coding-domain bound; open-ended meta-improvement is hard to validate."
+      "Fixed task distribution: the paper's own first limitation — nothing co-evolves the tasks or curriculum, so 'any computable task' means any task a human has pre-defined an evaluator for",
+      "Full self-referentiality is deferred: parent selection and evaluation protocols stay handcrafted in the main experiments; the preliminary E.5 relaxation shows the agent reinvents UCB/softmax/stagnation heuristics but does not yet beat score-child-prop (0.491 vs 0.532, n.s.)",
+      "The headline meta-level wins over human engineering are median-only: DGM-H vs DGM-custom and the compounding gain (0.640 vs 0.610) are both not statistically significant, and the paper concedes saturation makes late gains small in absolute terms",
+      "Expensive and gate-sensitive: ~88.6M tokens per 100-iteration run (33M self-modification + 0.506M/iteration evaluation, App. D.2), and staged evaluation assigns zero to all unevaluated tasks of any agent failing a small-subset gate"
     ],
-    "fits": "The deepest step on the self-improvement ladder — not just improving the agent, but improving the *improver*. Read after DGM.",
-    "reading": "Read the meta-level vs. object-level framing (§2–3) and the DGM relationship."
+    "fits": "Stage 5 harness-level RSI, the direct generalization of DGM: the improver itself becomes improvable, and its improvements demonstrably transfer across domains (imp@50) and compound across runs. Read after DGM; pair with the HyperAgents repo card (the domains/ git-reset quarantine) and ADAS — which is exactly DGM-H w/o self-improve.",
+    "reading": "§1–2 for the fixed-meta-layer critique and alignment assumption; §3 for hyperagents and metacognitive self-modification; §5.1–5.3 with Figures 2–4 (imp@50, transfer, compounding); §7 limitations; Appendix E.3 (learned memory/tracking) and E.5 (evolved parent selection)."
   },
   "2603.18000": {
     "tldr": "AgentFactory keeps successful task solutions as executable Python subagents — not textual reflections — in a growing library, refines them from execution feedback, and re-exports them to other agent systems; saved subagents cut orchestrator output tokens roughly in half on transfer tasks.",
@@ -901,16 +992,29 @@
     "reading": "Read the explain-then-fix loop (§3) and the execution-feedback variant."
   },
   "2312.13010": {
-    "tldr": "AgentCoder: split code generation into programmer + test-designer + test-executor agents that iterate against execution feedback.",
-    "method": "Decomposes code generation into specialized agents — programmer, test designer, and test executor — that iterate: generate tests, run them, and refine code against execution feedback.",
+    "tldr": "AgentCoder splits code generation into three roles — a Chain-of-Thought programmer, a test designer that writes basic/edge/large-scale tests without seeing the code, and a Python test-executor — looping until tests pass. GPT-4 reaches 96.3% HumanEval pass@1 at 56.9K tokens.",
+    "method": "Input is only the task description/stub. The programmer agent (LLM) emits code after a four-step Chain-of-Thought (understand and clarify, select algorithm, write pseudocode, generate code). The test designer agent (LLM, separate call) emits test cases independently — it sees the prompt stub but never the generated code, so its oracles cannot be biased by the bugs it is meant to catch — and is prompted for basic, edge, and large-scale inputs. The test executor agent is a Python script, not an LLM: agents must wrap output in ```py[Code]```/```py[TestCases]``` blocks, which it extracts, runs in a local terminal, and inspects for assertion/runtime errors. All tests pass → return code; otherwise the traceback is fed to the programmer, which regenerates. Loop ends on success or at an iteration budget (5 in experiments). Nothing is trained — all improvement is in-context repair.",
     "results": [
-      "Improves code-generation accuracy (e.g., HumanEval/MBPP) over single-agent generation."
+      "GPT-4: 96.3% HumanEval / 91.8% MBPP pass@1 at 56.9K/66.3K response tokens, vs MetaGPT 85.9/87.7 at 138.2K/206.5K, ChatDev 84.1/79.8 at 183.7K/259.3K, AgentVerse 89.0/73.5 at 149.2K/193.6K, Self-Collaboration 90.2/78.9 at 74.3K/89.2K (Tab. 9).",
+      "GPT-3.5-turbo: HumanEval 57.3% zero-shot → 79.9% with AgentCoder; MBPP-ET 89.1% vs 63.0% for CodeCoT. Mean pass@1 across the four datasets is 84.1% (GPT-3.5) and 91.5% (GPT-4) against 75.3% and 86.8% for the best baselines, and it holds up on the harder enhanced sets (77.4/89.1) where base models collapse.",
+      "Ablation (Tab. 2): programmer alone 61.0/47.9 (HumanEval/MBPP) → +test designer 64.0/62.3 → programmer+executor 64.6/69.3 → full AgentCoder 79.9/89.9; both generated tests and real execution feedback are needed.",
+      "Test quality: designer-test accuracy 87.8/89.9 (GPT-3.5) and 89.6/91.4 (GPT-4), against MetaGPT (GPT-4) 79.3/84.4, CodeCoT 67.1/79.0, and plain GPT-3.5 47.0/57.2; line coverage 91.7/92.3 (GPT-4) vs MetaGPT 81.7/80.5 and CodeCoT 77.2/82.9.",
+      "Iterations 1→5 (GPT-3.5) raise pass@1 74.4→79.9 (HumanEval), 84.1→89.9 (MBPP), 80.3→89.1 (MBPP-ET); one agent doing both jobs is worse than two (test accuracy 61.0/51.8 vs 87.8/89.9, pass@1 71.3/79.4 vs 79.9/89.9)."
+    ],
+    "advantages": [
+      "Isolates why multi-agent code generation works: the win comes from a *non-oracle-biased test designer* plus a *real execution gate*, not from adding more agents — the executor is a plain Python script, so only two LLM calls are in the loop.",
+      "Cheapest of the measured multi-agent frameworks and the most accurate: 56.9K/66.3K tokens vs 138.2K+ for MetaGPT/ChatDev/AgentVerse, i.e. the paper's efficiency claim is bought by removing coordination chatter rather than by skimping on testing.",
+      "Ablations separate the contributions cleanly (Tab. 2, Tab. 6–8): a single agent asked to write code then tests loses ~27 points of test accuracy, quantifying the self-confirmation bias in code-then-test prompting.",
+      "Robustness under stricter tests: near-flat performance on HumanEval-ET/MBPP-ET is direct evidence the generated code is actually correct rather than tuned to the base datasets' two-or-three weak tests."
     ],
     "limitations": [
-      "Multi-agent orchestration adds calls/latency; wrong tests can steer the fix astray."
+      "The paper has no limitations or broader-impact section: §5 says they are discussed in the Appendix, but Appendix A.1–A.6 contains only output-format setup, overhead, and case studies.",
+      "Scope is single-function generation on HumanEval/MBPP with ground-truth oracles; nothing is repository-scale, and no weights change, so every gain is in-context and evaporates at the end of the task.",
+      "The loop stops on 'all tests pass' or a fixed budget of 5 iterations: wrong designer oracles stall or misdirect the repair, and there is no mechanism to detect or discard a bad test.",
+      "Cost accounting counts response tokens only (no coordination/latency analysis of the failed iterations), and the abstract pairs the SOTA pass@1 (90.2/78.9, Self-Collaboration) with MetaGPT's token counts (138.2K/206.5K), misattributing the baseline comparison."
     ],
-    "fits": "The multi-agent + execution-feedback recipe for code — the same ingredients (agents + tests + iteration) SWE agents use at scale.",
-    "reading": "Read the three-role decomposition and iterative loop (§3)."
+    "fits": "Stage 7 'Iterative Repair & Training': the test-time repair loop Self-Debug (2304.05128) runs single-agent, here split into roles against an executed test oracle. It isolates the ingredients — generated tests, real execution, agent division — that SWE-Gym (2412.21139) later trains into weights and DGM/ASI (2505.22954, 2504.15228) turn on the agent's own code.",
+    "reading": "§3 for the three agents (3.1 programmer CoT, 3.2 the test-designer prompt, 3.3 the executor script); §4.3–4.7 for the ablations (Tables 2–9). Appendix A.1–A.3 has the verbatim prompts and the ```py``` output-format contract."
   },
   "2601.14525": {
     "tldr": "Execution-Grounded AI Research: build an automated executor to implement ideas and launch parallel GPU experiments, then let the LLM learn from execution feedback.",
@@ -949,16 +1053,29 @@
     "reading": "Read the three-layer stack (Gym/RL/Evo) and the agent post-training (§3–4)."
   },
   "2603.01712": {
-    "tldr": "FT-Dojo: an interactive benchmark for autonomous LLM fine-tuning — 13 tasks across 5 domains for end-to-end fine-tuning agents.",
-    "method": "Interactive benchmark where an agent must curate data, configure training, and diagnose model behavior end-to-end, across 13 tasks in 5 domains.",
+    "tldr": "FT-Dojo is the first interactive benchmark for end-to-end LLM fine-tuning agents — 13 tasks across 5 domains with a shared raw-data pool, Docker sandbox and held-out evaluator; FT-Agent, a planning/fail-fast/feedback framework, wins 10 of 13 tasks.",
+    "method": "FT-Dojo formalizes fine-tuning as argmax over data strategy θd and training hyperparameters θt, given structured feedback f(t). Each task supplies a natural-language objective plus an evaluation script; agents work inside a GPU-limited Docker sandbox against three interfaces — a Meta API (task spec, data descriptions, API docs), a shared raw-Data Repository (not per-task splits, so source selection is itself an optimization target), and an Evaluator built on OpenCompass returning aggregate metrics, per-instance predictions with correctness labels, and training loss curves. Validation and test splits are non-overlapping, each min(100, ⌊n/2⌋); training is capped at 2,000 self-constructed samples via SFT or LoRA on Qwen2.5-7B-Instruct within a 12-hour single-B200 budget. FT-Agent adds structured iteration planning (compact data-strategy + training-config + rationale plans instead of verbose logs), three-stage fail-fast validation (schema/syntax, mini-run format check, runtime sanity), and multi-level feedback diagnosis that promotes a new best configuration when Fτ improves.",
     "results": [
-      "Systematically studies end-to-end fine-tuning as an agent task, exposing where agents fail."
+      "Best on 10 of 13 tasks (mean±std over 3 runs). AIME 2025: 0.00 → 11.11±3.82 accuracy, while Qwen2.5-7B-Instruct, constrained Manual SFT and tool-augmented OpenHands all stay at 0.00 — the agent diagnosed missing reasoning supervision and synthesized CoT from a pool where 82% of samples lack solutions",
+      "Strongest where code or structural constraints are strict: Table QA Visualization Pass@1 29.33±6.11 vs OpenHands 24.00; Chemistry Molecule Editing 54.44±2.94 vs OpenHands 40.00. The losses are reported honestly — OpenHands wins both Reaction metrics (FTS 35.59 vs 30.92, Acc 60.00 vs 35.33) and Manual SFT wins Financial QA (71.68 vs 67.20)",
+      "Fail-fast validation converts budget into iterations: 6.0 vs 2.75 effective iterations inside the same 12h (2.2×; Table QA FC 7 vs 2), avg loops 8.77 vs 3.69, improvement rate 24.37% vs 17.31%, for $5.73 vs $3.92 of iterative spend",
+      "Five-task controlled comparison (same data repo, Docker env, LlamaFactory/OpenCompass wrappers, 12h): FT-Agent+GPT-5.2 averages 42.83, above Claude Code Sonnet-4.6-thinking (39.86), LLM-assisted Manual SFT (37.11), Codex GPT-5.2 (36.06) and OpenHands GPT-5.2 (34.55); swapping the planner to DeepSeek-V3.2 (35.83), GPT-4o (36.65) or Qwen3.5-397B (31.97) keeps it in range",
+      "Case-study duality: on Mol Edit the agent recovers from a 2% vocabulary-corruption collapse to 56% accuracy via format fixes and RDKit SMILES validation, but on PI4PC it shotguns generic fixes (NEFTune −11pp, collapse to 8%) and returns to the 34% baseline after 8 loops; on Visualization a locally-sane filter chain cut ~1,800 samples to 27 (98.5%) and dropped Pass@1 20% → 4%"
+    ],
+    "advantages": [
+      "First interactive, protocol-standardized environment for end-to-end fine-tuning: rather than per-task static datasets, it makes data curation and training configuration joint optimization targets under one fixed 2,000-sample budget, with a two-phase validation/test protocol that keeps the test set inaccessible during optimization",
+      "Unusually clean factorization — base model, raw data repository, Docker sandbox, training/eval wrappers, GPU, splits and wall clock are held fixed so only the agent framework varies — plus honest negative controls: doubling OpenHands to 24h on AIME changes nothing (best checkpoint lands in the first 6 hours), and scaling data 2k → 5k can hurt under a fixed budget because processing squeezes iteration time",
+      "Documents emergent autonomous cross-domain data transfer: for Numerical Reasoning the agent mixed in 10% out-of-domain DeepScaleR (AIME/AMC math) for 32.00 → 46.00 accuracy; for Mol Opt it built a 70/25/5 composite of mol_opt/mol_edit/mol_und for SR 23.33 → 36.67 with valid-SMILES 68.67 → 91.67 — and it stays selective, using only in-domain data on Reaction, Mol Edit and Mol Und",
+      "No black box: the paper's conflict-of-interest disclosure names the Microsoft authors behind FT-Agent, and the harness is released at github.com/microsoft/rd-agent with pluggable task-objective and evaluation-script modules, so new fine-tuning tasks need no core infrastructure changes"
     ],
     "limitations": [
-      "A benchmark, not a method; task coverage is still small."
+      "A benchmark, not a method, and the authors say so: the constituent datasets are pre-existing held-out evaluators (PANORAMA, ChemCoTBench, FinanceIQ, TableBench, AIME 2025), only the protocol is new; 13 tasks in 5 domains with pools from 4,497 to 136,211 raw samples is still narrow coverage",
+      "Causal diagnosis is the headline deficit: on PI4PC the agent describes symptoms with hedging language ('likely', 'appears') and applies generic ML techniques without asking why the task overfits, never operationalizing the train–eval mismatch it correctly named in Loop 2; net gain was zero",
+      "Planning myopia: the agent optimizes each pipeline step locally without modeling cumulative state changes, which is exactly how the Visualization dataset collapsed 98.5%; a 3-stage validation gate cannot catch joint effects that only appear after composition",
+      "Statistics are uneven by necessity: 3 seeds for FT-Agent only (full coverage would cost 1,500+ GPU-hours, so baselines are single controlled runs) and chemistry reaction similarity is volatile (30.92±11.22), which the paper flags as large variance; one author group also built both the benchmark and the winning agent"
     ],
-    "fits": "The 'fine-tuning as an agent task' testbed — the environment for the next level of self-improvement (improving training itself).",
-    "reading": "Read the task taxonomy (§3) and the agent baselines/analysis (§5)."
+    "fits": "Stage 8 (Automated AI R&D) — the 'fine-tuning as an agent task' environment, one level above MLE-Bench/DSBench and below MLEvolve. Pairs with MLE-Dojo and MLE-Bench as the fixed-data vs open-data contrast, and with the autoresearch/rd-agent harnesses: FT-Agent is the feedback-and-reward-signal half, hyperagents the self-modification half.",
+    "reading": "Read §2.1–2.4 for the task formulation, two-phase validation/test protocol and 2k budget; §3 for the three FT-Agent mechanisms; §4.2–4.5 with Tables 2–4; and Appendix D for the Mol Edit recovery vs PI4PC shotgun-debugging traces."
   },
   "2606.06473": {
     "tldr": "An LLM multi-agent framework that evolves end-to-end ML algorithms, reaching 65.3% average medal rate on MLE-Bench in a 12-hour budget — best among compared agents at half the standard 24h runtime — and the best result on 11 of 15 AlphaEvolve math-optimization tasks.",
@@ -1160,24 +1277,37 @@
     "note": "Trace the core loop from reef/service/app.py through reef/artifact/release_chain.py; read train/evaluation/evaluators.py (RegressionCheckMixin is the online non-regression gate) and compare recipes/sao/ (weights) with reef/recipe/reefine/evolution.py (harness) — the same loop over two artifact types."
   },
   "autoresearch": {
-    "what": "Karpathy's experiment: hand an agent a small but real LLM-training setup and let it improve it autonomously overnight.",
+    "what": "Karpathy's experiment: hand an AI agent a small but real LLM-training setup (a simplified single-GPU nanochat) and let it edit the training code autonomously overnight, keeping only the changes that lower validation bits-per-byte.",
     "architecture": [
-      "Agent modifies training code, trains ~5 minutes, checks whether the result improved, keeps or discards, repeats.",
-      "Built on a simplified single-GPU nanochat implementation.",
-      "Logs experiments so you wake up to a history — and hopefully a better model."
+      "The harness is program.md, 'a super lightweight skill': the agent cuts a branch autoresearch/<tag>, then LOOP FOREVER — edit train.py, git commit, run `uv run train.py > run.log 2>&1`, extract results with `grep \"^val_bpb:\\|^peak_vram_mb:\" run.log`, log an untracked results.tsv row (commit, val_bpb, memory_gb, keep/discard/crash, description), keep the commit if val_bpb dropped, otherwise git reset. Runs over 10 minutes are killed and reverted; crashes are logged as status 'crash' with val_bpb 0.000000. A NEVER STOP clause forbids pausing to ask the human — ~12 experiments/hour, ~100 per night.",
+      "Scope split over exactly three files: the agent may edit only train.py — 'everything is fair game' (architecture, optimizer, hyperparameters, batch size, model size; baseline is DEPTH 8 → 512-dim, Muon at lr 0.04 for matrices + Adam for embeddings 0.6 / unembedding 0.004 / scalars 0.5, total batch 2^19, 'SSSL' sliding-window attention, FA3 kernels). prepare.py is read-only, no new packages allowed.",
+      "The gate is evaluate_bpb in prepare.py ('DO NOT CHANGE — this is the fixed metric'): validation bits-per-byte on a pinned shard (shard_06542 of climbmix-400b-shuffle), ~21M eval tokens (EVAL_TOKENS = 40 × 524,288) at MAX_SEQ_LEN 2048 — sums per-token cross-entropy in nats over target byte lengths, special tokens excluded; vocab-size-independent so architecture changes compare fairly.",
+      "Fixed 300-second wall-clock training budget (first 10 compile/warmup steps excluded) keeps every experiment directly comparable and auto-tunes to your GPU; training fast-fails if loss is NaN or > 100. Soft constraints: VRAM shouldn't blow up, and a simplicity criterion — a ~0.001 val_bpb gain for 20 hacky lines is 'probably not worth it', while equal-or-better results from deleting code is a win.",
+      "Baseline printed by the stock config (example in program.md): val_bpb 0.997900, 953 steps, 499.6M tokens, 50.3M params, 44.0 GB peak VRAM, 39.8% MFU in 300.1s on an H100."
     ],
-    "run": "Python; single-GPU; see README for the nanochat-based setup.",
-    "note": "A deliberately *small, real* self-improvement loop — the minimal reproducible 'AI improving its own training code'. Note: distinct from the AutoResearch *paper* (2608.17906)."
+    "advantages": [
+      "Time-boxed equal-budget comparisons: because every run costs exactly 5 minutes regardless of what changed, results stay comparable across radical architecture rewrites, and the search finds the best model for your specific hardware rather than a leaderboard config.",
+      "Cleanly separates what evolves from what judges: train.py (agent-editable), prepare.py (immutable evaluator), program.md (human-editable 'research org code') — so you can study or iterate on the improvement policy itself, not just the code it improves.",
+      "Fully auditable by construction: each experiment is a git commit on the run branch plus a results.tsv row, keeping diffs reviewable and the overnight history replayable."
+    ],
+    "run": "Install uv (`curl -LsSf https://astral.sh/uv/install.sh | sh`), then: `uv sync`; `uv run prepare.py` (one-time data + BPE tokenizer, ~2 min); `uv run train.py` (one ~5-min experiment). For autonomous mode, spin up Claude/Codex in the repo with all permissions disabled and prompt: 'Hi have a look at program.md and let's kick off a new experiment! let's do the setup first.'",
+    "note": "Read program.md first — the loop, keep/discard rule, crash policy, and NEVER STOP clause are the entire harness; then evaluate_bpb in prepare.py, the gate the agent may not touch. Distinct from the AutoResearch paper (arXiv 2608.17906)."
   },
   "evolutionary-model-merge": {
-    "what": "Sakana's Evolutionary Model Merge — evolve recipes for merging multiple foundation models in weight space (no training).",
+    "what": "Sakana AI's hub for the Evolutionary Model Merge series (Nature Machine Intelligence 2025): the released EvoLLM-JP / EvoVLM-JP merged checkpoints plus the harness that reproduces the paper's evaluation. The CMA-ES merge search itself is not in this repo.",
     "architecture": [
-      "Evolution (CMA-ES) searches layer-wise merge ratios and permutations.",
-      "Combines several open models into one merged model with each's strengths (e.g., Japanese + math + code).",
-      "Hub for released merged models (e.g., EvoLLM-JP-v1-7B) + evaluation code."
+      "Evaluation-only codebase: the tree is evaluate.py plus evomerge/{eval,models,modules} — no search code. A GitHub code search for `cma` across the repo returns 0 hits; README states it \"serves as a central hub ... includes models and code for reproducing the evaluation presented in our paper.\" The merge optimizer lives in the paper, which the card's context below draws from.",
+      "The evolved space, per arXiv 2403.13187: (a) parameter space — DARE-TIES sparsification plus per-layer weight-mixing coefficients (one config per embedding/transformer block), optimized by Optuna's CMA-ES with all initial values 0.5, sigma 1/6, population 4+⌊3·ln(n_params)⌋, 1000 trials, fitness = accuracy on 1069 held-out Japanese GSM8k items; (b) data-flow space — an indicator array I over M=64 layers repeated r=3 times (so T=192 slots) plus a scaling matrix W, optimized by EvoJAX CMA-ES for 100 generations, population 128, with W forced to 1 on same-model adjacent hops so any gain comes from layer stacking/permutation alone.",
+      "Config-driven runner: each YAML pairs a model with one or more evaluators. Models are evomerge.CausalLMWithvLLM (vLLM backend, default template ja-alpaca-cot, stop tokens Instruction:/Response:) or evomerge.LLaVA for the VLM; evaluate.py loads the config, set_seed(42), instantiates, runs evaluator(model), and writes results/<config-basename>.json.",
+      "Three evaluators ship in-tree: JaMGSM (juletxara/mgsm, ja test split), JaVGVQA (SakanaAI/JA-VG-VQA-500) and JaVLMBenchIntheWild (SakanaAI/JA-VLM-Bench-In-the-Wild). MGSM-JA is zero-shot pass@1 accuracy on the last number regex-extracted from the response; every evaluator also reports a `_ja` strict variant that calls fasttext on lid.176.ftz and zeroes answers not labeled Japanese with p>0.5. VLM scoring is MeCab-tokenized ROUGE-L after neologdn full/half-width normalization."
     ],
-    "run": "Python; evaluation scripts + released models on Hugging Face (SakanaAI org).",
-    "note": "Model-level self-improvement by *recombination* — improving an AI by evolving how existing weights are mixed, cheaper than gradient descent."
+    "advantages": [
+      "The released weights are the artifact: EvoLLM-JP-v1-7B scores 52.0 MGSM-JA and 70.5 on lm-eval-harness JP average where its source models sit at or below 30.0 and 66.1; EvoLLM-JP-v1-10B reaches 55.6/66.2 and EvoLLM-JP-A-v1-7B 52.4/69.0. Weight-level capability gain with zero gradient steps — the cleanest demonstration in the catalog that recombination is a distinct improvement operator.",
+      "The harness encodes the exact protocol behind those claims, not a leaderboard snapshot: the fasttext Japanese-answer gate, the last-number extraction heuristic (needed because source models use incompatible output formats), and MeCab-tokenized ROUGE for VQA are all visible and re-runnable.",
+      "EvoLLM-JP-v1-10B is produced by merging EvoLLM-JP-v1-7B with shisa-gamma-7b-v1 — a merge of a merge — and EvoVLM-JP crosses modality (LLaVA-1.6-Mistral-7B + shisa-gamma-7b-v1), so the released set doubles as a worked example of iterated and cross-domain recombination."
+    ],
+    "run": "git clone https://github.com/SakanaAI/evolutionary-model-merge.git && cd evolutionary-model-merge\n# download fasttext lid.176.ftz into the cwd, or point LID176FTZ_PATH at it\npip install -e .\npython evaluate.py --config_path configs/llm/evollm-v1-jp-7b.yaml\n# VLM: python evaluate.py --config_path configs/vlm/evovlm-v1-jp-7b.yaml\n# tested on Python 3.10.12, CUDA 12.3; vllm is pinned to the SakanaAI/vllm fork rev 538aa22a278dc731bc09bb968af2eae909a834c7",
+    "note": "Open it for the evaluation protocol, not the search. Read evomerge/eval/metrics.py (fasttext Japanese gate, MeCab ROUGE) and evomerge/eval/ja_mgsm.py, then diff configs/llm/evollm-v1-jp-7b.yaml against a source-model config. Pair with the 2403.13187 paper for the CMA-ES search space the weights came from."
   },
   "openevolve": {
     "what": "An open-source evolutionary coding agent — turns an LLM into an autonomous code optimizer that discovers better algorithms.",

@@ -47,18 +47,18 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 13 | 3 | paper | 2303.17651 | Self-Refine: Iterative Refinement with Self-Feedback | had | yes | ☐ |  |
 | 14 | 3 | paper | 2309.11495 | Chain-of-Verification Reduces Hallucination in Large Language Models | had | yes | ☐ |  |
 | 15 | 3 | paper | 2305.11738 | CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing | had | yes | ☐ |  |
-| 16 | 3 | paper | 2203.11171 | Self-Consistency Improves Chain of Thought Reasoning in Language Models | had | yes | ☐ |  |
+| 16 | 3 | paper | 2203.11171 | Self-Consistency Improves Chain of Thought Reasoning in Language Models | had | yes | ✓ |  |
 | 17 | 3 | paper | 2305.20050 | Let's Verify Step by Step | had | yes | ☐ |  |
-| 18 | 3 | paper | 2310.01798 | Large Language Models Cannot Self-Correct Reasoning Yet | had | yes | ☐ |  |
+| 18 | 3 | paper | 2310.01798 | Large Language Models Cannot Self-Correct Reasoning Yet | had | yes | ✓ |  |
 | 19 | 4 | paper | 2303.11366 | Reflexion: Language Agents with Verbal Reinforcement Learning | had | yes | ☐ |  |
 | 20 | 4 | paper | 2305.16291 | Voyager: An Open-Ended Embodied Agent with Large Language Models | had | yes | ☐ |  |
 | 21 | 4 | paper | 2308.10144 | ExpeL: LLM Agents Are Experiential Learners | had | yes | ☐ |  |
 | 22 | 4 | paper | 2502.12110 | A-MEM: Agentic Memory for LLM Agents | had | yes | ☐ |  |
 | 23 | 4 | paper | 2305.10250 | MemoryBank: Enhancing Large Language Models with Long-Term Memory | had | yes | ✓ |  |
-| 24 | 4 | paper | 2510.04618 | Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models | had | yes | ☐ |  |
+| 24 | 4 | paper | 2510.04618 | Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models | had | yes | ✓ |  |
 | 25 | 4 | paper | 2510.16079 | EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle | had | yes | ✓ |  |
 | 26 | 4 | paper | 2604.15097 | From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution | had | yes | ☐ |  |
-| 27 | 4 | paper | 2602.07755 | Learning to Continually Learn via Meta-learning Agentic Memory Designs | had | yes | ☐ |  |
+| 27 | 4 | paper | 2602.07755 | Learning to Continually Learn via Meta-learning Agentic Memory Designs | had | yes | ✓ |  |
 | 28 | 4 | paper | 2607.14159 | MemoHarness: Agent Harnesses That Learn from Experience | had | yes | ☐ |  |
 | 29 | 4 | paper | 2607.26784 | SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution | had | yes | ☐ |  |
 | 30 | 4 | paper | 2605.23904 | SkillOpt: Executive Strategy for Self-Evolving Agent Skills | had | yes | ☐ |  |
@@ -70,13 +70,13 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 36 | 5 | paper | 2608.12307 | AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses | had | yes | ☐ |  |
 | 37 | 5 | paper | 2603.03329 | AutoHarness: Improving LLM Agents by Automatically Synthesizing a Code Harness | had | yes | ☐ |  |
 | 38 | 5 | paper | 2605.09998 | Continual Harness: Online Adaptation for Self-Improving Foundation Agents | had | yes | ☐ |  |
-| 39 | 5 | paper | 2608.05446 | EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents | had | yes | ☐ |  |
+| 39 | 5 | paper | 2608.05446 | EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents | had | yes | ✓ |  |
 | 40 | 5 | paper | 2609.20519 | SoL-Pi: Recursively Scaling Auto-Research Loops for Efficient Agent Harness | had | yes | ☐ |  |
 | 41 | 5 | paper | 2609.24974 | Harness-Zero: Harness Distillation via Agent-as-Harness | had | yes | ☐ |  |
 | 42 | 5 | paper | 2609.24972 | RRSI: Regularized Recursive Self-Improvement of Agent Harnesses | had | yes | ☐ |  |
-| 43 | 5 | paper | 2603.19461 | Hyperagents | had | yes | ☐ |  |
-| 44 | 5 | paper | 2605.27276 | SIA: Self Improving AI with Harness & Weight Updates | had | yes | ☐ |  |
-| 45 | 5 | paper | 2603.18000 | AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse | had | yes | ◐ |  |
+| 43 | 5 | paper | 2603.19461 | Hyperagents | had | yes | ✓ |  |
+| 44 | 5 | paper | 2605.27276 | SIA: Self Improving AI with Harness & Weight Updates | had | yes | ✓ |  |
+| 45 | 5 | paper | 2603.18000 | AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse | had | yes | ✓ |  |
 | 46 | 5 | paper | 2604.20133 | EvoAgent: An Evolvable Agent Framework with Skill Learning and Multi-Agent Delegation | had | yes | ✓ |  |
 | 47 | 5 | paper | 2507.03616 | EvoAgentX: An Automated Framework for Evolving Agentic Workflows | had | yes | ✓ |  |
 | 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ☐ |  |
@@ -85,7 +85,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ☐ |  |
 | 52 | 6 | paper | 2305.19118 | Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate | had | yes | ✓ |  |
 | 53 | 6 | paper | 2305.14325 | Improving Factuality and Reasoning in Language Models through Multiagent Debate | had | yes | ✓ |  |
-| 54 | 6 | paper | 2505.15734 | DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning | had | yes | ☐ |  |
+| 54 | 6 | paper | 2505.15734 | DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning | had | yes | ✓ |  |
 | 55 | 6 | paper | 2511.16043 | Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning | had | yes | ✓ |  |
 | 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ✓ |  |
 | 57 | 6 | paper | 2403.08715 | SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents | had | yes | ✓ |  |
@@ -93,13 +93,13 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 59 | 7 | paper | 2504.15228 | A Self-Improving Coding Agent | had | yes | ☐ |  |
 | 60 | 7 | paper | 2412.21139 | Training Software Engineering Agents and Verifiers with SWE-Gym | had | yes | ☐ |  |
 | 61 | 7 | paper | 2304.05128 | Teaching Large Language Models to Self-Debug | had | yes | ☐ |  |
-| 62 | 7 | paper | 2312.13010 | AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation | had | yes | ☐ |  |
+| 62 | 7 | paper | 2312.13010 | AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation | had | yes | ✓ |  |
 | 63 | 8 | paper | 2408.06292 | The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery | had | yes | ☐ |  |
 | 64 | 8 | paper | nature-ai-scientist-v2-2026 | Towards End-to-End Automation of AI Research (The AI Scientist-v2) | had | yes | ☐ |  |
 | 65 | 8 | paper | 2601.14525 | Towards Execution-Grounded Automated AI Research | had | yes | ☐ |  |
 | 66 | 8 | paper | 2608.17906 | AutoResearch: Insight In, Hallucination Out | had | yes | ☐ |  |
 | 67 | 8 | paper | 2607.28568 | Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering | had | yes | ☐ |  |
-| 68 | 8 | paper | 2603.01712 | FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents | had | yes | ☐ |  |
+| 68 | 8 | paper | 2603.01712 | FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents | had | yes | ✓ |  |
 | 69 | 8 | paper | 2606.06473 | MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery | had | yes | ✓ |  |
 | 70 | 9 | paper | nature-funsearch-2024 | Mathematical Discoveries from Program Search with Large Language Models | had | yes | ☐ |  |
 | 71 | 9 | paper | 2506.13131 | AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery | had | yes | ☐ |  |
@@ -131,8 +131,8 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 97 | 10 | repo | rrsi | RRSI (code) | had | - | ☐ |  |
 | 98 | 10 | repo | adas | ADAS (code) | had | - | ✓ |  |
 | 99 | 10 | repo | ai-scientist | AI Scientist (code) | had | - | ✓ |  |
-| 100 | 10 | repo | autoresearch | autoresearch | had | - | ☐ |  |
-| 101 | 10 | repo | evolutionary-model-merge | Evolutionary Model Merge | had | - | ☐ |  |
+| 100 | 10 | repo | autoresearch | autoresearch | had | - | ✓ |  |
+| 101 | 10 | repo | evolutionary-model-merge | Evolutionary Model Merge | had | - | ✓ |  |
 | 102 | 10 | repo | funsearch | FunSearch (code) | had | - | ✓ |  |
 | 103 | 10 | repo | mlevolve | MLEvolve (code) | had | - | ✓ |  |
 | 104 | 10 | repo | openevolve | OpenEvolve | had | - | ☐ |  |
