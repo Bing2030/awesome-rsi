@@ -42,11 +42,11 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 8 | 2 | paper | 2310.03714 | DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines | had | yes | ☐ |  |
 | 9 | 2 | paper | 2406.07496 | TextGrad: Automatic "Differentiation" via Text | had | yes | ✓ |  |
 | 10 | 2 | paper | 2309.03409 | Large Language Models as Optimizers | had | yes | ☐ |  |
-| 11 | 2 | paper | 2309.16797 | Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution | had | yes | ☐ |  |
+| 11 | 2 | paper | 2309.16797 | Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution | had | yes | ✓ |  |
 | 12 | 2 | paper | 2310.04406 | Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models | had | yes | ☐ |  |
 | 13 | 3 | paper | 2303.17651 | Self-Refine: Iterative Refinement with Self-Feedback | had | yes | ☐ |  |
-| 14 | 3 | paper | 2309.11495 | Chain-of-Verification Reduces Hallucination in Large Language Models | had | yes | ☐ |  |
-| 15 | 3 | paper | 2305.11738 | CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing | had | yes | ☐ |  |
+| 14 | 3 | paper | 2309.11495 | Chain-of-Verification Reduces Hallucination in Large Language Models | had | yes | ✓ |  |
+| 15 | 3 | paper | 2305.11738 | CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing | had | yes | ✓ |  |
 | 16 | 3 | paper | 2203.11171 | Self-Consistency Improves Chain of Thought Reasoning in Language Models | had | yes | ✓ |  |
 | 17 | 3 | paper | 2305.20050 | Let's Verify Step by Step | had | yes | ☐ |  |
 | 18 | 3 | paper | 2310.01798 | Large Language Models Cannot Self-Correct Reasoning Yet | had | yes | ✓ |  |
@@ -59,21 +59,21 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 25 | 4 | paper | 2510.16079 | EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle | had | yes | ✓ |  |
 | 26 | 4 | paper | 2604.15097 | From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution | had | yes | ☐ |  |
 | 27 | 4 | paper | 2602.07755 | Learning to Continually Learn via Meta-learning Agentic Memory Designs | had | yes | ✓ |  |
-| 28 | 4 | paper | 2607.14159 | MemoHarness: Agent Harnesses That Learn from Experience | had | yes | ☐ |  |
+| 28 | 4 | paper | 2607.14159 | MemoHarness: Agent Harnesses That Learn from Experience | had | yes | ✓ |  |
 | 29 | 4 | paper | 2607.26784 | SkillRise: Agentic Reinforcement Learning for Cross-Task Skill Evolution | had | yes | ✓ |  |
-| 30 | 4 | paper | 2605.23904 | SkillOpt: Executive Strategy for Self-Evolving Agent Skills | had | yes | ☐ |  |
-| 31 | 4 | paper | 2512.18746 | MemEvolve: Meta-Evolution of Agent Memory Systems | had | yes | ☐ |  |
-| 32 | 4 | paper | 2607.05297 | MetaSkill-Evolve: Recursive Self-Improvement of LLM Agents via Two-Timescale Meta-Skill Evolution | had | yes | ☐ |  |
-| 33 | 5 | paper | 2408.08435 | Automated Design of Agentic Systems | had | yes | ☐ |  |
-| 34 | 5 | paper | 2310.02304 | Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation | had | yes | ☐ |  |
+| 30 | 4 | paper | 2605.23904 | SkillOpt: Executive Strategy for Self-Evolving Agent Skills | had | yes | ✓ |  |
+| 31 | 4 | paper | 2512.18746 | MemEvolve: Meta-Evolution of Agent Memory Systems | had | yes | ✓ |  |
+| 32 | 4 | paper | 2607.05297 | MetaSkill-Evolve: Recursive Self-Improvement of LLM Agents via Two-Timescale Meta-Skill Evolution | had | yes | ✓ |  |
+| 33 | 5 | paper | 2408.08435 | Automated Design of Agentic Systems | had | yes | ✓ |  |
+| 34 | 5 | paper | 2310.02304 | Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation | had | yes | ✓ |  |
 | 35 | 5 | paper | 2604.25850 | Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses | had | yes | ☐ |  |
 | 36 | 5 | paper | 2608.12307 | AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses | had | yes | ☐ |  |
-| 37 | 5 | paper | 2603.03329 | AutoHarness: Improving LLM Agents by Automatically Synthesizing a Code Harness | had | yes | ☐ |  |
+| 37 | 5 | paper | 2603.03329 | AutoHarness: Improving LLM Agents by Automatically Synthesizing a Code Harness | had | yes | ✓ |  |
 | 38 | 5 | paper | 2605.09998 | Continual Harness: Online Adaptation for Self-Improving Foundation Agents | had | yes | ☐ |  |
 | 39 | 5 | paper | 2608.05446 | EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents | had | yes | ✓ |  |
-| 40 | 5 | paper | 2609.20519 | SoL-Pi: Recursively Scaling Auto-Research Loops for Efficient Agent Harness | had | yes | ☐ |  |
-| 41 | 5 | paper | 2609.24974 | Harness-Zero: Harness Distillation via Agent-as-Harness | had | yes | ☐ |  |
-| 42 | 5 | paper | 2609.24972 | RRSI: Regularized Recursive Self-Improvement of Agent Harnesses | had | yes | ☐ |  |
+| 40 | 5 | paper | 2609.20519 | SoL-Pi: Recursively Scaling Auto-Research Loops for Efficient Agent Harness | had | yes | ✓ |  |
+| 41 | 5 | paper | 2609.24974 | Harness-Zero: Harness Distillation via Agent-as-Harness | had | yes | ✓ |  |
+| 42 | 5 | paper | 2609.24972 | RRSI: Regularized Recursive Self-Improvement of Agent Harnesses | had | yes | ✓ |  |
 | 43 | 5 | paper | 2603.19461 | Hyperagents | had | yes | ✓ |  |
 | 44 | 5 | paper | 2605.27276 | SIA: Self Improving AI with Harness & Weight Updates | had | yes | ✓ |  |
 | 45 | 5 | paper | 2603.18000 | AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse | had | yes | ✓ |  |
@@ -82,31 +82,31 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ✓ |  |
 | 49 | 5 | paper | 2402.17574 | Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization | had | yes | ✓ |  |
 | 50 | 5 | paper | 2409.00872 | Self-evolving Agents with Reflective and Memory-Augmented Abilities | had | yes | ✓ |  |
-| 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ☐ |  |
+| 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ✓ |  |
 | 52 | 6 | paper | 2305.19118 | Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate | had | yes | ✓ |  |
 | 53 | 6 | paper | 2305.14325 | Improving Factuality and Reasoning in Language Models through Multiagent Debate | had | yes | ✓ |  |
 | 54 | 6 | paper | 2505.15734 | DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning | had | yes | ✓ |  |
 | 55 | 6 | paper | 2511.16043 | Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning | had | yes | ✓ |  |
 | 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ✓ |  |
 | 57 | 6 | paper | 2403.08715 | SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents | had | yes | ✓ |  |
-| 58 | 7 | paper | 2505.22954 | Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents | had | yes | ☐ |  |
+| 58 | 7 | paper | 2505.22954 | Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents | had | yes | ✓ |  |
 | 59 | 7 | paper | 2504.15228 | A Self-Improving Coding Agent | had | yes | ✓ |  |
 | 60 | 7 | paper | 2412.21139 | Training Software Engineering Agents and Verifiers with SWE-Gym | had | yes | ☐ |  |
-| 61 | 7 | paper | 2304.05128 | Teaching Large Language Models to Self-Debug | had | yes | ☐ |  |
+| 61 | 7 | paper | 2304.05128 | Teaching Large Language Models to Self-Debug | had | yes | ✓ |  |
 | 62 | 7 | paper | 2312.13010 | AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation | had | yes | ✓ |  |
 | 63 | 8 | paper | 2408.06292 | The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery | had | yes | ☐ |  |
-| 64 | 8 | paper | nature-ai-scientist-v2-2026 | Towards End-to-End Automation of AI Research (The AI Scientist-v2) | had | yes | ☐ |  |
+| 64 | 8 | paper | nature-ai-scientist-v2-2026 | Towards End-to-End Automation of AI Research (The AI Scientist-v2) | had | yes | ✓ |  |
 | 65 | 8 | paper | 2601.14525 | Towards Execution-Grounded Automated AI Research | had | yes | ☐ |  |
 | 66 | 8 | paper | 2608.17906 | AutoResearch: Insight In, Hallucination Out | had | yes | ✓ |  |
 | 67 | 8 | paper | 2607.28568 | Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering | had | yes | ☐ |  |
 | 68 | 8 | paper | 2603.01712 | FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents | had | yes | ✓ |  |
 | 69 | 8 | paper | 2606.06473 | MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery | had | yes | ✓ |  |
 | 70 | 9 | paper | nature-funsearch-2024 | Mathematical Discoveries from Program Search with Large Language Models | had | yes | ☐ |  |
-| 71 | 9 | paper | 2506.13131 | AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery | had | yes | ☐ |  |
+| 71 | 9 | paper | 2506.13131 | AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery | had | yes | ✓ |  |
 | 72 | 9 | paper | 2601.10657 | PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution | had | yes | ✓ |  |
 | 73 | 9 | paper | openreview-higher-order-evolution-2024 | Higher Order and Self-Referential Evolution for Population-based Methods | had | no | ✗ | PDF challenge-blocked — not enriched this pass; see failures.json |
-| 74 | 9 | paper | 1901.01753 | Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions | had | yes | ☐ |  |
-| 75 | 10 | repo | agent-zero | Agent Zero | had | - | ☐ |  |
+| 74 | 9 | paper | 1901.01753 | Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions | had | yes | ✓ |  |
+| 75 | 10 | repo | agent-zero | Agent Zero | had | - | ✓ |  |
 | 76 | 10 | repo | deepseek-harness | DeepSeek Harness | had | - | ✓ |  |
 | 77 | 10 | repo | openclaw | OpenClaw | had | - | ✓ |  |
 | 78 | 10 | repo | pi | Pi | had | - | ✓ |  |
@@ -122,13 +122,13 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 88 | 10 | repo | continual-harness | Continual Harness (code) | had | - | ✓ |  |
 | 89 | 10 | repo | evoagentx | EvoAgentX (code) | had | - | ✓ |  |
 | 90 | 10 | repo | evolver | EvolveR (code) | had | - | ✓ |  |
-| 91 | 10 | repo | letta-code | Letta Code | had | - | ☐ |  |
+| 91 | 10 | repo | letta-code | Letta Code | had | - | ✓ |  |
 | 92 | 10 | repo | memento-skills | Memento-Skills | had | - | ✓ |  |
 | 93 | 10 | repo | reef | Reef | had | - | ✓ |  |
 | 94 | 10 | repo | voyager | Voyager (code) | had | - | ✓ |  |
-| 95 | 10 | repo | rsiagent | RSIAgent (code) | had | - | ☐ |  |
-| 96 | 10 | repo | harness-zero | Harness-Zero (code) | had | - | ☐ |  |
-| 97 | 10 | repo | rrsi | RRSI (code) | had | - | ☐ |  |
+| 95 | 10 | repo | rsiagent | RSIAgent (code) | had | - | ✓ |  |
+| 96 | 10 | repo | harness-zero | Harness-Zero (code) | had | - | ✓ |  |
+| 97 | 10 | repo | rrsi | RRSI (code) | had | - | ✓ |  |
 | 98 | 10 | repo | adas | ADAS (code) | had | - | ✓ |  |
 | 99 | 10 | repo | ai-scientist | AI Scientist (code) | had | - | ✓ |  |
 | 100 | 10 | repo | autoresearch | autoresearch | had | - | ✓ |  |
