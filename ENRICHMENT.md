@@ -54,7 +54,7 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 20 | 4 | paper | 2305.16291 | Voyager: An Open-Ended Embodied Agent with Large Language Models | had | yes | ☐ |  |
 | 21 | 4 | paper | 2308.10144 | ExpeL: LLM Agents Are Experiential Learners | had | yes | ☐ |  |
 | 22 | 4 | paper | 2502.12110 | A-MEM: Agentic Memory for LLM Agents | had | yes | ☐ |  |
-| 23 | 4 | paper | 2305.10250 | MemoryBank: Enhancing Large Language Models with Long-Term Memory | had | yes | ☐ |  |
+| 23 | 4 | paper | 2305.10250 | MemoryBank: Enhancing Large Language Models with Long-Term Memory | had | yes | ✓ |  |
 | 24 | 4 | paper | 2510.04618 | Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models | had | yes | ☐ |  |
 | 25 | 4 | paper | 2510.16079 | EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle | had | yes | ☐ |  |
 | 26 | 4 | paper | 2604.15097 | From Procedural Skills to Strategy Genes: Towards Experience-Driven Test-Time Evolution | had | yes | ☐ |  |
@@ -80,15 +80,15 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 46 | 5 | paper | 2604.20133 | EvoAgent: An Evolvable Agent Framework with Skill Learning and Multi-Agent Delegation | had | yes | ☐ |  |
 | 47 | 5 | paper | 2507.03616 | EvoAgentX: An Automated Framework for Evolving Agentic Workflows | had | yes | ☐ |  |
 | 48 | 5 | paper | 2510.23601 | Alita-G: Self-Evolving Generative Agent for Agent Generation | had | yes | ☐ |  |
-| 49 | 5 | paper | 2402.17574 | Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization | had | yes | ☐ |  |
+| 49 | 5 | paper | 2402.17574 | Agent-Pro: Learning to Evolve via Policy-Level Reflection and Optimization | had | yes | ✓ |  |
 | 50 | 5 | paper | 2409.00872 | Self-evolving Agents with Reflective and Memory-Augmented Abilities | had | yes | ✓ |  |
 | 51 | 5 | paper | 2609.15364 | RSIAgent: Autonomous Exploration for Recursive Self-improvement in New Environments | had | yes | ☐ |  |
 | 52 | 6 | paper | 2305.19118 | Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate | had | yes | ☐ |  |
 | 53 | 6 | paper | 2305.14325 | Improving Factuality and Reasoning in Language Models through Multiagent Debate | had | yes | ✓ |  |
 | 54 | 6 | paper | 2505.15734 | DEBATE, TRAIN, EVOLVE: Self Evolution of Language Model Reasoning | had | yes | ☐ |  |
-| 55 | 6 | paper | 2511.16043 | Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning | had | yes | ☐ |  |
-| 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ☐ |  |
-| 57 | 6 | paper | 2403.08715 | SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents | had | yes | ☐ |  |
+| 55 | 6 | paper | 2511.16043 | Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning | had | yes | ✓ |  |
+| 56 | 6 | paper | 2406.14228 | EvoAgent: Towards Automatic Multi-Agent Generation via Evolutionary Algorithms | had | yes | ✓ |  |
+| 57 | 6 | paper | 2403.08715 | SOTOPIA-π: Interactive Learning of Socially Intelligent Language Agents | had | yes | ✓ |  |
 | 58 | 7 | paper | 2505.22954 | Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents | had | yes | ☐ |  |
 | 59 | 7 | paper | 2504.15228 | A Self-Improving Coding Agent | had | yes | ☐ |  |
 | 60 | 7 | paper | 2412.21139 | Training Software Engineering Agents and Verifiers with SWE-Gym | had | yes | ☐ |  |
@@ -100,10 +100,10 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 66 | 8 | paper | 2608.17906 | AutoResearch: Insight In, Hallucination Out | had | yes | ☐ |  |
 | 67 | 8 | paper | 2607.28568 | Frontis-MA1: Training an AI4AI Model towards Recursive Self-Improvement in Machine Learning Engineering | had | yes | ☐ |  |
 | 68 | 8 | paper | 2603.01712 | FT-Dojo: Towards Autonomous LLM Fine-Tuning with Language Agents | had | yes | ☐ |  |
-| 69 | 8 | paper | 2606.06473 | MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery | had | yes | ☐ |  |
+| 69 | 8 | paper | 2606.06473 | MLEvolve: A Self-Evolving Framework for Automated Machine Learning Algorithm Discovery | had | yes | ✓ |  |
 | 70 | 9 | paper | nature-funsearch-2024 | Mathematical Discoveries from Program Search with Large Language Models | had | yes | ☐ |  |
 | 71 | 9 | paper | 2506.13131 | AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery | had | yes | ☐ |  |
-| 72 | 9 | paper | 2601.10657 | PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution | had | yes | ☐ |  |
+| 72 | 9 | paper | 2601.10657 | PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution | had | yes | ✓ |  |
 | 73 | 9 | paper | openreview-higher-order-evolution-2024 | Higher Order and Self-Referential Evolution for Population-based Methods | had | no | ☐ |  |
 | 74 | 9 | paper | 1901.01753 | Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions | had | yes | ☐ |  |
 | 75 | 10 | repo | agent-zero | Agent Zero | had | - | ☐ |  |
@@ -129,12 +129,12 @@ stage order breaks ties. Missing PDFs are downloaded along the way.
 | 95 | 10 | repo | rsiagent | RSIAgent (code) | had | - | ☐ |  |
 | 96 | 10 | repo | harness-zero | Harness-Zero (code) | had | - | ☐ |  |
 | 97 | 10 | repo | rrsi | RRSI (code) | had | - | ☐ |  |
-| 98 | 10 | repo | adas | ADAS (code) | had | - | ☐ |  |
+| 98 | 10 | repo | adas | ADAS (code) | had | - | ✓ |  |
 | 99 | 10 | repo | ai-scientist | AI Scientist (code) | had | - | ☐ |  |
 | 100 | 10 | repo | autoresearch | autoresearch | had | - | ☐ |  |
 | 101 | 10 | repo | evolutionary-model-merge | Evolutionary Model Merge | had | - | ☐ |  |
 | 102 | 10 | repo | funsearch | FunSearch (code) | had | - | ☐ |  |
-| 103 | 10 | repo | mlevolve | MLEvolve (code) | had | - | ☐ |  |
+| 103 | 10 | repo | mlevolve | MLEvolve (code) | had | - | ✓ |  |
 | 104 | 10 | repo | openevolve | OpenEvolve | had | - | ☐ |  |
 | 105 | 10 | repo | poet | POET (code) | had | - | ☐ |  |
 <!-- END STATUS TABLE -->

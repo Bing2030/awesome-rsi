@@ -438,16 +438,29 @@
     "reading": "Read the memory formation + evolution loops (§3–4) and the LoCoMo results."
   },
   "2305.10250": {
-    "tldr": "MemoryBank: long-term memory for companions — summarize events and apply an Ebbinghaus forgetting curve for consistent, long-horizon recall.",
-    "method": "Maintain a long-term memory bank of summarized past events with an Ebbinghaus-inspired decay; retrieve relevant memories so multi-day companion/counseling interactions stay consistent beyond the context window.",
+    "tldr": "MemoryBank adds persistent long-term memory to frozen LLMs: timestamped dialogue logs with LLM-written event summaries and user portraits, FAISS dense retrieval, and an Ebbinghaus forgetting curve that decays unreinforced memories — demonstrated in SiliconFriend, an empathetic companion chatbot.",
+    "method": "Storage has three tiers: timestamped multi-turn dialogue logs; LLM-generated daily event summaries rolled up into a global summary; and daily personality insights aggregated into a global user portrait (fixed prompts, e.g. \"Summarize the events and key information in the content [dialog/events]\"). Each dialogue turn and summary is a memory piece, embedded (MiniLM for English, Text2vec for Chinese) and indexed in FAISS via LangChain, DPR-style dual-tower retrieval. At interaction time the current conversation is the query; retrieved memories plus the global portrait and event summary are packed into the prompt. Updating applies the Ebbinghaus curve R = e^(−t/S): retention R decays with elapsed time t; strength S starts at 1 on first mention, and each recall increments S by 1 and resets t to 0, so re-accessed memories persist longer. Open-source variants add LoRA tuning (rank 16, 3 epochs, one A100) on 38k psychological dialogues.",
     "results": [
-      "Enables consistent multi-day companion interactions (persona and history recall) beyond context limits."
+      "Quantitative eval: 194 hand-written probing questions (97 English, 97 Chinese) over a simulated 10-day memory store of 15 ChatGPT-role-played users; human annotators scored retrieval accuracy, response correctness, coherence, and ranking (s = 1/rank).",
+      "SiliconFriend_ChatGPT is best overall: English retrieval 0.763, correctness 0.716, coherence 0.912, ranking 0.818 (Chinese: 0.711 / 0.655 / 0.675 / 0.758).",
+      "Open-source variants match or beat retrieval (BELLE 0.814 EN / 0.856 ZH; ChatGLM 0.809 / 0.84) but lag sharply on correctness (0.418–0.603) and coherence — attributed to weaker base models, not the memory layer.",
+      "Qualitatively, an online SiliconFriend platform collected real user conversations; the paper shows it recalling a recommended book and a quicksort request days later and correctly denying an undiscussed heap-sort session.",
+      "The forgetting curve itself is never quantified: no ablation or number isolates its effect, and the paper flags the model as exploratory."
+    ],
+    "advantages": [
+      "Early (May 2023) mechanism giving both closed-source (ChatGPT) and open-source (ChatGLM 6.2B, BELLE 7B) LLMs persistent, evolving memory with no weight changes — the memory layer alone, plus optional LoRA for empathy tuning.",
+      "Forgetting-as-feature: time-decayed retention with reinforcement on recall (spacing effect) replaces append-only logs or fixed-window truncation with an anthropomorphic update policy.",
+      "Memory is more than retrieval: hierarchical daily-to-global summaries plus a user portrait let the bot adapt to personality, not just look up facts.",
+      "Practical and bilingual: swappable embedders and backbones, released as working SiliconFriend code."
     ],
     "limitations": [
-      "Domain-specific (companion/counseling); summary-based storage loses detail."
+      "The paper itself calls the Ebbinghaus update \"exploratory and highly simplified\": S is a bare integer counter, and no experiment measures whether forgetting helps or hurts.",
+      "Quantitative evaluation is fully simulated — ChatGPT role-plays all 15 users and generates the dialog history — with only 194 probing questions scored by annotators.",
+      "Summary-based storage discards detail: correctness for open-source backbones falls to 0.42–0.60, so specific recall is unreliable even when retrieval succeeds.",
+      "Scoped to companion/counseling interactions of 10 simulated days; far shorter than real long-horizon deployment."
     ],
-    "fits": "The 'memory as database with decay' baseline — contrast with agentic memory (A-MEM) and evolving memory (MemEvolve).",
-    "reading": "Read the memory bank + forgetting-curve design (§3)."
+    "fits": "Stage 4's \"memory as database with decay\" baseline: an external store passively written, densely retrieved, and decayed by a hand-set curve — the update policy is fixed by design, never learned. A-MEM makes memory agentic (LLM organizes and links notes into a graph); MemEvolve evolves the memory system's own architecture.",
+    "reading": "§2 covers the three components (storage 2.1, FAISS retrieval 2.2, Ebbinghaus update 2.3 — the R = e^(−t/S) rules); §3.1 for the 38k-dialogue LoRA tuning; Table 2 for all numbers. §4.1 examples are skippable."
   },
   "2604.15097": {
     "tldr": "Strategy Genes: skill *documents* are unstable control; compact 'strategy genes' (skill IDs + parameters) control and evolve more reliably.",
@@ -631,16 +644,29 @@
     "reading": "Read the tool generation/abstraction/curation loop (§3)."
   },
   "2402.17574": {
-    "tldr": "Agent-Pro: evolve the agent's *behavioral policy* (beliefs and decisions), not just its prompts, for interactive games.",
-    "method": "Learns policy-level knowledge — beliefs and decision rules — for interactive games via reflection and optimization, evolving the behavioral policy through play rather than tuning fixed prompts.",
+    "tldr": "Agent-Pro evolves an LLM agent's behavioral policy — its prompt-level beliefs and decision rules — through in-game reflection and payoff-based selection, letting GPT-4 beat the trained DMC poker bot in Limit Texas Hold'em with zero parameter updates.",
+    "method": "Policy here means the prompt itself: task description plus behavioral strategy. 'Training' is gradient-free prompt optimization through play. Each decision, the agent first writes natural-language beliefs — self-belief (hand, plan, risk) and world-belief (opponents, rules) — then acts conditioned on them. After lost games, policy-level reflection audits the whole belief sequence against the delayed final result (correctness, consistency, rationality), not single actions, and distills failures into two instruction types: Behavioral Guidelines (goals, strategies, demonstration trajectories) and World Modeling (opponent models, overlooked rules). New instructions are verified by replaying the same game (kept only if the score improves, ≤3 retries), then evaluated on novel games with all hands and seats swapped across (K+1)² permutations; the metric Δ is the average margin over the strongest opponent. A depth-first search over B=8 candidate policies per iteration accepts any Δ gain and backtracks otherwise — in-context policy iteration.",
     "results": [
-      "Improves on dynamic game scenarios (e.g., Blackjack) where prompt-only agents plateau."
+      "Blackjack, 900 games vs dealer (Table 1): win rate 36.2% on Qwen-72B (+3.9 over best baseline Reflexion 32.3), 23.1% on Llama2-70B (+11.0 over Reflexion's 12.1), 38.2% on GPT-3.5 (+1.5); on GPT-4 it reaches 40.4%, 0.5 below plain ReAct (40.9). Paper's overall claim: ~+4% average advantage; GPT-3.5 Agent-Pro tops the human reference (37.1%, Table C3).",
+      "Limit Hold'em, 1600 test games (Table 2), GPT-4 base: Agent-Pro averages 4.3 chips per game vs Vanilla LLM 1.4 (+2.9), beating the trained DMC bot (1.1, +3.2), ReAct (2.2) and Reflexion (1.2); human reference 5.7. GPT-3.5 base: 1.2 vs −1.1 (+2.3); Llama2-70B: −1.4 vs −2.2 (+0.8) — average gain ~+2 chips.",
+      "Ablations on GPT-4 (Table B2): belief-aware decisions alone (no learning) score 2.7 chips (+1.3 over vanilla); reflection without the belief module drops to 2.5 and yields vague, verbose instructions — beliefs help both deciding and reflecting.",
+      "Few-shot demonstration does not substitute for evolution: adding 3 winning example hands to the vanilla prompt scores 0.9 chips (−0.5), 3 losing hands 2.0 (+0.6), both far below the evolved policy's 4.3.",
+      "Learned styles diverge by base model when dealt the same bad hand: GPT-4-based Agent-Pro bluffs and probes, GPT-3.5 plays cautiously and folds late, Llama2-70B collapses into folding at the start (§5.2, Fig 4-5)."
+    ],
+    "advantages": [
+      "Shifts reflection from the action level to the policy level: it checks belief trajectories against delayed, game-level outcomes and compiles them into reusable instructions, which is exactly where action-level correction (Reflexion) stalls in long-horizon zero-sum play — e.g. Llama2-70B Blackjack 23.1% vs 12.1%.",
+      "Verification-plus-swap evaluation is a genuine in-context analog of policy iteration: a new prompt is accepted only when Δ improves on novel games with hands and seats permuted (K+1)² times, making gains luck-free and monotonic without any gradient step.",
+      "Shows strategic behaviors — bluffing, disguising strength, cutting losses — emerging purely from reflection on ~167 curated losing hands, and demonstrates that winning demonstrations are useless as prompts while failures drive reflection.",
+      "Ablates its own load-bearing parts: the dynamic belief module improves decisions even without learning (+1.3 chips) and is also necessary for high-quality reflection (4.3 → 2.5 without it)."
     ],
     "limitations": [
-      "Policy space is domain-specific; evaluated on small interactive games."
+      "Paper's own: heavy dependency on the base model — the GPT-4-based agent nears human level and beats DMC, but GPT-3.5 and Llama2-70B versions remain below DMC despite notable gains.",
+      "Paper's own: a significant gap likely remains to state-of-the-art game algorithms such as CFR+; no head-to-head against such solvers is run.",
+      "Evidence covers only two RLCard card games; Blackjack learning is simplified (50 failed games, no verification or DFS), and Hold'em evaluation rests on 100 test hands × 16 permutations.",
+      "On the simpler game the ceiling shows: with GPT-4, Agent-Pro (40.4%) does not beat plain ReAct (40.9%) at Blackjack, and the paper notes different strategies perform 'quite similarly' there."
     ],
-    "fits": "Moves self-evolution from prompts to the *decision layer* — a precursor to policy-level RL agents.",
-    "reading": "Read the policy-level reflection/optimization (§3)."
+    "fits": "Moves self-evolution from prompt tweaks to the decision layer: the evolving artifact is a behavioral policy — beliefs plus decision rules — verified and selected by in-game payoff, i.e. gradient-free policy iteration for LLM agents (stage 5, harness-level). A direct precursor to policy-level RL-agent evolution, and an early case of LLM-judged evolution beating trained RL opponents.",
+    "reading": "§3 (belief-aware decisions 3.1, policy-level reflection 3.2, DFS evolution 3.3), §4-5 results with Tables 1-2 and B2, the Limitations paragraphs; Appendix A.3-A.4 for the 50/167-hand setups and Table C3 for RL/human reference."
   },
   "2409.00872": {
     "tldr": "A training-free three-agent loop (User/Assistant/Checker) plus Ebbinghaus-style MemorySyntax memory management roughly doubles Reflexion's long-context QA F1 and yields up to 2.26x AgentBench gains, with the largest improvements on the smallest models.",
@@ -705,40 +731,78 @@
     "reading": "Sections 2.1–2.2 (protocol, prompt-controlled consensus), Tables 1–2 with Figure 10 (agents/rounds scaling), and §5 Limitations; Figure 3 plus §3.3 for short vs long debate prompts."
   },
   "2511.16043": {
-    "tldr": "Agent0: evolve agents from *zero human data* via tool-integrated reasoning and self-play RL.",
-    "method": "Removes human-curated data: the agent self-generates a curriculum via tool-integrated reasoning and self-play RL, evolving skills (tool use, dynamic reasoning) without external supervision.",
+    "tldr": "Agent0 evolves math-reasoning agents from zero human data by co-evolving two RL-trained agents — a curriculum generator rewarded for frontier-difficulty, tool-heavy tasks and a tool-using executor trained on majority-vote pseudo-labels — lifting Qwen3-8B-Base 18% on math and 24% on general reasoning.",
+    "method": "From one base LLM (Qwen3-4B/8B-Base), Agent0 clones two agents and alternates GRPO training over 3 iterations. Curriculum agent: generates tasks under reward RC = Rformat·max(0, λunc·Runc + λtool·Rtool − Rrep), where Runc = 1−2|p̂−0.5| peaks when the executor's self-consistency over k=10 sampled solutions is 50% (frontier difficulty), Rtool = γ·min(Ntool, 4) counts code-execution calls in executor responses, and Rrep penalizes BLEU-clustered duplicate tasks. Executor: the frozen curriculum agent emits a task pool; tasks in the intermediate self-consistency band (|p̂−0.5| ≤ δ, δ=0.25) are kept, the majority vote becomes the pseudo-label, and training uses ADPO — advantages scaled down on low-consistency (noisy-label) tasks while the upper clip is relaxed there so low-probability tokens (new reasoning paths) can grow. Rollouts are multi-turn tool-integrated reasoning: generation pauses at python code blocks, a sandbox returns the output, looping until a boxed answer.",
     "results": [
-      "Evolves agents capable of tool use and dynamic reasoning from zero human data."
+      "Qwen3-8B-Base, math AVG (AMC/MATH/GSM8K/Olympiad/Minerva/AIME24-25): 49.2 → 58.2 (+18%); AIME24 13.9 → 28.0, AIME25 16.7 → 24.8, Minerva 50.0 → 61.3. General benchmarks: MMLU-Pro 51.8 → 63.4, SuperGPQA 28.3 → 33.0, BBEH 8.6 → 13.7 (abstract's +24% is the relative gain across the three general benchmarks; Table 2 'Overall AVG' 34.5 → 42.1 includes math).",
+      "Beats data-free baselines on 8B math AVG: 58.2 vs R-Zero 54.7 (+6.4%), Absolute Zero 52.6 (+10.6%), Socratic-Zero 56.1 (+3.7%) — the last despite Socratic-Zero relying on external OpenAI APIs; the base model given the tool zero-shot only reaches 53.2.",
+      "Qwen3-4B-Base: math AVG 42.6 → 52.5; general Overall AVG 27.1 → 37.6 (SuperGPQA 20.9 → 29.9, MMLU-Pro 37.4 → 55.9, BBEH 7.57 → 12.0).",
+      "Co-evolution is measurable: the frozen Iter-1 executor's pass rate on curricula from iterations 1/2/3 falls 64.0% → 58.5% → 51.0% while average tool calls rise 1.65 → 2.10 → 2.60; 8B math AVG climbs 55.1 → 56.5 → 58.2 across the three iterations.",
+      "Ablations (8B math AVG, full Agent0 = 58.2): 46.8 without curriculum-agent training, 48.7 without the tool reward, 47.9 without the repetition penalty, 56.2 with vanilla GRPO instead of ADPO, 55.9 without multi-turn; 4-turn vs 1-turn curriculum generation adds 3.4% overall."
+    ],
+    "advantages": [
+      "Genuinely zero human data: both agents start from the same base model, and tasks, pseudo-labels (executor majority vote), and training rewards (uncertainty, tool use) are all self-generated — no external corpus or annotations enter training.",
+      "Breaks the self-play capability ceiling the paper identifies in prior work: difficulty targeting (p̂ ≈ 0.5) plus an explicit tool-use reward measurably escalates task complexity iteration over iteration (Table 5) instead of stagnating at the base model's level.",
+      "ADPO tackles the pseudo-label noise inherent to self-play RL head-on: ambiguity-scaled advantages plus dynamic trust regions beat vanilla GRPO by 2 math points (58.2 vs 56.2)."
     ],
     "limitations": [
-      "Self-generated curricula risk low-quality or degenerate signals; heavy compute."
+      "Pseudo-labels are majority votes, so label noise on ambiguous tasks is inherent; ADPO only downweights unreliable signals rather than eliminating them (the paper's own motivation for ambiguity-aware scaling).",
+      "The paper concedes that closed-loop self-evolution without the external tool 'risks mode collapse and curriculum stagnation' because it is bounded by the model's inherent knowledge — the sandboxed code interpreter is load-bearing.",
+      "The curriculum prompt casts the generator as a competition-math problem setter; coverage beyond math is shown only as transfer to three general benchmarks, on Qwen3-4B/8B-Base alone, and the paper is labeled 'preliminary work'.",
+      "The pipeline is data-free but not external-model-free: Appendix A uses a GPT-4o answer-checking judge (temperature 0.1); compute demand is heavy (k=10 executor samples per task for both curriculum reward and pseudo-labels, 16 rollout groups, multi-turn sandbox calls), though the paper reports no GPU budget."
     ],
-    "fits": "The 'zero human data' extreme of self-evolution, pairing with the multi-agent self-play lineage.",
-    "reading": "Read the curriculum generation + tool-integrated reasoning (§3–4)."
+    "fits": "The zero-human-data extreme of stage-6 multi-agent self-improvement: a curriculum/executor symbiosis in the Absolute Zero / R-Zero / Socratic-Zero lineage, distinguished by putting tool-integrated reasoning inside the loop so task complexity ratchets past the base model's ceiling instead of stagnating.",
+    "reading": "§3 for the curriculum reward (Eqs. 2–5), frontier filtering (Eq. 7), and ADPO (§3.3.2); then §4.2 Tables 1–2, §4.3 Tables 3 and 5 (difficulty/tool-use escalation); Appendix A for hyperparameters and prompts."
   },
   "2406.14228": {
-    "tldr": "EvoAgent (multi-agent): automatically generate specialized multi-agent teams via evolutionary algorithms, instead of hand-designing them.",
-    "method": "Evolutionary algorithm over agent designs: generate, select, and mutate specialized multi-agent teams so expert roles emerge automatically.",
+    "tldr": "EvoAgent treats any existing LLM agent as a parent whose role/skill/prompt settings form an evolvable genome, and applies LLM-simulated crossover, mutation, and quality-checked selection to grow it into a specialized multi-agent team that beats hand-designed multi-agent frameworks on reasoning, science, and planning benchmarks.",
+    "method": "An individual is one agent from any framework; its evolvable genome is its natural-language settings (role, skills, prompts), so LLMs can simulate the operators by rewriting them. From initial parent A(0,0), each of T iterations runs: (1) Crossover — parents answer the query, an LLM inspects the results to pick skills to improve, and rewrites settings into child agents; (2) Mutation — an LLM compares children against parents and edits them until distinct yet still task-capable; (3) Selection — an LLM quality-check module discards children that fail to inherit parent characteristics or duplicate an existing skill type (Fig. 1's hotel agent is dropped for duplicating the accommodation agent), keeping N per iteration; (4) Result update — every survivor drafts an answer and an LLM integrates all candidates with the prior result (EvoUpdate). All earlier agents stay in the population (EvoAgent(N,T) yields N×T specialists per query; main runs are (1,3)).",
     "results": [
-      "Auto-generated multi-agent systems match/beat human-designed frameworks on several tasks."
+      "Logic Grid Puzzle (200 puzzles, accuracy): GPT-4 77.0 vs hand-designed AutoAgents 69.0, AgentVerse 66.5, CoT 65.5; GPT-3.5 71.5 vs 68.0/66.5; Llama2-13B 35.5 vs Self-Refine 33.5 while persona-ensemble SPP collapses to 0.0 (Table 1).",
+      "TravelPlanner (180-query validation, GPT-4): final macro pass rate 7.2 vs 2.2 Direct/CoT, 1.1 Self-Refine, 0.6 SPP; hard-constraint micro 21.1 vs 15.8; commonsense micro 81.5 vs 79.4. On Mistral-7B it doubles hard-constraint micro (7.8 vs 3.9) and is the only method with nonzero final pass (1.1 vs 0.0).",
+      "ScienceWorld (30 interactive science tasks, sub-task completion): GPT-4 overall 27.97 to 30.42 and GPT-3.5 17.12 to 19.02 over the single-agent ReAct baseline; biggest gains on short trajectories (GPT-4 42.41 to 48.67), smallest on long ones (Table 2).",
+      "Ablation (TravelPlanner, averaged GPT-3.5 + Gemini-Pro): EvoAgent(1,3) with quality check reaches 68.9 commonsense / 14.0 hard micro vs same-budget variants Overgen3 61.4/10.7, PromptRefine3 63.0/13.8, Suggest3 61.7/8.4, Direct 59.5/13.7 (Table 4).",
+      "Cost (Table 5, Llama-3.1-70B on 8x RTX 3090 via SGLang): Logic 67.0 in 1060.8s vs AutoAgents 61.5 in 988.8s and AgentVerse 60.0 in 1056.0s — near-identical wall-clock to other multi-agent baselines at the best score. The MetaGPT/CAMEL/AutoGen adaptations (Appendix D) report no benchmark numbers — qualitative demos only."
+    ],
+    "advantages": [
+      "Framework-agnostic by construction: because the genome is plain-language agent settings, the same four operators wrap MetaGPT, AutoGen, and CAMEL without modifying their code — unlike ADAS (stage 5), which must program a new executable pipeline per domain and framework.",
+      "Selection needs no validation metric: the quality check tests inheritance and non-duplication rather than benchmark fitness, so the loop runs on tasks where you cannot score candidates individually (at the cost of optimizer signal — see limitations).",
+      "Gains hold on weak backbones where persona methods fail: on Llama2-13B Logic it scores 35.5 while SPP scores 0.0, showing diversity-from-evolution generalizes where SPP's persona self-collaboration does not.",
+      "Outperforms the dedicated auto-generation frameworks AgentVerse and AutoAgents it is closest to, at comparable inference cost, and beats same-budget ablations (Overgen, PromptRefine, Suggest), isolating the value of evolving agents rather than just sampling or refining prompts."
     ],
     "limitations": [
-      "EA over agent populations is LLM-call expensive; specialist roles can overfit tasks."
+      "From the paper's own Limitations section: generating multiple specialized agents brings higher token cost than a single agent; comparisons with existing multi-agent frameworks are limited to AgentVerse and AutoAgents because adapting others to each benchmark was out of scope; and the generated agents' quality is never manually evaluated.",
+      "Improvements shrink as trajectories lengthen — ScienceWorld gains are largest on short tasks and the authors attribute this to long contexts degrading multi-agent systems (Table 2).",
+      "Iteration gains plateau after 3 on Trivia Creative Writing as generated agents converge and become similar, and with N>1 the quality-check module is needed to suppress duplicate-type agents (Sec. 4.4, App. B).",
+      "Scaling population/iterations shifts plans toward user preferences at the expense of commonsense-rule adherence — the authors blame an initial-agent integration bias they leave to future work."
     ],
-    "fits": "Applies ADAS-style search to *multi-agent teams* — the meta-agent now composes societies, not just single agents.",
-    "reading": "Read the evolutionary generation/selection loop (§3)."
+    "fits": "Stage 6: ADAS-style evolutionary search pointed at multi-agent societies. Adds over ADAS (stage 5): the search space is language-level role/prompt settings inside any existing framework (MetaGPT/AutoGen/CAMEL wrap-in), not new forward() code, and selection is an LLM inheritance/diversity check instead of a scored archive — wider plug-in reach, weaker optimization signal. Predates ADAS (June 2024).",
+    "reading": "Sec. 3 plus Algorithm 1 for the four operators; Tables 1 and 3 for the headline numbers; Sec. 4.4 ablations; Appendix D only to see framework wrap-in (qualitative); Limitations. Skip the prompt listings."
   },
   "2403.08715": {
-    "tldr": "SOTOPIA-π: train social intelligence — behavior cloning + self-reinforcement on LLM-rated social interactions.",
-    "method": "Interactive social learning: behavior cloning + self-reinforcement training on filtered social-interaction data, using LLM ratings to improve social goal-achievement (not just task skill).",
+    "tldr": "Behavior cloning plus self-reinforcement on GPT-4-rated social interactions lifts Mistral-7B to GPT-4-level social goal completion on SOTOPIA (7.62 vs 7.62), improves safety, preserves MMLU — while revealing GPT-4 judges overestimate agents trained on GPT-4 ratings.",
+    "method": "Three automated steps. (1) Task generation: GPT-4 turns keywords sampled from Social Chemistry, Social IQa, and Normbank into scenarios with paired private goals (462 tasks from 510 prompts), reusing SOTOPIA's 40 character profiles — unfiltered, disjoint from eval tasks. (2) Data collection: behavior cloning (BC) data comes from GPT-4-agent vs GPT-4-agent interactions; self-reinforcement (SR) data from the Mistral-7B agent role-playing both characters — 100 tasks × 10 character-pair interactions per round. (3) Update: GPT-4 rates each agent's goal completion (0-10, the best human-correlated SOTOPIA-EVAL dimension). BC keeps the top-2 interactions per task per agent plus a rank-wise min(local, global) mean threshold; SR keeps the top 20% per task (ratio-based, replacing ReST's iteratively tuned thresholds). Filtered positive (context, history) → JSON-action pairs train Mistral-7B-Instruct via QLoRA SFT, sequentially BC then SR.",
     "results": [
-      "A 7B model trained this way improves social goal-achievement on SOTOPIA."
+      "GPT-4-judged goal completion on SOTOPIA-hard: base Mistral-7B 3.25 → BC+SR 5.71, near the GPT-4 expert's 5.89; on all 90 tasks 5.07 → 7.62, exactly matching GPT-4's 7.62 (overall 2.33 → 3.44 vs GPT-4's 3.31).",
+      "Human evaluation is weaker: hard-task goal completion 2.89 (base) → 4.29 (BC+SR) vs GPT-4's 5.25; overall 1.04 → 1.95 (BC+SR vs GPT-4's 2.07, not significant, p=0.355).",
+      "The GPT-4-vs-human goal-score gap on hard tasks grows from 0.36 (base) to 1.42 (BC+SR): optimizing the LLM rating widens judge–human divergence.",
+      "Beyond goal completion (human, hard tasks), BC+SR over base: believability +2.05, relationship +1.91, social rules +1.11, overall +0.91 (all significant); knowledge −0.14, secret 0.00.",
+      "MMLU 5-shot preserved: BC+SR 48.57 vs base 49.21 (SR alone drops to 43.46). On a violence-refusal task, BC+SR's proceed-to-injure rate falls 100% → 44% (matching GPT-4), toxic words 3.6 → 0.9 (GPT-4: 0.3), and as the persuader character it prevents injury 11% → 100% with 2.9 alternative solutions vs GPT-4's 1.2."
+    ],
+    "advantages": [
+      "Runs the BC + LLM-rated self-reinforcement recipe (ReST-style) on open-ended multi-turn social interaction — private goals, secrets, non-verbal actions — rather than Stable Alignment's single-turn QA, and a 7B model reaches the GPT-4 expert's goal-completion score under the same judge.",
+      "Ratio-based filtering (top 20% per task) removes ReST's iterative threshold tuning, enabling single-pass SR across tasks of mixed difficulty; one round of BC alone already surpasses the GPT-3.5-based agent (goal 4.82 vs 4.21, auto-rated hard tasks).",
+      "Side benefits without explicit alignment training: safety and toxicity improve on their probe task and MMLU is preserved, suggesting social-interaction skill is roughly orthogonal to general QA ability.",
+      "Documents reward hacking inside its own loop: training on GPT-4 ratings inflates GPT-4-judged scores faster than human scores — a concrete warning for any self-improvement pipeline that uses an LLM as its own reward."
     ],
     "limitations": [
-      "Social intelligence is hard to evaluate; LLM ratings are a proxy."
+      "Headline parity holds only under GPT-4 judging; by human rating BC+SR stays below GPT-4 (4.29 vs 5.25 goal completion on hard tasks) and the judge–human gap grows 0.36 → 1.42 (the paper's own central caveat).",
+      "The method is offline and single-pass — no online RL or iteration (PPO left to future work); the expert is GPT-4, and human conversation data as a BC source is deferred.",
+      "Safety conclusions rest on a single custom social task (paper acknowledges); trained models still emit more toxic words than GPT-4 (0.9 vs 0.3), and SR alone degrades MMLU (43.46 vs 49.21).",
+      "Training tasks are auto-generated and deliberately unfiltered ('lower quality'), and human evaluation covers only 28 interactions per model on the 14 hard scenarios."
     ],
-    "fits": "Extends self-improvement to *social* capability — the dimension multi-agent settings actually exercise.",
-    "reading": "Read the behavior-cloning + self-reinforcement loop (§3)."
+    "fits": "Extends self-improvement to the social dimension stage-6 multi-agent settings exercise: open-ended multi-turn role-play with private goals, secrets, and non-verbal acts. Its LLM-rater-as-reward + filtered self-training loop is self-play data curation for social skills — and the judge-vs-human divergence result is direct evidence of reward hacking in LLM-judged self-improvement.",
+    "reading": "§2.1 (SOTOPIA-EVAL dimensions), §3 (pipeline + filtering), §5 with Fig 4 and Tables 1-2, §6 (safety, MMLU); Appendix B.2 for exact filtering rules and Table 5 for full per-dimension numbers."
   },
   "2412.21139": {
     "tldr": "SWE-Gym: the first *training environment* for software-engineering agents — 2,438 real Python tasks with runtime + tests — used to train agents and verifiers.",
@@ -825,28 +889,53 @@
     "reading": "Read the task taxonomy (§3) and the agent baselines/analysis (§5)."
   },
   "2606.06473": {
-    "tldr": "MLEvolve: self-evolving multi-agent framework for automated ML algorithm discovery, with hierarchical control and cross-branch memory.",
-    "method": "Extends ML-engineering agents with hierarchical control, cross-branch information sharing, and persistent (non-memoryless) search to evolve end-to-end ML algorithms over long horizons.",
+    "tldr": "An LLM multi-agent framework that evolves end-to-end ML algorithms, reaching 65.3% average medal rate on MLE-Bench in a 12-hour budget — best among compared agents at half the standard 24h runtime — and the best result on 11 of 15 AlphaEvolve math-optimization tasks.",
+    "method": "Three coupled mechanisms per task (500 steps, 12h). A branch is a root-to-leaf trajectory of candidate solutions (3 initial drafts, max 5 branches plus 2 fusion). (1) Progressive MCGS: primary edges carry UCT selection and backpropagation; reference edges — never backpropagated — point from other branches' top nodes, so cross-branch transfer conditions generation on retrieved solutions, not scalar rewards. A soft switch w(t) decays 1.0→0.2, blending UCT exploration into Elite-Guided picks from the global top-3 by inverse rank; two-level stagnation detection (τ_branch=3, τ_global=6) triggers intra-branch evolution, cross-branch fusion, or multi-branch aggregation at the root. (2) Retrospective Memory: curated cold-start knowledge base plus a dynamic global store of per-node records (plan, outcome, metric, analysis), retrieved by BM25+FAISS fused via RRF at planning/debugging stages — records persist across the run, replacing memoryless scalar-only search. (3) Planner-coder decoupling: planner decides what/why at module level; coder implements via Base/Stepwise/Diff modes chosen by search state.",
     "results": [
-      "Improves long-horizon ML algorithm discovery vs. prior MLE agents by removing inter-branch isolation and memoryless search."
+      "MLE-Bench (75 tasks, 12h budget, 3 seeds): 65.3% average medal rate, 34.7% gold, 100% valid submissions, 76.0% above-median — vs. best 24h baselines MARS+ 62.7% medal / 33.8% gold and AIBuildAI 63.1% / 25.8%; by complexity 80.3% low, 64.0% medium, 46.7% high.",
+      "AlphaEvolve's 15 math-optimization tasks: best result on 11 of 15 vs. AlphaEvolve, AlphaEvolve-v2, SimpleTES, TTT-Discover, and OpenEvolve (e.g., sums-differences problem 1: 1.1901774219 vs. AlphaEvolve's 1.1479889651; circle packing in a rectangle: 2.3658323759 vs. 2.3658321334).",
+      "Component ablation on MLE-Bench Lite (22 tasks): medal 81.82% full → 68.18% w/o Progressive MCGS, 68.18% w/o Retrospective Memory (the paper's cited 13.64% drop), 72.73% w/o adaptive code generation; beat ratio 88.39% vs. 79.91/81.90/84.14.",
+      "Search dynamics: effective active branches exp(H(π)) falls 4.8 → 2.8 over the run (vanilla MCTS flat at ~4.3); on representative tasks beat ratio reaches 98.2% vs. ~70% for vanilla MCTS, which plateaus early.",
+      "Mechanism-level ablation (9-task subset): removing intra-branch evolution drops medal 66.67% → 33.33% (largest single factor); removing the knowledge base or the global memory each drops it to 44.44%."
+    ],
+    "advantages": [
+      "State-of-the-art MLE-Bench result at half the standard 24-hour budget (65.3% vs. MARS+ 62.7% and AIBuildAI 63.1%, both at 24h) with 100% valid submissions — an efficiency claim, not just a score claim.",
+      "Cross-domain check most MLE agents skip: unchanged, it beats specialized algorithm-discovery systems (AlphaEvolve, AlphaEvolve-v2, OpenEvolve) on 11/15 math tasks, evidence the search machinery generalizes past Kaggle.",
+      "Reference edges are a clean way to get cross-branch information flow without corrupting credit assignment — backpropagation stays strictly on primary edges — and every mechanism ablates positively, with intra-branch evolution isolated as the critical one.",
+      "Memory accumulates without extra reflection LLM calls: records are logged by a Result Parse Agent and retrieved by BM25+FAISS/RRF, unlike MARS/ROME-style reflection memory, and the two memory halves (static KB vs. dynamic store) are separately ablatable."
     ],
     "limitations": [
-      "Compute-heavy evolutionary search; gains are in MLE task settings."
+      "Expensive per task: up to 500 expansion steps over 12h on 21 vCPUs / 234GB RAM, an H200 GPU, and a frontier backbone (Gemini-3.1-Pro-preview); baseline numbers are taken from leaderboards or papers, so comparisons confound framework with different backbone LLMs and budgets.",
+      "The edge shrinks with difficulty: 46.7% medal on high-complexity tasks only ties AIBuildAI's 46.7% (at 24h), vs. 80.3% on low-complexity — most of the gain over MARS+ comes from medium tasks (64.0% vs. 60.5%).",
+      "The cold-start knowledge base is manually curated per task type from repositories and competition platforms, so part of performance is static human prior rather than self-evolved; the dynamic memory is task-scoped, not accumulated across tasks (ML-Master 2.0's cross-task caching is the contrast).",
+      "Ablation statistics are thin: 22 tasks (Lite) for component removal, 9 tasks for mechanism analysis, and some headline cells carry ±0.0 SEM over 3 seeds (gold rate, valid rate, high-complexity)."
     ],
-    "fits": "AlphaEvolve/AutoML-Zero's descendant for *ML algorithm* discovery — with the memory/control machinery to make long-horizon search work.",
-    "reading": "Read the hierarchical-control + cross-branch memory design (§3–4)."
+    "fits": "Stage-8 descendant of AutoML-Zero/AlphaEvolve for whole-ML-algorithm discovery (the repo positions it as AutoMLGen's successor): it keeps the propose-execute-evaluate loop but adds machinery that makes long-horizon search persistent — graph reference edges for cross-branch reuse, an entropy schedule shifting exploration toward exploitation, run-length experience memory, and planner/coder decoupling.",
+    "reading": "§3.2 (Progressive MCGS, Eqs. 3–7, four expansion types), §3.3 (memory + RRF retrieval), §4.2 Tables 1–2, §4.3 Table 3 plus Appendix E Table 5, §4.4 Fig 3 (entropy dynamics)."
   },
   "2601.10657": {
-    "tldr": "PACEvolve: diagnose *why* self-evolving agents stall (context pollution, mode collapse) and fix it with progress-aware, consistency-preserving evolution.",
-    "method": "Identifies that self-evolving agents anchor reasoning to local context; PACEvolve adds progress-aware, consistency-preserving mechanisms to keep long-horizon evolution on track.",
+    "tldr": "PACEvolve diagnoses three failure modes of LLM-driven evolutionary search — context pollution, mode collapse, weak collaboration — and fixes them with hierarchical idea memory, momentum-triggered backtracking, and self-adaptive cross-island crossover, reaching state-of-the-art on symbolic regression, KernelBench, and Modded NanoGPT.",
+    "method": "From 200+ 1000-step evolution runs the authors find append-only history contexts saturate with failed trials (context pollution), agents anchor to locally similar hypotheses (mode collapse), and static periodic crossover wastes parallel compute (weak collaboration). PACEvolve evolves candidate solutions (equations, GPU kernels, training code) via three mechanisms. HCM decouples idea generation from selection over a persistent idea pool (caps: 5 ideas, 20 hypotheses each): an LLM classifier merges conceptually duplicate ideas, caps trigger summarization and LLM pruning, and a permanent failure log preserves consistency by blocking rediscovery of dead ends. MBB computes scale-invariant Relative Progress R_t (fraction of remaining gap G_t = s_t − r closed), smoothed into momentum m_t by EWMA (β=0.85); when m_t < 0.001 the trajectory reverts to an ancestor state drawn from a power-law (α=1.5), resetting context. CE then samples backtrack vs. crossover from other islands with probability proportional to absolute-progress-based weights.",
     "results": [
-      "Mitigates local-anchoring failure modes, improving long-horizon evolution across code optimization and discovery."
+      "LLM-SR nonlinear-oscillator symbolic regression (Log10 NMSE, 10 runs × 1000 iterations, Gemini 2.5 Pro): PACEvolve-Multi best −8.24 / P75 −7.64 / mean −6.11 vs ShinkaEvolve −6.35 / −5.92 / −5.35, OpenEvolve −7.11 / −5.79 / −5.40, and non-LLM uDSR best −4.06; Multi finds 3 solutions below log10 NMSE −8.",
+      "KernelBench (16 kernels, 1000 iterations each, A100 40GB): beats the best KernelBench-leaderboard kernel on all 16, beats ShinkaEvolve on all 16 (PACE-Multi ≥ Single on 13/16, i.e. 81.25%), matches-or-beats OpenEvolve on 15/16 and CodeEvolve/ShinkaEvolve on 14/16; up to 17.38× over PyTorch (LayerNorm, 10.1ms → 0.581ms), though it loses to PyTorch on MLP/MatMul.",
+      "Modded NanoGPT (8×H100, Gemini 3 Pro): cuts time to val loss 3.28 on FineWeb from the heavily optimized v40 baseline 142.8s → 140.2s via data sharding/preloading, U-shaped skip-connection init (0.8→0.4→0.8), hyperparameter tuning, and dynamic context scheduling — on a benchmark already optimized from ~2700s (v1) to 142s.",
+      "Ablation (10 runs each): HCM lifts mean/best but worst runs still stall (a locally-optimal idea is never erased); adding MBB eliminates stalled trajectories yet slightly hurts best runs (exploration tax); adding CE recovers top-run performance while keeping the floor — full stack needed."
+    ],
+    "advantages": [
+      "Real diagnosis, not anecdote: 200+ 1000-step runs show trajectories that fail to find low-NMSE solutions in the first few iterations rarely recover, with large variance across independent runs (Fig. 2) — grounding context pollution and mode collapse in measured search dynamics.",
+      "Each failure mode gets a matched, ablation-isolated fix: HCM's bi-level pruning cleans context, and MBB's progress-aware trigger removes the worst-run tail that context erasure alone cannot (§4.3).",
+      "The scale-invariant Relative Progress metric lets one stagnation trigger work across tasks without task-specific thresholds, unlike fixed-schedule resets in ShinkaEvolve/FunSearch-style loops that ignore search state.",
+      "Same scaffold achieves SOTA across three distinct domains — scientific equation discovery, GPU kernel optimization, and full-stack distributed training engineering — suggesting the recipe transfers."
     ],
     "limitations": [
-      "Mechanisms add complexity; evaluated on specific long-horizon domains."
+      "By the paper's own ablation, backtracking 'slightly affected the best-performing processes' (exploration taxes exploitation), and CE only helps 'provided that at least one island discovers a promising direction' — joint all-island stagnation remains a risk.",
+      "No explicit limitations section; the authors flag KernelBench/Modded-NanoGPT world knowledge as 'questionable' (Table 5) since optimization strategies likely sit in LLM pretraining corpora, so gains may partly reflect retrieval rather than search.",
+      "Tasks need smooth rewards and cheap evaluation per the paper's own criteria; Modded NanoGPT needs 8 H100s and its gain is incremental (142.8s → 140.2s, conceded as 'this improvement looks incremental').",
+      "Mechanism assumes a known metric lower bound r and tuned constants (β=0.85, ε_rel=0.001, caps 5/20, power-law exponent 1.5); a sweep (Fig. 5) reports robustness but values are still benchmark-derived."
     ],
-    "fits": "The diagnostic + fix for why self-evolving agents stall — the engineering prerequisite for truly long-horizon open-ended evolution.",
-    "reading": "Read the failure-mode study (§2–3) and the progress-aware mechanism (§4)."
+    "fits": "Stage-9 prerequisite: open-ended evolution stalls without memory governance — long-horizon search needs structured, pruned idea memory plus a progress signal that decides when to abandon a line of work. Its diagnosis-first methodology (measure failure modes across 200+ runs, then derive the scaffold) pairs naturally with PACE-style diagnosis in this catalog.",
+    "reading": "Read §2 (failure-mode study), §3.1–3.3 (HCM, MBB, CE with the Relative Progress equations), §4.3 (ablation), and Appendix A (case-study insights); Appendix B has pseudocode and hyperparameters (β=0.85, ε=0.001, caps 5/20)."
   },
   "openreview-higher-order-evolution-2024": {
     "tldr": "Higher-order evolution: evolve the mutation rate, recursively the meta-mutation rate, up to a self-referential top-level parameter that modifies itself.",
@@ -1137,13 +1226,20 @@
     "note": "The canonical skill-library agent — run it (if you have Minecraft) to watch skills compound."
   },
   "adas": {
-    "what": "ADAS (Automated Design of Agentic Systems) — a meta-agent that programs new agents.",
+    "what": "ADAS (Automated Design of Agentic Systems) — Meta Agent Search: a meta agent iteratively programs new agents as executable forward() code, scores each on a validation split, and appends survivors to a growing archive of designs (arXiv 2408.08435, ICLR 2025).",
     "architecture": [
-      "A meta-agent proposes agent designs as executable code and evaluates them.",
-      "A re-architect step improves the meta-agent's own prompt."
+      "Agent-as-code: every candidate is one complete `def forward(self, taskInfo)` function; `evaluate_forward_fn()` in `_mmlu/search.py` literally `exec()`s the string and installs it via `setattr(AgentSystem, 'forward', func)`, so discovered agents run inside a shared shell whose `LLMAgentBase.query()` returns `Info` namedtuples (name, author, content, iteration_idx).",
+      "Per-domain self-contained searches: `_mmlu/`, `_arc/`, `_drop/`, `_gpqa/`, `_mgsm/` each carry a `search.py` + `{domain}_prompt.py`; the archive is seeded by `get_init_archive()` with 7 hand-written agents (COT, COT_SC, Reflexion, LLM_debate, Take_a_step_back, QD, Role_Assignment) and persisted to `results/{expr}_run_archive.json`.",
+      "Each generation: `get_prompt(archive)` shows the meta agent the full scored archive plus a placeholder `AgentArchitecture` interface and 'WRONG Implementation examples'; the proposal then goes through two Reflexion revision passes (`get_reflexion_prompt(archive[-1])` feeds back the previous attempt — the repo-level realization of the paper's re-architect step) and an execution-error debug loop (`debug_max=3`) that returns stack traces as `debug_thought`.",
+      "Fitness is median + 95% bootstrap CI of accuracy on a 128-example validation slice (`--valid_size 128`, `--n_generation 30`, gpt-4o default); after search, `evaluate()` re-runs every archived agent on the held-out test split, and `_arc/search.py` instead execs a candidate `transform()` function with `run_examples_and_get_feedback()` giving per-example CORRECT/WRONG feedback."
     ],
-    "run": "Python; LLM API key; run the meta-agent search per README.",
-    "note": "The harness-level flagship — run to see an improver that *generates executable improvements*."
+    "advantages": [
+      "The cleanest executable-improvement substrate in this catalog: improvements are whole Python programs the meta agent wrote (multi-agent flows, debate, reflection), so the search space is Turing-complete rather than a fixed prompt/prompt-part genome like prompt-optimizers or Darwin-Gödel-style mutation.",
+      "Scored archive (not just mutation of one incumbent) makes it the reference setup for studying novelty, stepping stones, and transfer: `_transfer_math/` re-evaluates agents discovered on one domain zero-shot on unseen ones (gsm8k, gsmhard, SVAMP, Asdiv, DROP).",
+      "Small enough to fully read in an afternoon — one `search.py` per domain, no framework — so you can trace every loop of a code-level self-improver end to end and re-target it to a new task by editing one `evaluate_forward_fn`."
+    ],
+    "run": "conda create -n adas python=3.11; conda activate adas; pip install -r requirements.txt; export OPENAI_API_KEY=\"YOUR KEY HERE\"; then python {DOMAIN}/search.py with {DOMAIN} in {_arc, _drop, _gpqa, _mgsm, _mmlu} (defaults: 30 generations, gpt-4o-2024-05-13).",
+    "note": "Read `_mmlu/search.py:evaluate_forward_fn` first — `exec()` + `setattr(AgentSystem, 'forward', func)` is the whole thesis in two lines. Then `_mmlu/mmlu_prompt.py` for the meta prompt (archive, interface, WRONG examples) and Reflexion prompts. Heed the untrusted-code-execution warning; results JSONs are committed under `results/`."
   },
   "ai-scientist": {
     "what": "The AI Scientist — an end-to-end ML research loop (idea → experiment → paper → review).",
@@ -1164,13 +1260,20 @@
     "note": "The cleanest 'LLM + evaluator' loop — study the evaluate → select → prompt cycle, then run a toy problem."
   },
   "mlevolve": {
-    "what": "MLEvolve — a self-evolving multi-agent framework for automated ML algorithm discovery.",
+    "what": "MLEvolve — an agentic MLE system that solves Kaggle-style competitions via progressive Monte Carlo Graph Search with multi-agent collaboration; #1 on MLE-bench (65.3% medal rate, 12h) and best on 11 of 15 math-optimization tasks against five specialized systems including AlphaEvolve (arXiv 2606.06473; AutoMLGen successor).",
     "architecture": [
-      "Hierarchical control + cross-branch memory + persistent search.",
-      "Evolves end-to-end ML algorithms over long horizons."
+      "Search core — engine/agent_search.py: AgentSearch coordinates the MCGS loop and delegates to engine/node_selection (UCT with _piecewise_decay exploration constant: initial_C=1.414 until T1, linear decay to lower_bound=0.7 by T2 from cfg.agent.decay.phase_ratios; root-locked draft/fusion_draft children), engine/evaluation, engine/execution (Interpreter) and engine/solution_manager; every SearchNode is tagged with a branch_id and tracked in branch_all_nodes/branch_successful_nodes.",
+      "Agent suite — agents/: draft/improve/debug plus evolution_agent (intra-branch evolution on stagnation), fusion_agent + aggregation_agent (cross-branch fusion, and multi-branch aggregation when the root hits its draft limit), code_review_agent, data_leakage_agent (metric beyond leakage_max_threshold=0.999 triggers a check); codegen is multi-mode — agents/coder/diff_coder/ SEARCH/REPLACE patching (diff_generate.py, patcher.py, apply.py) vs stepwise_coder.py vs single-pass, dispatched from config flags use_diff_mode/use_stepwise_generation.",
+      "Experience memory — agents/memory/global_memory.py: GlobalMemoryLayer persists a MemRecord per node (plan, code summary, stage, success/failure label, parent/current metric, exec_time) into a task-scoped workspace_dir/global_memory dir; agents/memory/retriever.py HybridRetriever fuses BM25Okapi keyword hits with FAISS vector search via Reciprocal Rank Fusion, and agents/planner/planner_with_memory.py uses it for the two-stage retrieval-augmented planning mode.",
+      "Stagnation triggers — engine/conditions.py: should_trigger_branch_fusion fires only inside a fusion_min_time_hours–fusion_max_time_hours window (config comment: cross-branch fusion >=6h) when >=fusion_min_branches branches each hold >=fusion_min_successful_nodes successful nodes and is_globally_stagnant is true; is_branch_stagnant counts threshold=3 attempts without beating the branch best; engine/coldstart/ recommends pretrained models per task category from models_guidance_classified.json."
     ],
-    "run": "Python; LLM API key; run the evolutionary search per README.",
-    "note": "AlphaEvolve's descendant for *ML algorithm* discovery — run to see long-horizon evolutionary search."
+    "advantages": [
+      "The most credible open-source data point in this catalog for long-horizon evolutionary search: #1 on MLE-bench at 65.3% medal rate on a 12-hour budget (baselines mostly get 24h), and per the paper it is best on 11/15 math-optimization tasks against five specialized systems including AlphaEvolve (the README's own tables claim matches-or-beats on 14/15) — evidence the substrate generalizes past Kaggle to algorithm discovery.",
+      "Cross-branch fusion is a concrete self-improvement mechanism you can read and ablate: on global stagnation the system merges insights from top-performing nodes across different branches into new candidates and runs trajectory-aware evolution over each branch's full improvement history — richer than the flat restart/population loops most evolutionary coder repos ship.",
+      "Memory with honest labels and per-agent retrieval policies: every node's plan/code/metric/success-failure outcome is stored and retrieved via hybrid BM25+FAISS (RRF), with different agents querying memory differently to force novel approaches — plus cold-start guidance per task category, all switchable via use_global_memory/use_evolution/use_fusion/use_aggregation ablation flags."
+    ],
+    "run": "pip install --no-deps -r requirements_base.txt\npip install --no-deps -r requirements_ml.txt\npip install --no-deps -r requirements_domain.txt\n# edit config/config.yaml: set dataset_dir to the mle-bench data root and agent.code/feedback base_url+api_key (OpenAI-compatible endpoints; if agent.use_global_memory, also set agent.memory_embedding_model_path, and agent.memory_embedding_device: cpu without CUDA)\nbash run_single_task.sh <EXP_ID> <DATASET_DIR> [SERVER_ID]\n# example: bash run_single_task.sh denoising-dirty-documents /mle-bench/data 1\n# results land in ./runs/<timestamp>_<exp_id>/ (search-tree logs, best solution code, top-K submissions)",
+    "note": "Start at engine/node_selection.py — _piecewise_decay's exploration schedule plus root-node locking is the whole search policy. Then engine/conditions.py: fusion needs >=N successful branches AND global stagnation inside a time window. Compare fusion_agent (cross-branch) vs evolution_agent (intra-branch); the use_fusion/use_evolution flags exist for exactly that ablation."
   },
   "poet": {
     "what": "POET (Paired Open-Ended Trailblazer) — co-evolves environments and their solutions.",
