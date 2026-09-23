@@ -98,16 +98,29 @@
     "reading": "Read the generation/reflection/curation loop (§3) and how incremental updates prevent collapse."
   },
   "2510.16079": {
-    "tldr": "A closed-loop experience lifecycle: trajectories are distilled into a repository of abstract 'strategic principles', retrieved at task time, and the policy is reinforced from outcomes.",
+    "tldr": "EvolveR closes the experience loop inside RL training: the agent distills its own trajectories into guiding/cautionary principles kept in a scored, deduplicated, pruned base, retrieves them via a learned <search experience> action, and GRPO-trains on experience-conditioned rollouts — beating Search-R1 across seven QA benchmarks.",
+    "method": "Three alternating phases (§3). (1) Offline self-distillation, policy frozen: the agent's own πθ reviews each trajectory under an expert persona and emits a principle — a natural-language description plus knowledge triples, typed 'guiding' (success) or 'cautionary' (failure). Same-problem candidates are pairwise-deduped by LLM votes; each survivor then passes a two-stage gate (BGE-M3 cosine retrieval + binary LLM equivalence check): add if max similarity < 0.85, else merge the source trajectory under the matched principle. Every principle carries a Laplace-smoothed trust score s(p)=(c_succ+1)/(c_use+2); scores below 0.3 are periodically pruned. (2) Online interaction: top-3 principles are retrieved on demand via a learned <search experience> action, alongside <search knowledge> document retrieval. (3) Policy evolution: GRPO (G=8 rollouts per prompt, 128 prompts/step) maximizes 1.0·exact-match + 0.1·format reward over experience-conditioned trajectories, after a ~700-sample GPT-4o cold-start SFT.",
     "results": [
-      "Outperforms baselines by refining *strategy* (not just factual memory) across agent tasks.",
-      "The offline-distillation + online-retrieval split makes learning persistent and reusable."
+      "Seven QA benchmarks, EM: top average at both scales — 0.382 (Qwen2.5-3B) and 0.417 (7B) vs Search-R1 0.303 (base, 3B) / 0.385 (instruct, 7B); best in five of seven columns at 3B (NQ 0.434 vs 0.406, HotpotQA 0.373 vs 0.284, Bamboogle 0.328 vs 0.264), trailing Search-R1-base by 0.003 on TriviaQA (0.584 vs 0.587) and PopQA (0.434 vs 0.435).",
+      "Self- vs teacher-distillation reverses with scale (Table 2): GPT-4o-mini distillation wins at 0.5B (avg 0.220 vs 0.150) and 1.5B (0.290 vs 0.270), but self-distillation wins at 3B (0.382 vs 0.370) — the paper's 'cognitive alignment' claim.",
+      "Retrieval is load-bearing: the same trained weights denied the experience base at eval drop 0.382 → 0.340 (3B), 0.270 → 0.123 (1.5B), 0.150 → 0.078 (0.5B); swapping GRPO for SFT on the identical successful trajectories costs 0.382 → 0.357 (7% relative).",
+      "Quality control demonstrably works (manual audit of 100 principles): the high-score tier holds 82% ideal / 8% incorrect-misleading vs 26% / 24% in the low tier; the base grows to 49,934 principles with top-3 latency of 0.20 s and stable EM, peaking at 0.410 near 45k.",
+      "Scaling and learning dynamics: avg EM rises 0.150 (0.5B) → 0.270 (1.5B) → 0.382 (3B); principles distilled later score higher (interval-4 avg trust 0.500 vs 0.462 for interval 1), and pruning is threshold-robust (avg 0.265–0.276 for θprune ∈ {0.1, 0.3, 0.7, 0.9} on 1.5B)."
+    ],
+    "advantages": [
+      "Closes the loop inside RL rather than around a frozen model: distill every step (params frozen), retrieve during rollouts, GRPO over experience-conditioned trajectories — Reflexion/ExpeL/Memento never touch weights, Search-R1-style search RL has no experience channel. Component attribution: RL alone 0.325, retrieval without RL 0.357, full framework 0.382.",
+      "Memory with an audited trust ledger: the (c_succ+1)/(c_use+2) score decides survival (θprune = 0.3) and tracks human-judged quality (82% vs 26% ideal), robustly — performance moves only 0.265 → 0.276 across the whole θprune sweep.",
+      "Shows self-distillation can beat a stronger teacher at 3B: principles matched to the policy's own failure modes outperform GPT-4o-mini's, direct evidence against the external-scribing paradigm (ExpeL-style insights from a big model).",
+      "The experience base scales as an artifact: ~50k principles with 0.04–0.20 s top-3 retrieval (Milvus, BGE-M3) and no collapse under noise accumulation; full 3B lifecycle trains in ~39.4 h on 8×A100."
     ],
     "limitations": [
-      "Distillation quality depends on trajectory coverage; retrieval can surface irrelevant principles."
+      "Scale-dependent distiller (paper's own finding): below 3B, self-distillation loses to GPT-4o-mini teacher distillation (0.5B avg 0.150 vs 0.220; 1.5B 0.270 vs 0.290); the conclusion concedes principle quality is 'inherently tied to the base model's capabilities'.",
+      "Capability is split between policy and base, not internalized: denying retrieval at eval costs 0.382 → 0.340 (3B) and 0.150 → 0.078 (0.5B), and the w/ exp-absorb attempt to learn from retrieved principle tokens degrades 0.382 → 0.371 (noisy top-k), left to future work.",
+      "Distillation failure mode is vagueness: low-score-tier principles are 50% vague and 24% incorrect/misleading (audit of just 100 samples) — scoring prunes but never eliminates bad advice.",
+      "Scope is QA-shaped: seven knowledge-intensive QA benchmarks with an exact-match headline; whether strategy principles transfer to non-QA agent domains is untested."
     ],
-    "fits": "The cleanest end-to-end 'experience → principle → policy' loop in stage 4. A direct, structured successor to Reflexion.",
-    "reading": "Read the two-stage lifecycle (§3) and how principles are distilled and retrieved."
+    "fits": "Stage 4 (memory, reflection & skills): converts the Reflexion/ExpeL verbal-reflection loop into curated principles plus GRPO signal, closing experience → memory → weights end-to-end. Pairs with the EvolveR repo card (implementation detail), ACE (context-only evolution), A-MEM/MemoryBank (memory organization without RL), and Search-R1-lineage RL agents.",
+    "reading": "§3.2 (distill/dedup/integrate, Eq. 1–2), §3.3 (reward + GRPO), §5.2–5.3 (Tables 2–7, the 100-principle audit), A.2.1/A.2.3 (SFT-vs-GRPO, learning dynamics), A.1 (hyperparameters)."
   },
   "2605.23904": {
     "tldr": "Trains the skill document as the external state of a frozen agent, with a separate optimizer model making bounded add/delete/replace edits accepted only on held-out validation gain.",
@@ -158,16 +171,27 @@
     "reading": "Read the act/refine alternation (§3) and the Pokémon results; note the contrast with reset-based prompt optimizers."
   },
   "2605.27276": {
-    "tldr": "A single Feedback-Agent updates both the harness and the weights of a task agent, unifying the two previously siloed self-improvement schools (harness-update vs. test-time training).",
+    "tldr": "A Feedback-Agent (Claude Sonnet 4.6) alternately rewrites a task agent's scaffold and RL-tunes its weights (LoRA on gpt-oss-120b), merging the harness-update and test-time-training silos into one loop that beats both single-lever variants on all three benchmarks.",
+    "method": "Three LLM components: a Meta-Agent writes the initial scaffold A1 from the task spec and reference code; the task-specific agent (gpt-oss-120b) runs the benchmark in a sandbox (read-only data, private working dir); a Feedback-Agent (Claude Sonnet 4.6) reads the full trajectory — every prompt, response, tool call, and extracted answer per instance, not summary metrics — plus the scaffold and scores, then picks the next step: a harness update (A_{g+1} = F(A_g, τ_g, E_g, U); weights frozen) or a weight update (LoRA r=32, lr 4e-5 on gpt-oss-120b, H100s via Modal; scaffold frozen). It also selects the RL algorithm from a six-entry menu (PPO+GAE, GRPO, entropic advantage weighting, REINFORCE+KL, best-of-N behavioral cloning, DPO) from reward structure; in practice scaffold iteration runs first, switching to weights when harness progress stalls. Gate: a deterministic per-instance verifier scores every step.",
     "results": [
-      "Improves across three contrasting domains (e.g., Chinese legal charge classification and low-level coding).",
-      "Shows joint harness+weight updates beat updating either one in isolation."
+      "LawBench 191-class Chinese charge classification (top-1 accuracy, 913-item held-out test): 13.5% initial → 50.0% harness-only — the scaffold converged on a TF-IDF + LinearSVC pipeline, abandoning the LLM path — → 70.1% after PPO+GAE weight updates; prior SOTA 45.0% (+25.1 points).",
+      "AlphaEvolve TriMul CUDA-kernel task (H100; score = 1500/runtime): harness-only stalled at 0.120 (12,483 µs, 1.14×); entropic advantage weighting drove runtime to 1,017 µs — 14.02× speedup, score 1.475 vs 1.292 prior SOTA (12.4% faster), a 91.9% runtime cut from the harness-only peak.",
+      "MAGIC scRNA-seq denoising on pancreas data (mse norm, higher = better): harness-only hyperparameter sweeps (k, diffusion steps, bandwidth) plateaued at 0.241; the first GRPO checkpoint added a np.clip + np.rint rounding step → 0.289 vs 0.240 prior SOTA (+20.4%).",
+      "Ablation (Table 3): SIA-W+H strictly beats SIA-H everywhere, but the dominant lever flips by domain — harness updates did most of the LawBench work, weights nearly all of TriMul's (0.120 → 1.475)."
+    ],
+    "advantages": [
+      "Table 1's only system that edits harness and weights inside one self-improving loop; the nearest neighbours each stop short — Hyperagents co-evolves agent and improver but freezes weights, EUREKA composes scaffold-side reward generation with RL training but one-directionally.",
+      "RL algorithm choice is part of what the Feedback-Agent searches: PPO+GAE when per-step rewards are dense, GRPO when rollouts are cheap and the verifier fires at episode end, entropic advantage weighting when the reward histogram is right-skewed, plus REINFORCE+KL, best-of-N behavioral cloning (cold start), and DPO — selected per trajectory, not a fixed schedule.",
+      "Conditions on full per-instance trajectories (every prompt, tool call, extracted answer) rather than aggregate scores, so edits diagnose specific failure modes instead of mutating toward summary statistics.",
+      "Isolates each lever's contribution empirically: weight updates are shown to deliver knowledge no scaffold generation reached (the np.clip+np.rint invariant, H100 tiling patterns), directly answering RQ2 rather than asserting synergy."
     ],
     "limitations": [
-      "Two-module complexity; evaluations are domain-specific rather than a single unified benchmark."
+      "Coupled co-evolutionary Goodhart (§8, the paper's own analysis): both levers optimise the same fixed verifier, so the harness finds scaffolds the current policy can exploit while the weights train on data from a scaffold that will change — the joint fixed point is a Nash equilibrium of two mutually blind optimisers, fragile off-distribution.",
+      "Lever and algorithm selection is a frozen LLM prior, not learned (§9); the loop alternates in coarse discrete rounds — finer interleaving is left as future work.",
+      "Three single-task evaluations, one base model (gpt-oss-120b), no seeds or variance reported; and §7.3's algorithm-selection guidance is 'common patterns observed' across tasks not reported here, with a fuller treatment deferred to v2."
     ],
-    "fits": "The 'close the loop' paper — harness-level and model-level RSI are not separate; this merges them. Read after Continual Harness.",
-    "reading": "Read the Feedback-Agent architecture (§3) and how harness and weight updates are coordinated."
+    "fits": "Stage 5 harness-level RSI at its merge point with test-time training: the capstone of the harness-school arc (DGM → Hyperagents → Continual Harness) that adds SEAL/TTRL-style weight updates as a second lever. Read after Continual Harness; pair with the sia repo card, whose --focus harness|weights flags split the loop the paper auto-selects.",
+    "reading": "§3.2–3.3 (Feedback-Agent inputs, trajectory), §5.1–5.3 (lever selection), Table 3 and §6.3 per-task numbers, §7.3 (the six-algorithm menu and when each fires), §8 (coupled Goodhart)."
   },
   "2505.15734": {
     "tldr": "Ground-truth-free self-training: generate multi-agent debate traces (with a Reflect-Critique-Refine prompt), fine-tune on the model's own improved traces, and repeat.",
@@ -596,40 +620,75 @@
     "reading": "Read the meta-level vs. object-level framing (§2–3) and the DGM relationship."
   },
   "2603.18000": {
-    "tldr": "AgentFactory: store successful solutions as executable *subagent code* (not text reflections), refined by execution feedback and reused as building blocks.",
-    "method": "Self-evolution that preserves successful task solutions as executable subagent code; subagents are continuously refined from execution feedback and accumulated for reuse.",
+    "tldr": "AgentFactory keeps successful task solutions as executable Python subagents — not textual reflections — in a growing library, refines them from execution feedback, and re-exports them to other agent systems; saved subagents cut orchestrator output tokens roughly in half on transfer tasks.",
+    "method": "A Meta-Agent orchestrates a three-tier skill system: fixed meta-skills (create_subagent, run_subagent, modify_subagent, list_saved_subagents, view_subagent_code, finish), fixed tool skills (Serper web_search, Jina web_reading, Playwright browser_automation, shell_command), and the one evolving tier — subagent skills saved as pure Python code plus a SKILL.md doc. Install: on an unsolved task the Meta-Agent decomposes it and builds a focused Python subagent per sub-problem, allocating each a tool subset rather than the whole toolset; on success the subagent is promoted from the isolated per-task workspace to the persistent library. Self-Evolve: on similar tasks it retrieves saved subagents, runs and assesses them, analyzes failure feedback, modifies the code (error handling, generality), and revalidates against the current task. Deploy: mature subagents export as standalone scripts; LangChain, AutoGen, and Claude Code onboard them via prompts + SKILL.md alone.",
     "results": [
-      "Executable subagent accumulation re-executes complex tasks more reliably than textual experience."
+      "Table 1, Batch 2 transfer tasks with saved subagents, avg orchestrator output tokens/task: Opus 4.6 2971 vs ReAct 7022 (−58%) and 6210 for the textual-experience baseline; Sonnet 4.6 3862 vs ReAct 7029 (−45%) and 8223 textual",
+      "Stronger models reuse even without a pre-built library: Opus 4.6 already drops to 4324 tokens on Batch 1 from scratch vs ReAct 8298 (the paper flags this as a signal for future models); Sonnet 4.6 does not — 9199 vs ReAct 6893, i.e. building subagents from scratch cost more than plain ReAct",
+      "The metric isolates orchestration effort (subagent-internal LLM tokens excluded); setup is two 15-task batches where each Batch 2 task mirrors its Batch 1 counterpart with changed specifics, and all tasks completed without runtime errors in every configuration",
+      "Qualitative loops: a README-generation subagent evolves hardcoded path → LLM JSON parsing with fragile hardcoded fallback → LLM + regex fallback over three runs (Fig. 2); subagents created in AgentFactory (Audio Transcriber, Document Creator) are invoked directly inside Claude Code with no new subagent creation (Fig. 3)"
+    ],
+    "advantages": [
+      "Experience is executable: saved subagents re-run as code, so reuse replaces re-derivation — the Reflexion/STaR-style textual-experience baseline never approaches the Batch 2 savings (6210/8223 vs 2971/3862 tokens)",
+      "Cross-system portability is demonstrated, not just claimed: pure-Python subagents with SKILL.md docs (aligned to Anthropic's Agent Skills standard) onboarded into Claude Code via prompts alone",
+      "Improvement by accumulation under containment: meta- and tool-skills stay frozen while only the subagent tier evolves, and the Workspace Manager runs each task in isolation so failed modifications can't corrupt the shared library"
     ],
     "limitations": [
-      "Code subagents can be brittle across task shifts; accumulation needs curation to avoid bloat."
+      "The headline metric excludes subagent-internal token consumption — savings are orchestration-level only, and there is no output-quality score beyond 'all tasks completed without runtime errors' on 30 author-curated tasks",
+      "The from-scratch overhead is backbone-dependent: Sonnet 4.6's Batch 1 orchestration cost (9199) exceeds ReAct (6893); the paper's text highlights only the favorable Opus contrast (4324 vs 8298)",
+      "Interaction is web-only (search, reading, Playwright); the conclusion defers GUI/non-web applications to future VLM integration",
+      "Safety is by convention rather than guarantee: shell_command has built-in checks that flag destructive operations, and the ethical considerations section relies on human-readable code plus user auditing of exported subagents"
     ],
-    "fits": "Voyager's 'code-as-skill' applied to *subagents* — the library holds working programs, the strongest form of reusable experience.",
-    "reading": "Read the subagent-as-code representation and the refine-from-feedback loop (§3–4)."
+    "fits": "Stage 5 harness-level RSI (Self-Evolving Agent Frameworks): Voyager's code-as-skill lifted from single functions to whole subagents, with the paper's own ablation being Reflexion/STaR textual experience. Pairs with DGM (evolves the agent's internals rather than growing a capability library) and the stage-10 AgentFactory repo card for the implementation.",
+    "reading": "Skim §3 for the three-phase lifecycle and skill tiers, §4 for both demonstrations (Fig. 2 path-resolution evolution, Fig. 3 Claude Code reuse), §5 + Table 1 for the token numbers, Appendix B for the 30 tasks."
   },
   "2604.20133": {
-    "tldr": "EvoAgent: multi-file structured skills with triggers + a hierarchical sub-agent delegation loop, closed by user feedback.",
-    "method": "Models skills as multi-file structured units with triggers and evolutionary metadata; a user-feedback-driven loop generates/optimizes skills, and three-stage matching + three-layer memory route tasks to hierarchical sub-agents.",
+    "tldr": "EvoAgent wraps GPT5.2 in a user-feedback-driven dual loop — deterministic online skill matching/delegation, asynchronous offline skill extraction — lifting average LLM-as-Judge score 27.998% (3.547→4.541) in deployed foreign-trade use, while degrading weaker models.",
+    "method": "A skill is the tuple (name, desc, triggers, instr, refs, meta): a multi-file package — SKILL.md plus lazily-loaded refs/ — carrying evolutionary metadata (usage count, success rate, timestamps). Online loop: three-stage cascading matching (case-insensitive trigger keywords → embedding cosine similarity above a 0.6 default threshold → LLM intent classification), structured context assembly, ReAct execution, and compression above 64K tokens that preserves an 'asset index' of skills, links, and key data; skills flagged requires_sub_agent spawn sub-agents with independent context spaces via OpenAI Agents SDK handoff, results flowing back past the main agent. Offline loop, triggered only at session end: an asynchronous Session Reviewer sub-agent updates SOUL.md/USER.md/MEMORY.md, extracts candidate skills, and grades maturity — Budding / Growing / Mature / Proficient at usage≥1 / ≥4 with success≥0.7 / ≥10 with success≥0.85. The MDP formalization is theoretical only: no numerical reward is computed; evolution runs on implicit usage/success statistics plus user feedback.",
     "results": [
-      "Structured skill learning + delegation improves evolvability and task handling over flat skill stores."
+      "RQ1, five-dimension LLM-as-Judge (1–5 scale; 172 instances split from 20 sampled multi-turn dialogues out of 664 collected; queries script-generated over product category × target market × buyer type × 12 foreign-trade scenarios): GPT5.2 average 3.547 → 4.541 with EvoAgent (+27.998%); professionalism 2.703→4.762, accuracy 2.907→4.238, practicality 3.744→4.709, language quality 4.052→4.779, completeness flat 4.331→4.215 (−0.116)",
+      "RQ2 model transfer: GPT4.1 under EvoAgent drops ~13% below its own standalone baseline and reaches ~75% of EvoAgent-enhanced GPT5.2; Qwen3.5-35B-A3B drops to ~85% of standalone, 74.5% of enhanced GPT5.2 — the paper formalizes capability as γ1·inference + γ2·agent-implementation compatibility, conceding no ablations isolate the factors",
+      "RQ3 long-horizon memory: 420 dialogue turns with 6 compression events without runtime errors; no memory errors across 17 tests at 120 turns; full accuracy at 200 turns without compression; compression triggers when context exceeds 64K tokens",
+      "Latency: ~12s average response early, 14s around 80 turns, stabilizing at 24s beyond 120 turns; external tool calls add 5–30s depending on complexity"
+    ],
+    "advantages": [
+      "A concrete Harness Engineering instantiation (explicitly built on Hashimoto, OpenAI's Codex report, Böckeler/Fowler, Iusztin): deterministic low-latency online execution loop cleanly separated from an asynchronous offline evolution loop, compiling the MDP objective into post-session updates so no labeled data or numerical reward is needed",
+      "Full skill lifecycle modeled — generation, cascading matching, lazy-loading injection, maturity grading with explicit usage/success thresholds, pruning inputs — versus the implicit, unstructured capability updates it attributes to Voyager-style skill libraries",
+      "Publishes the negative transfer result most RSI papers omit: the same harness that gives GPT5.2 +27.998% degrades GPT4.1 ~13% and Qwen ~15%, evidence that architecture gains are a model–harness interaction, not a free amplifier",
+      "Deployed on a real foreign-trade assistant at Focus Technology rather than a benchmark; queries generated by a parameterized script independent of runtime skill-triggering outcomes"
     ],
     "limitations": [
-      "Relies on user feedback for the closed loop; delegation hierarchy adds complexity."
+      "Paper's own, from the HarnessEngineering lens: evolution triggers only after session termination (unidirectional online→offline coupling) — 'delayed learning but not real-time adaptation' to skill degradation or intent shift",
+      "Only single-skill invocation per task — no multi-skill orchestration or parallel execution; user profiling relies on heuristic frequency thresholds; no cross-user knowledge sharing",
+      "Evaluation is small (172 instances), synthetic, and collected inside the deployed EvoAgent environment (authors concede distribution dependence); LLM-as-Judge scoring with no human validation, variance, or ablations; no head-to-head against a standalone-GPT compression/memory baseline",
+      "Compression irreversibly loses early dialogue details and long-term memory lacks automatic pruning; system lacks cost tracking, monitoring dashboards, and enterprise auth (JWT/OAuth)"
     ],
-    "fits": "Industrializes the Voyager idea — structured (multi-file, metadata, triggers) skill units plus delegation.",
-    "reading": "Read the skill-unit structure and the matching/delegation mechanism (§3–4)."
+    "fits": "Stage 5 harness-level RSI: the industrial, user-in-the-loop counterpoint to EvoSkills' automated co-evolution verification (its main cited contrast) and Voyager's flat skill library. Pairs with RRSI and Harness-Zero on 'the harness moves scores' — and with the model–harness synergy caveat (GPT4.1/Qwen degradation) every RSI claim should be read against.",
+    "reading": "§3.1–3.3 for the dual loop and skill tuple, §4.1–4.2 for the GPT5.2/GPT4.1/Qwen transfer numbers, §4.3.2 for the paper's own limitations; Appendix A pseudocode has exact matching and maturity thresholds."
   },
   "2507.03616": {
-    "tldr": "EvoAgentX: an open-source platform that automates generation, execution, and optimization of agentic workflows in one framework.",
-    "method": "Platform that automates the generation, execution, and optimization of multi-agent workflows, integrating evolution/optimization algorithms into a unified framework with native dynamic evolution.",
+    "tldr": "EvoAgentX is an open-source platform unifying workflow generation, execution, evaluation, and evolution: TextGrad, MIPRO, SEW, and AFlow optimizers rewrite prompts, tool configs, and workflow graphs, gaining 7.44–10.00 points on HotPotQA/MBPP/MATH and up to 20.00% on GAIA.",
+    "method": "Five layers: basic components (config/logging/checkpointing; LLMs via LiteLLM/OpenRouter), agent, workflow, evolving, evaluation. An agent is a ⟨LLM, memory, actions⟩ tuple; a workflow is a directed graph W=(V,E) of WorkFlowNodes carrying PENDING/RUNNING/COMPLETED/FAILED status — WorkFlowGraph for hand-built graphs, SequentialWorkFlowGraph inferring edges from task input/output dependencies. The evolving layer exposes three optimizer roles driven by evaluation feedback: an agent optimizer (TextGrad, MIPRO) rewriting prompt templates and tool configurations; a workflow optimizer (SEW, AFlow) restructuring the graph by reordering nodes, modifying dependencies, and trying alternative execution strategies; and a memory optimizer (under active development). The evaluation layer pairs task-specific metrics with an LLM-based evaluator, closing the run→score→update loop. In the AFlow demo config, each run allows 20 optimization rounds with 3 validation rounds, Claude 3.5 Sonnet as optimizer LLM and GPT-4o-mini as executor, over operators like Custom, CustomCodeGenerate, ScEnsemble.",
     "results": [
-      "Automates workflow configuration that was previously manual, with built-in dynamic evolution."
+      "Table 2, HotPotQA F1: 63.58 → 71.02 with TextGrad (AFlow 65.09, MIPRO 69.16); MATH solve rate: 66.00 → 76.00 with TextGrad (AFlow 71.00, MIPRO 72.30); MBPP pass@1: 69.00 → 79.00 with AFlow (TextGrad 71.00, MIPRO 68.00 — below the unoptimized baseline)",
+      "GAIA applications: Open Deep Research overall accuracy +18.41% (+20.00 Level 1, +8.71 Level 2, +7.69 Level 3); OWL +20.00% overall (+28.57 Level 1, +10.00 Level 2, +100.00 Level 3)",
+      "Built-in benchmark harness (Table 1): NQ, HotPotQA, GSM8K, MATH, HumanEval (164), MBPP (427), LiveCodeBench v1–v5 (400–880 per version, plus 479 code-execution and 442 test-output-prediction items)",
+      "Case study (A.4): AFlow turns a one-prompt math workflow into a multi-agent pipeline (analysis → Python code generation → 3-sample ScEnsemble → answer formatting); TextGrad and MIPRO each expand a one-line boxed-answer prompt into structured step-by-step reasoning"
+    ],
+    "advantages": [
+      "Unified substrate where TextGrad, MIPRO, SEW, and AFlow optimize the same WorkFlowGraph representation over one shared benchmark harness — optimizers become swappable and head-to-head comparable (Table 2) rather than fragmented paper artifacts",
+      "Separates optimizer roles by what they touch — prompts/tool configs (agent) vs. graph topology (workflow) vs. memory — so agent-level and workflow-level evolution compose within one framework rather than competing designs",
+      "Optimizes other people's deployed systems, not just its own: prompt and topology refinement of Open Deep Research and OWL on GAIA",
+      "Evaluation is a first-class layer (task-specific metrics plus LLM-based evaluator) wired into the optimization loop, not a post-hoc script"
     ],
     "limitations": [
-      "Platform-level contribution; evolved workflows are bounded by available operators."
+      "The memory optimizer 'remains under active development' — Eq. 5 is aspirational, never demonstrated in the experiments",
+      "Table 2 reports single deltas against the unoptimized workflow with no ablations, variance, or cost/token accounting; on MBPP, MIPRO (68.00) lands below the 69.00 baseline, so optimization can hurt",
+      "The GAIA gains are level-relative percentages on two systems (OWL Level 3 '+100.00%') with no absolute accuracies or statistical treatment in the main text; the paper self-describes contributions as those of 'our demo'",
+      "Evolution is bounded by the integrated algorithms' search spaces (AFlow operators, SEW mutations) — the contribution is the harness, not a new evolution mechanism"
     ],
-    "fits": "The tooling that operationalizes harness/workflow evolution — read when you want to *run* workflow evolution, not just read about it.",
-    "reading": "Read the generation–execution–optimization architecture (§3) and the integrated algorithms."
+    "fits": "Stage 5 harness-level RSI: the runnable counterpart to the workflow-evolution papers it integrates (AFlow, SEW, TextGrad, MIPRO) — one graph representation, swappable optimizers. Its conclusion names MASS, AlphaEvolve, and Darwin Gödel Machine as future evolution strategies; read alongside those cards to move from reading workflow evolution to running it.",
+    "reading": "Short paper: §3 (system design, especially §3.4 evolving layer), Table 2 and §4.1 for optimizer-by-benchmark numbers, §4.2 for GAIA, and Appendix A.4 for before/after workflow and prompt case studies."
   },
   "2510.23601": {
     "tldr": "Alita-G: a generalist agent self-evolves into a domain expert by generating, abstracting, and curating MCP tools.",
@@ -694,16 +753,29 @@
     "reading": "Read Sec 3.1-3.2 (checker loop, reflection, MemorySyntax), then Tables 1-3 (AgentBench, HotpotQA/MultiWOZ/ALFWorld, Reflexion comparison) and the Table 5 ablation. Appendix A is formal game theory — skimmable."
   },
   "2305.19118": {
-    "tldr": "Divergent Thinking: self-reflection alone degenerates ('degeneration of thought'); multi-agent *debate* preserves divergent, higher-quality reasoning.",
-    "method": "Multiple LLM agents hold a debate, each proposing and challenging solutions; the paper demonstrates that single-agent self-reflection suffers from Degeneration-of-Thought while debate sustains divergence.",
+    "tldr": "Names and measures the Degeneration-of-Thought (DoT) failure of single-agent self-reflection — confidence locks in wrong answers — and fixes it with Multi-Agent Debate (MAD): two 'tit-for-tat' debaters plus a judge with adaptive break, lifting GPT-3.5-Turbo past GPT-4 on commonsense MT.",
+    "method": "The paper names DoT: once an LLM is confident in an answer, self-reflection stops generating novel thoughts even when the initial stance is wrong, quantified as adjacent-iteration opposition over 5 forced rounds (Fig. 1): self-reflection's disagreement stays low while debate keeps it high. MAD runs three agents: an affirmative debater, a negative debater prompted to 'disagree with the affirmative side's points', and a judge. Debaters speak in fixed order, each conditioned on the full debate history H. The judge has two modes: discriminative (is a correct solution on the table? True ends the debate early, the adaptive break) and extractive (pull the final answer from H at the iteration limit, set to 3). All roles share one backbone LLM (vicuna-7b/13b-v1.5-16k, GPT-3.5-Turbo-0301, GPT-4-0314), zero-shot at temperature 0; tasks are Common MT (Chinese⇒English commonsense ambiguity) and the authors' 200-question Counter-Intuitive AR set.",
     "results": [
-      "Multi-agent debate improves reasoning and mitigates the 'degeneration of thought' observed in single-agent self-reflection."
+      "Common MT human direct assessment (1-5), GPT-3.5-Turbo baseline → +MAD vs GPT-4: lexical 3.14 → 3.78 (GPT-4 3.41), contextless 3.43 → 3.67 (3.63), contextual 3.57 → 3.67 (3.65) — MAD on Turbo beats GPT-4 on all three, and on COMET/BLEURT it matches or edges GPT-4 (contextual COMET 85.3 vs 85.0); Self-Reflect reaches only 3.43 lexical",
+      "Counter-Intuitive AR accuracy: 26.0% (Turbo) → 37.0% with MAD, vs Self-Reflect 27.5%, CoT 28.0%, Self-Consistency 29.5%; GPT-4 stays ahead at 51.0%",
+      "DoT mitigation vs Self-Reflect: human-labeled ambiguity-error (bias) 29.0 → 24.8 and output diversity (100 - Self-BLEU) 19.3 → 49.7",
+      "Math/symbolic transfer (Turbo, Appendix C): MAD vs CoT — GSM8K 73.8 vs 70.2, AddSub 92.1 vs 87.3, BBH Date 65.2 vs 56.4, Penguin 63.7 vs 58.9; cost 2.46x CoT's generated tokens (Self-Reflect 1.83x)",
+      "Ablations (Sec 4): debater quality dominates judge quality (Turbo debaters: 3.47 HUMAN with a vicuna-13b judge vs 3.69 with a Turbo judge); the judge favors its own backbone (GPT-4 judging GPT-4-vs-Turbo picks the GPT-4 side 120/200 vs 77); more debaters hurt (2 → 3 → 4: COMET 84.4 → 83.1 → 82.9); modest level-2 'tit for tat' beats full consensus (HUMAN 3.00 → 3.81) and forced total disagreement (0.988 disagreement, 3.72)"
+    ],
+    "advantages": [
+      "First to name and operationally measure DoT (adjacent-iteration disagreement), turning 'self-reflection plateaus' into a diagnosable failure with a causal account — bias, rigidity, missing external feedback — each mapped to a mechanism of the fix",
+      "Divergence by construction rather than hope: the negative debater is instructed to oppose, so the loop cannot quietly agree with itself the way Self-Reflect does (diversity 49.7 vs 19.3)",
+      "The judge's adaptive break ends most debates after one round and outperforms forcing any fixed iteration count (Fig. 5), keeping overhead at 2.46x CoT tokens",
+      "Reports the negative results later debate work leans on — adding debaters hurts, forced disagreement backfires, LLM judges favor their own backbone — and states the mitigations (modest tit-for-tat, one LLM for all roles) in the limitations"
     ],
     "limitations": [
-      "Needs multiple agents/compute; debate quality depends on agent diversity."
+      "Time/compute cost of multi-round interaction: 2.46x CoT's generated tokens on Counter-Intuitive AR, vs 1.83x for Self-Reflect (Sec. Limitations, Appendix E)",
+      "Long-context degradation: with more debaters, 'LLM-based debaters tend to forget the views of other debaters' and judge extraction degrades — 2 debaters beat 3 and 4 (Table 7)",
+      "LLM judges are not impartial across backbones (self-preference, Table 6); the authors recommend identical LLMs for judge and debaters",
+      "Counter-Intuitive AR is the authors' own 200-question set (elicitation questionnaires + web puzzles), and MAD does not close the gap to GPT-4 there (37.0 vs 51.0)"
     ],
-    "fits": "The empirical argument that *other agents* — not self-feedback — are a better correction signal; motivates the multi-agent arc.",
-    "reading": "Read the DoT analysis (§3) and the debate setup (§4)."
+    "fits": "Stage 6: the diagnostic companion to Du et al.'s debate paper (2305.14325) — debate instrumented against self-reflection with a named failure mode (DoT) and a judge-plus-adaptive-break control loop. Its 'other agents beat self-feedback' argument underwrites the multi-agent arc toward debate-generated training data; pair with Reflexion as the single-agent foil.",
+    "reading": "Sec 1-2 (DoT definition, MAD loop, judge modes), Table 1 + Sec 3.3 (Turbo+MAD vs GPT-4), Table 3 (CIAR), Sec 4.1-4.3 (DoT mitigation, judge fairness, tit-for-tat levels), Table 12 (token cost)."
   },
   "2305.14325": {
     "tldr": "Having multiple LLM instances propose, critique, and revise answers over debate rounds reliably beats single-agent generation and self-reflection — e.g. GSM8K 77.0 to 85.0% — and the resulting debate transcripts can be distilled back, creating a model self-improvement loop.",
@@ -972,41 +1044,68 @@
     "note": "An 'extensible substrate' — the harness *is* a whole computer. Study it for how an OS-level workspace generalizes far beyond a chat loop."
   },
   "deepseek-harness": {
-    "what": "DeepSeek's open-source agent harness, built on an everything-is-a-plugin architecture (powered by Cordis), with web and CLI runtimes.",
+    "what": "DeepSeek's open-source agent harness (`dsh`): a TypeScript monorepo where every component — model adapters, tool registry, session log, the agent loop itself — is a Cordis plugin, composed at boot into replaceable profiles (web, headless, sdk, sdk-minimal, acp). MIT, developer preview.",
     "architecture": [
-      "Everything-is-a-plugin: tools, memory, and orchestration are all plugins composed via Cordis (spatiotemporal composability).",
-      "Web UI + CLI launch modes; developer preview with a documented safety notice."
+      "Everything-is-a-plugin via Cordis (its design is formalized in arXiv 2608.25512, 'A Programming Paradigm for Spatiotemporal Composability'): plugins contribute services, typed events, and reversible effects to one shared context; there is no privileged core — the model adapter, tool registry, session log, and agent loop (`ctx.agentLoop`) are all rows replaceable from config, and registrations unwind when their plugin unloads.",
+      "Boot composition is ordered layers: each profile stacks bundles, then the profile's `cordis.patch.yml`, then the home-level one, then `--patch` overlays; a patch targets a config row by id and replaces its whole config, and `dsh --profile web --dump-config` prints the exact tree your machine boots.",
+      "The session log is the source of truth: an append-only `SessionEvent` log under a runtime invariant that anything reaching a model request must be reconstructable from it ('model-visible means logged'); `deriveMessages()` projects model history, and storage is versioned `session.vN.jsonl[.zstd]` generations with one-step migration chains — fork, resume, transcripts, and telemetry all derive from it.",
+      "Tools register with `defineTool` (typed params, validated calls, allow/deny/ask policy) and their schemas join prompt assembly automatically; native function-calling or PTC mode, where a `run_code` program calls registry tools through nested sub-dispatches — each logged for reconstruction, only the outer curated result entering model history; `maxParallelToolCalls` defaults to 10. Capability seams (Service Definition + Provider + Consumer) swap fs and subprocess together, so one provider change moves Bash, PTY, and LSP to a remote sandbox with no forks."
     ],
-    "run": "`npx @deepseek-ai/dsh web` starts the Web UI at http://127.0.0.1:3080 (Node.js required).",
-    "note": "A production-grade harness from a frontier lab — the plugin architecture is the reusable idea (contrast with monolithic harnesses)."
+    "advantages": [
+      "The interception surface a self-modification experiment needs is first-class, not monkey-patched: `agent/pre-step` rewrites or rejects claimed input, `agent/request` reroutes model calls, `tools/pre-execute|execute|post-execute` guard tool runs, and `agent/turn-stopping` stops a turn — every extension point is a typed event with a documented producer/consumer map.",
+      "Harness-as-data: because the running agent is a patchable config tree with YAML-driven HMR, you can inspect, re-compose, or shrink the harness itself (`sdk-minimal` is a complete explicit SDK tree that omits `dsh-base`) through the same mechanism plugins use to extend it.",
+      "A coordination substrate for multi-agent RSI: experimental Agent Teams on `ctx.agentTeams` (durable roster, task board, mailbox over continuable subagents), forkable sessions at turn boundaries, and swappable subagent providers — including a one-shot provider that delegates a task to a fresh, unattended Claude Code session in the parent workspace."
+    ],
+    "run": "`npx @deepseek-ai/dsh web` — Web UI at http://127.0.0.1:3080 (needs Node.js; `--no-open` skips the browser). From source: `git clone https://github.com/deepseek-ai/deepseek-harness && cd deepseek-harness && pnpm install && pnpm run build && pnpm dsh web`. Other profiles: `dsh --profile headless|sdk|sdk-minimal|acp`.",
+    "note": "Read docs/architecture.md first — its turn-flow event map and 'where new behavior goes' table are the real spec. Then trace one turn's events end-to-end and study the patch mechanism as the harness self-modification seam. Mind SAFETY.md: unaudited preview that executes model-generated code and third-party plugins."
   },
   "openclaw": {
-    "what": "A self-hosted personal assistant that runs on your own devices and lives in your chats (Node.js, MIT).",
+    "what": "Open-source, self-hosted personal AI assistant (TypeScript on Node, MIT, stewarded by the OpenClaw Foundation 501(c)(3)): an always-on local Gateway drives agent sessions from your existing chats — WhatsApp, Telegram, Slack, Discord, iMessage, 20+ more — with state, memory, and credentials on your own hardware.",
     "architecture": [
-      "Runs locally across your devices rather than in a hosted cloud.",
-      "Chat-native: plugs into existing messaging surfaces as an assistant.",
-      "Distributed as `openclaw` on npm; Node.js runtime."
+      "The Gateway is the whole architecture: one local, always-on control plane for sessions, tools, events, and channel connections; CLI, TUI, and Control UI attach to it, and the identical Gateway runs a laptop assistant or a shared team deployment — configuration is the only difference. Channels bring it to 20+ chat networks; companion apps and nodes add voice, Canvas, camera, screen, and device-local actions.",
+      "Trusted gateway / untrusted execution with policy as code: denial is structural, not a request the model is asked to honor — src/gateway/agent-turn/agent-admission-controller.ts admits runs through session-work admission leases and dedupe reservations that fail closed (aborted/timeout/superseded outcomes, fail on deleted or archived sessions). Sandboxing (docker or OpenShell kernel-level backends, agents.defaults.sandbox.mode: \"all\"), exec approvals, DM sender pairing, and `openclaw security audit --deep` are explicit configuration, off by default.",
+      "Vendor harnesses are first-class swappable plugins, not API endpoints: the Codex plugin drives Codex's own app-server loop, the Anthropic plugin drives the installed Claude Code executable over its structured stdio protocol, while OpenClaw keeps ownership of channels, sessions, policy, and state. The core stays deliberately small — channels, memory, and harnesses are all plugins behind capability-registration points enforced by CI import guards, with a public plugin SDK of about 150 entrypoints under shrink-only surface budgets.",
+      "Extensibility and state have their own mechanisms: skills follow the AgentSkills spec and ship through the ClawHub registry (moderation, VirusTotal/ClawScan/static-analysis scan status, `openclaw skills verify`); memory carries provenance with explicit deletion (`openclaw memory forget`); state is schema-versioned with guarded migrations owned by `openclaw doctor`; interoperates over MCP (client and server), A2A 1.0, and ACP. Default telemetry is a single daily version check; `update.checkOnStart: false` disables it."
     ],
-    "run": "`npm install -g openclaw` (or `npx openclaw`) then follow onboarding; Node.js required.",
-    "note": "The 'assistant on your own hardware' substrate — useful for studying how self-improvement is shaped by local, persistent execution."
+    "advantages": [
+      "The clearest production answer to what an always-on, credential-holding personal agent must fix before self-improvement is safe: secrets via handles with egress substitution so the model never sees them, versioned state with guarded upgrades, purgeable memory with reingestion barriers, recorded provenance and audit — each a named, code-level mechanism, formalized as seven testable harness properties in Why OpenClaw.",
+      "Harness portability made concrete: one operator-owned loop that can drive Claude Code, Codex, Copilot, or local models as plugins keeps harness, policy, and state as inspectable, separately-replaceable layers — the exact factoring that harness-evolving RSI work tends to blur.",
+      "A field-tested threat model for long-lived autonomous agents: ~390k stars with chat-network ingress and real credentials, 647 published security advisories (as of 2026-08-27), public trust model, and an academic security case study of the architecture (arXiv 2603.12644); NVIDIA's NemoClaw distribution hardens it with OpenShell sandboxing."
+    ],
+    "run": "curl -fsSL https://openclaw.ai/install.sh | bash   # macOS / Linux / WSL2 (Windows PowerShell: iwr -useb https://openclaw.ai/install.ps1 | iex)\nnpm install -g openclaw@latest --allow-scripts=openclaw   # if you manage Node yourself (24.16+ or 26.1+; 26 recommended)\nopenclaw onboard --install-daemon   # after install; then: openclaw gateway status && openclaw dashboard",
+    "note": "Read the seven testable harness properties in Why OpenClaw, then check them against code: agent-admission-controller.ts (fail-closed admission), the plugin capability-registration points, ClawHub skill verification. Policy-in-code vs policy-in-prompt is where it becomes functions — what a self-modifying agent may touch, what persists, who approves."
   },
   "pi": {
-    "what": "Pi's agent harness — a monorepo whose centerpiece is a self-extensible coding agent.",
+    "what": "Minimal, extensible terminal coding agent and harness (pi.dev) whose centerpiece is a self-extensible agent: it writes its own TypeScript extensions, skills, and prompt templates, layered on a stateful agent runtime and a unified multi-provider LLM API.",
     "architecture": [
-      "Monorepo packages: `pi-coding-agent` (interactive CLI), `pi-agent-core` (agent runtime with tool calling + state), `pi-ai` (unified multi-provider LLM API).",
-      "The self-extensible coding agent builds on the runtime to extend its own capabilities."
+      "Layered monorepo: `pi-coding-agent` (interactive CLI, bin `pi`) builds on `pi-agent-core` (stateful `Agent` with tool execution and event streaming), which builds on `pi-ai` (unified multi-provider LLM API: OpenAI, Anthropic, Google, …); sibling packages add `pi-tui`, `pi-durable`, `pi-telemetry`, and `chord`.",
+      "Self-extension = in-process TypeScript extensions: a default factory receives `ExtensionAPI` and registers tools (`pi.registerTool()`), commands, providers, and event handlers; loaded via `jiti` (no compile step) from `~/.pi/agent/extensions/` or project dirs, or ad hoc with `pi --extension ./hello.ts`. The README's pitch: 'Ask Pi to create the prompt templates, skills, extensions, and themes you need.'",
+      "The agent mutates its own tool set at runtime: register every tool, keep optional ones inactive, and a loader tool calls `pi.setActiveTools()`; `examples/extensions/dynamic-tools.ts` registers brand-new tools mid-session. Pi logs the initial prompt/tool set in the transcript's first system message and appends each tool/prompt change before the next model request.",
+      "Sessions are JSONL trees — every entry has an ID and parent, branches fork from any entry, compaction inserts summary entries — and all five interfaces (interactive, print, JSON, RPC, TypeScript SDK) share the same agent/session mechanisms. Skills inject instructions on demand."
     ],
-    "run": "npm packages; `npx @earendil-works/pi-coding-agent` for the CLI.",
-    "note": "A clean split of runtime / LLM-API / coding-agent — the layered design makes 'self-extension' concrete (the agent modifies its own tool set)."
+    "advantages": [
+      "The extension API is ordinary in-process TypeScript the agent itself can author and reload (`ctx.reload()`), so self-extension is a first-class loop — a concrete substrate for studying agents that grow their own tool sets rather than a metaphor.",
+      "Each layer is independently reusable: build a custom agent on `pi-agent-core` + `pi-ai` (a dozen lines to stream a tool-calling agent) without adopting the coding agent.",
+      "Branch-tree sessions with compaction and forking yield durable, inspectable transcripts; the project actively curates real OSS agent sessions as datasets (badlogicgames/pi-mono on Hugging Face)."
+    ],
+    "run": "npm install -g --ignore-scripts @earendil-works/pi-coding-agent  # Node >= 22.19; or: curl -fsSL https://pi.dev/install.sh | sh\ncd /path/to/project && pi   # then /login to attach a provider",
+    "note": "Read packages/coding-agent/docs/extensions.md and how-pi-works.md, then examples/extensions/dynamic-tools.ts: new tools registered mid-session, active set switched via pi.setActiveTools(). Deliberately ships no built-in permission system — docs/containerization.md covers micro-VM/Docker sandboxing."
   },
   "hermes-agent": {
-    "what": "Nous Research's Hermes agent and desktop app — a general-purpose local agent with a full desktop interface.",
+    "what": "Nous Research's MIT-licensed general-purpose Python agent — AIAgent core behind a CLI, messaging gateway, and Electron desktop shell — whose headline is a closed self-improvement loop: the agent writes its own skills, curates its bounded memory, searches its past sessions, and prunes both in the background.",
     "architecture": [
-      "Agent runtime + desktop client (macOS/Windows/Linux).",
-      "MIT-licensed; docs at hermes-agent.nousresearch.com."
+      "AIAgent core (run_agent.py facade; loop in agent/conversation_loop.py + turn_*.py): 3 API modes (chat completions, codex responses, anthropic), 70+ tools across 28 toolsets, `delegate_task` subagents, and 7 terminal backends (local, Docker, SSH, Singularity, Modal, Daytona, Vercel Sandbox), fronted by CLI/TUI, an Electron shell (apps/desktop), and one gateway process bridging Telegram/Discord/Slack/WhatsApp/Signal/email; session storage is SQLite + FTS5.",
+      "Procedural memory: agentskills.io-compatible SKILL.md files in ~/.hermes/skills loaded by progressive disclosure (a ≤60-char description indexed every session — past char 60 it is silently cut and never routes; `skill_view` loads bodies on demand). The agent authors its own via `skill_manage` (create/patch/delete/write_file) under HARDLINE authoring standards, with an advisory linter (incident-log-shape, references-sprawl >60 files, oversized-body ~24k chars); `/learn` distills any source into a skill or a lean-index knowledge base (SKILL.md + per-chapter references/).",
+      "Episodic memory: MEMORY.md (2,200 chars ≈800 tokens) and USER.md (1,375 chars ≈500 tokens) injected as a frozen session-start snapshot (preserves prefix cache); the `memory` tool does add/replace/remove only — no read — and returns an error when full, forcing the agent to consolidate in-turn before retrying. `session_search` (FTS5, custom fts5_cjk extension) with LLM summarization recalls past sessions; Honcho supplies dialectic user modeling.",
+      "The learning loop is background machinery, not a training loop: after each turn a forked AIAgent (agent/background_review.py, auxiliary.background_review.enabled default true) replays the conversation snapshot asking 'should any skill/memory be saved or updated?' and writes straight to the stores — inheriting the parent's runtime and prompt-cache prefix, whitelist-gated tools, isolated session id — gated by nudge counters (memory.nudge_interval default 10; skills.creation_nudge_interval); plus the inactivity-triggered Curator (agent/curator.py): 7-day interval, 2h min idle, stale after 14 unused days, archived (never deleted) after 30, opt-in aux-model consolidation fork, before/after-hash ledger with rollback."
     ],
-    "run": "Install the desktop app or run from source per the README/docs.",
-    "note": "A usability-focused harness — good for seeing how memory/tools surface in a real product rather than a research scaffold."
+    "advantages": [
+      "A production-grade instance of the experience→procedural-memory loop (Voyager-style skill libraries, but for a deployed agent): usage telemetry (~/.hermes/skills/.usage.json, `created_by: agent` markers), a linter, lifecycle states (active→stale→archived), and approval gates specify the parts research scaffolds leave implicit.",
+      "Every self-write is observable and reversible: skill mutations append before/after hashes to .curator_ledger.jsonl (`hermes curator rollback`), the curator only ever archives, and skills.write_approval / memory.write_approval stage agent writes for human review — a working model of gated self-modification.",
+      "Ships the data flywheel: batch trajectory generation writes ShareGPT-format JSONL (trajectory_samples.jsonl vs failed_trajectories.jsonl by completion, <REASONING_SCRATCHPAD> normalized to <think>) explicitly for 'training the next generation of tool-calling models'."
+    ],
+    "run": "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash   (Windows: iex (irm https://hermes-agent.nousresearch.com/install.ps1)); then `source ~/.bashrc && hermes`; `hermes model` picks a provider (OpenRouter/OpenAI/Nous Portal/own endpoint), `hermes gateway` starts the messaging bridge. Dev: `uv pip install -e \".[all,dev]\"` in the installer's checkout at ~/.hermes/hermes-agent.",
+    "note": "Read agent/background_review.py (the post-turn 'should this be saved?' fork and its persistence-isolation guards) and agent/curator.py (7d/2h/14d/30d lifecycle) against config_defaults.py. Contrast with DGM: Hermes improves its memory and procedures, never its own code — self-improvement as curation, not metaprogramming."
   },
   "seal": {
     "what": "SEAL (Self-Adapting LLMs) trains models via RL to generate *self-edits* — their own finetuning data and update directives — in response to new inputs.",
@@ -1283,22 +1382,36 @@
     "note": "Read `_mmlu/search.py:evaluate_forward_fn` first — `exec()` + `setattr(AgentSystem, 'forward', func)` is the whole thesis in two lines. Then `_mmlu/mmlu_prompt.py` for the meta prompt (archive, interface, WRONG examples) and Reflexion prompts. Heed the untrusted-code-execution warning; results JSONs are committed under `results/`."
   },
   "ai-scientist": {
-    "what": "The AI Scientist — an end-to-end ML research loop (idea → experiment → paper → review).",
+    "what": "The AI Scientist (code for arXiv 2408.06292) — a full automated-research loop: novelty-gated idea generation, aider-driven code experiments, cited LaTeX writeup, and a NeurIPS-form LLM reviewer; README FAQ: typically under $15 per paper with Claude 3.5 Sonnet.",
     "architecture": [
-      "Idea generation (novelty-checked) → experiments → plots → LaTeX paper → automated reviewer.",
-      "Iterates; on the order of ~$15 per paper."
+      "Idea stage (ai_scientist/generate_ideas.py): the LLM emits ideas as JSON over num_reflections=5 critique rounds, then check_idea_novelty casts it as 'an ambitious AI PhD student… harsh critic for novelty' with live Semantic Scholar API access (OpenAlex via --engine openalex), searching multiple rounds until it writes 'Decision made: novel.' or 'Decision made: not novel.'; launch_scientist.py then hard-filters — `novel_ideas = [idea for idea in ideas if idea[\"novel\"]]` — so rejected ideas never run.",
+      "Experiment stage (perform_experiments.py): aider (Coder.create, yes=True, chat saved to <idea>_aider.txt) edits the template's experiment.py and executes `python experiment.py --out_dir=run_i` for up to MAX_RUNS=5 runs with MAX_ITERS=4 retries per stage and a 7200s timeout; each run's final_info.json is fed back as the next prompt, failed/timed-out run dirs are deleted and retried, then it rewrites plot.py (600s timeout) and notes.txt. The user-prepared run_0 baseline is injected into the coder prompt as 'the baseline results… for reference'.",
+      "Writeup (perform_writeup.py): the draft goes into the template's ICLR-style latex/template.tex with up to num_cite_rounds=20 rounds of Semantic Scholar citation search appended to references.bib; generate_latex then checks every \\cite{} resolves to a references.bib entry (removing unmatched cites) and recompiles with num_error_corrections=5.",
+      "Review (perform_review.py): a NeurIPS review form (1–10 scales with rubric text, Decision restricted to Accept/Reject, ethics flag) seeded with bundled fewshot_examples/ reviews; launch_scientist.py calls it hardcoded as gpt-4o-2024-05-13, num_reflections=5, num_fs_examples=1, num_reviews_ensemble=5, temperature=0.1 — the 5 ensemble reviews are merged by an 'Area Chair' meta-review prompt and numeric scores replaced with the ensemble average. --improvement feeds the review back via perform_improvement(review, coder) for an aider revision pass, then re-reviews into review_improved.txt."
     ],
-    "run": "Python; LLM API keys; run the pipeline over a research template (see README).",
-    "note": "Run it to see 'AI doing AI research' end to end; read v2 for the agentic-search upgrade."
+    "advantages": [
+      "The most complete inspectable research loop in this catalog: every gate is plain readable Python — a novelty verdict gate, a run/retry counter, a citation-consistency check, an ensemble+meta-review — so each stage can be studied or swapped independently, and the reviewer is reusable standalone on any PDF (load_paper + perform_review), benchmarked via review_iclr_bench/iclr_analysis.py --num_reviews 500 against ICLR papers.",
+      "Template architecture makes re-targeting the whole loop a file contract, not a fork: drop in experiment.py/plot.py/prompt.json/seed_ideas.json/latex/template.tex and the same idea→experiment→paper→review machinery applies; three first-party templates (NanoGPT, 2D Diffusion, Grokking) plus community ones (seir, mobilenetV3, sketch_rnn, MACE, earthquake-prediction, tensorf, probes).",
+      "Cheap enough to sweep: <$15/paper with Claude 3.5 Sonnet (README FAQ) with DeepSeek as the budget option, --parallel/--gpus to fan ideas across GPUs, and all paper runs from the paper (each base model x each template x ~50 ideas) published in the companion Drive folder so you can study outputs without re-running."
+    ],
+    "run": "conda create -n ai_scientist python=3.11; conda activate ai_scientist; sudo apt-get install texlive-full; pip install -r requirements.txt; export OPENAI_API_KEY (or ANTHROPIC_API_KEY / DEEPSEEK_API_KEY / GEMINI_API_KEY) and S2_API_KEY; prepare a template baseline (e.g. python data/enwik8/prepare.py, then cd templates/nanoGPT && python experiment.py --out_dir run_0 && python plot.py); then python launch_scientist.py --model \"claude-3-5-sonnet-20241022\" --experiment nanoGPT_lite --num-ideas 2",
+    "note": "Read launch_scientist.py's do_idea for the loop in order, then check_idea_novelty's decision loop and perform_review.py's ensemble+Area-Chair merge. Note what it lacks vs a true self-improver: ideas run independently in per-idea folders with no cross-idea memory, and the template bounds the space. v2 repo adds agentic search. Executes LLM-written code — containerize (experimental/Dockerfile)."
   },
   "funsearch": {
-    "what": "FunSearch — LLM + evaluator + evolution that discovered new mathematics (cap sets).",
+    "what": "Official code for the Nature 2023 FunSearch paper: a frozen LLM evolves a `priority` function inside a problem skeleton while evaluators score candidates and islands of programs recycle the best as few-shot examples; ships the discovered cap-set, admissible-set, bin-packing and cyclic-graph artifacts.",
     "architecture": [
-      "A frozen LLM proposes candidate functions in a problem skeleton; an evaluator scores them.",
-      "The best functions are fed back as few-shot examples (an evolutionary loop)."
+      "Skeleton contract (implementation/funsearch.py): a specification must contain exactly one `@funsearch.run` function (the scorer, e.g. `evaluate(n) -> int`) and one `@funsearch.evolve` function to evolve (e.g. `priority(el, n)`); funsearch.main() seeds the initial body into all islands and launches Sampler/evaluator loops. cap_set/cap_set.ipynb shows the full skeleton — solve() builds a cap set greedily from the LLM-written priority, so the LLM evolves a scoring rule, not the object itself.",
+      "Prompt construction (implementation/programs_database.py): each of num_islands=10 Islands clusters programs by signature (the tuple of per-test scores); clusters are softmax-sampled with a temperature decaying linearly over 30,000 programs (init 0.1), shorter programs favored within a cluster, then `functions_per_prompt=2` implementations are score-sorted, renamed `_v0, _v1, ...` with docstrings 'Improved version of `_v{i-1}`', and the prompt ends with an empty `_v{n}` header for the LLM to continue.",
+      "Island resets as diversity pressure: every reset_period (14,400 s = 4 h) the weakest half of islands is wiped and re-founded from the best program of one random surviving island; results land back via register_program(program, island_id, scores_per_test), so generations stay attributable to the island that produced their prompt.",
+      "Evaluator gate (implementation/evaluator.py): _trim_function_body parses the continuation with ast, deleting trailing lines until it compiles, splices it into the template, and runs it in a Sandbox (abstract stub, 30 s timeout) on held test inputs — candidates calling an ancestor `_v*` version are rejected by _calls_ancestor, and only programs returning int/float scores on every input register. Both `LLM._draw_sample` and `Sandbox.run` raise NotImplementedError: no model, sandbox, or distributed infra ships (config defaults: num_samplers=15, num_evaluators=140, samples_per_prompt=4)."
     ],
-    "run": "Python (Jupyter); provides the evaluator + program-sampler framework.",
-    "note": "The cleanest 'LLM + evaluator' loop — study the evaluate → select → prompt cycle, then run a toy problem."
+    "advantages": [
+      "Ships the actual winning artifacts, not just the loop: the discovered priority functions that build a 512-cap in n=8 (previous best construction: 496) and a 1082-cap in n=9 (matching the previous best), admissible sets up to n=24, w=17, size 237,984, corner-free sets, cyclic-graph independent sets, and bin-packing heuristics with an OR3 (20 instances x 500 items) / Weibull 5k evaluation suite reporting excess over the L1 lower bound.",
+      "Program-space search yields inspectable mechanisms: the n=8 discovered priority's weight/reflection regularities were hand-distilled into build_512_cap(), an explicit construction of the 512-cap — the notebook walks from skeleton to discovered function to human-understandable structure.",
+      "The minimal reference LLM+evaluator loop (~640 lines across five files): every trick of the later, bigger systems — signature clustering, temperature schedules, island resets, few-shot score-sorted prompt ordering, ancestor-call rejection — is one short, copyable function."
+    ],
+    "run": "No installation required — open the notebooks in Google Colab (cap_set/cap_set.ipynb, admissible_set, bin_packing, cyclic_graphs each have a Colab badge in the README). To run the pipeline yourself, implement the `LLM._draw_sample` and `Sandbox.run` stubs and call `funsearch.main(specification, inputs, config)` from implementation/funsearch.py (see implementation/specification_nonsymmetric_admissible_set.txt for a spec example).",
+    "note": "Read programs_database.py's get_prompt/_generate_prompt first — score-sorted `_v0..._vn` few-shots ending in an empty header is the core trick. Then evaluator.py's _calls_ancestor anti-cheat. Run cap_set.ipynb's discovered priority to verify 512 (n=8) and 1082 (n=9) yourself."
   },
   "mlevolve": {
     "what": "MLEvolve — an agentic MLE system that solves Kaggle-style competitions via progressive Monte Carlo Graph Search with multi-agent collaboration; #1 on MLE-bench (65.3% medal rate, 12h) and best on 11 of 15 math-optimization tasks against five specialized systems including AlphaEvolve (arXiv 2606.06473; AutoMLGen successor).",

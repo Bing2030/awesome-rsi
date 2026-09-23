@@ -1,0 +1,25 @@
+{
+  "tldr": "EvoAgentX is an open-source platform unifying workflow generation, execution, evaluation, and evolution: TextGrad, MIPRO, SEW, and AFlow optimizers rewrite prompts, tool configs, and workflow graphs, gaining 7.44–10.00 points on HotPotQA/MBPP/MATH and up to 20.00% on GAIA.",
+  "method": "Five layers: basic components (config/logging/checkpointing; LLMs via LiteLLM/OpenRouter), agent, workflow, evolving, evaluation. An agent is a ⟨LLM, memory, actions⟩ tuple; a workflow is a directed graph W=(V,E) of WorkFlowNodes carrying PENDING/RUNNING/COMPLETED/FAILED status — WorkFlowGraph for hand-built graphs, SequentialWorkFlowGraph inferring edges from task input/output dependencies. The evolving layer exposes three optimizer roles driven by evaluation feedback: an agent optimizer (TextGrad, MIPRO) rewriting prompt templates and tool configurations; a workflow optimizer (SEW, AFlow) restructuring the graph by reordering nodes, modifying dependencies, and trying alternative execution strategies; and a memory optimizer (under active development). The evaluation layer pairs task-specific metrics with an LLM-based evaluator, closing the run→score→update loop. In the AFlow demo config, each run allows 20 optimization rounds with 3 validation rounds, Claude 3.5 Sonnet as optimizer LLM and GPT-4o-mini as executor, over operators like Custom, CustomCodeGenerate, ScEnsemble.",
+  "results": [
+    "Table 2, HotPotQA F1: 63.58 → 71.02 with TextGrad (AFlow 65.09, MIPRO 69.16); MATH solve rate: 66.00 → 76.00 with TextGrad (AFlow 71.00, MIPRO 72.30); MBPP pass@1: 69.00 → 79.00 with AFlow (TextGrad 71.00, MIPRO 68.00 — below the unoptimized baseline)",
+    "GAIA applications: Open Deep Research overall accuracy +18.41% (+20.00 Level 1, +8.71 Level 2, +7.69 Level 3); OWL +20.00% overall (+28.57 Level 1, +10.00 Level 2, +100.00 Level 3)",
+    "Built-in benchmark harness (Table 1): NQ, HotPotQA, GSM8K, MATH, HumanEval (164), MBPP (427), LiveCodeBench v1–v5 (400–880 per version, plus 479 code-execution and 442 test-output-prediction items)",
+    "Case study (A.4): AFlow turns a one-prompt math workflow into a multi-agent pipeline (analysis → Python code generation → 3-sample ScEnsemble → answer formatting); TextGrad and MIPRO each expand a one-line boxed-answer prompt into structured step-by-step reasoning"
+  ],
+  "advantages": [
+    "Unified substrate where TextGrad, MIPRO, SEW, and AFlow optimize the same WorkFlowGraph representation over one shared benchmark harness — optimizers become swappable and head-to-head comparable (Table 2) rather than fragmented paper artifacts",
+    "Separates optimizer roles by what they touch — prompts/tool configs (agent) vs. graph topology (workflow) vs. memory — so agent-level and workflow-level evolution compose within one framework rather than competing designs",
+    "Optimizes other people's deployed systems, not just its own: prompt and topology refinement of Open Deep Research and OWL on GAIA",
+    "Evaluation is a first-class layer (task-specific metrics plus LLM-based evaluator) wired into the optimization loop, not a post-hoc script"
+  ],
+  "limitations": [
+    "The memory optimizer 'remains under active development' — Eq. 5 is aspirational, never demonstrated in the experiments",
+    "Table 2 reports single deltas against the unoptimized workflow with no ablations, variance, or cost/token accounting; on MBPP, MIPRO (68.00) lands below the 69.00 baseline, so optimization can hurt",
+    "The GAIA gains are level-relative percentages on two systems (OWL Level 3 '+100.00%') with no absolute accuracies or statistical treatment in the main text; the paper self-describes contributions as those of 'our demo'",
+    "Evolution is bounded by the integrated algorithms' search spaces (AFlow operators, SEW mutations) — the contribution is the harness, not a new evolution mechanism"
+  ],
+  "fits": "Stage 5 harness-level RSI: the runnable counterpart to the workflow-evolution papers it integrates (AFlow, SEW, TextGrad, MIPRO) — one graph representation, swappable optimizers. Its conclusion names MASS, AlphaEvolve, and Darwin Gödel Machine as future evolution strategies; read alongside those cards to move from reading workflow evolution to running it.",
+  "reading": "Short paper: §3 (system design, especially §3.4 evolving layer), Table 2 and §4.1 for optimizer-by-benchmark numbers, §4.2 for GAIA, and Appendix A.4 for before/after workflow and prompt case studies.",
+  "_source_note": "Read the full local PDF (arXiv:2507.03616v2, 23 Sep 2025) via pdftotext: abstract, §1–5, Tables 1–2, §4 experiments, and Appendix A.1–A.4 including code examples and case-study before/after artifacts. All numbers verified against Table 2 and the §4.2 text. High confidence. Note: the paper's headline trio is TextGrad/AFlow/MIPRO, with SEW additionally named as a workflow optimizer in §3.4; the repo card's EvoPrompt and MAP-Elites optimizers are not mentioned in this paper."
+}
