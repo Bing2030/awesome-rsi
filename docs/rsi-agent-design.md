@@ -27,7 +27,9 @@ Three scope decisions (fixed for this design):
    OpenCode/Cursor can adopt it later by re-implementing one component (§15).
 2. **Context-space only.** No weight training. The improvement surface is exactly what a
    `git diff` can show.
-3. **Human-gated promotion.** The system proposes; the researcher merges.
+3. **Tiered promotion autonomy.** Content and behavioral changes auto-promote under the
+   regularized accept gate; structural changes — and periodic ratification of everything
+   auto-promoted — stay human-gated (§8).
 
 ## 2. Core thesis
 
@@ -114,14 +116,26 @@ Services (each a small program or headless Claude Code session):
 - **Breeder** — maintains the genome archive, samples parents, applies mutation/crossover
   operators.
 - **Referee** — scores runs from environment evidence only.
-- **Gatekeeper** — applies the accept rule; opens promotion PRs; never merges them.
+- **Gatekeeper** — applies the accept rule; auto-promotes content/behavioral tiers; opens PRs
+  for the structural tier and for ratification bundles; never merges them.
+- **Supervisor** — the always-on loop driver: a deterministic, non-LLM program (cron/launchd
+  timer + task queue) invoking the other services as idempotent CLI phases — `work-tick`,
+  `wave-start`, `consolidate`, `generation`, `health`. It holds no state in memory: every phase
+  reads and writes durable state (git refs + append-only JSONL), so any crash is resolved by
+  re-running the phase. Retries with backoff on transient API failures; repeated failure trips
+  a circuit breaker → freeze + alert. Spine-side and frozen — *the loop itself is a boring
+  program, not an agent*; LLM sessions are its short-lived workers.
 - **Governor** — enforces budget caps and the schedule.
 - **Warden** — owns permissions, hook registration, and the audit trail; the only component that
   may land structural changes (with human approval).
 
-One generation: Governor wakes within budget → Breeder emits N candidates → Runner executes on
-a staged task subset → Referee scores → Gatekeeper rejects (feeding the Distiller and the
-failure log) or opens a promotion PR → human merges → incumbent ref fast-forwards.
+Two interleaved loops run at machine cadence. The **work loop** (production): the incumbent
+genome executes incoming real tasks as they arrive. The **evolution loop** (training, scheduled
+off-peak): Governor wakes within budget → Breeder emits N candidates → Runner executes on a
+staged task subset → Referee scores → Gatekeeper rejects (feeding the Distiller and the failure
+log) or promotes per the tier rules (§8) → incumbent ref fast-forwards. Real work dual-uses:
+once a verifier is attached, every completed work task becomes a bank entry — *work is training
+data; evaluation is quarantined* — so the loop never has to choose between doing and improving.
 
 ## 5. The genome
 
@@ -153,7 +167,11 @@ can never land them itself.
 1. **Real work (~60%)** — the actual task queue of the target repo (here: card-enrichment waves,
    site regeneration, issue triage), each wrapped with a machine-checkable verifier (schema
    validation, tests, `node enrichment/tools.mjs merge` passing). Genuine improvement is defined
-   here first; everything else exists to predict it.
+   here first; everything else exists to predict it. A **standing objective** keeps this queue
+   from starving during unattended stretches: a project charter is maintained as a durable plan
+   file (goal → milestone graph → status table); a decomposer phase keeps the backlog topped up;
+   the curriculum generator fills residual idle capacity (its 15% share may flex upward, always
+   under the frozen-verifier-first admission rule).
 2. **Mined failures (~25%)** — the Distiller mines the Ledger for recurring failure shapes
    (flaky tool sequences, misattributed edits, compaction-induced losses) and packages them as
    regression tasks. PACEvolve's permanent failure log ensures dead ends are blocked, not
@@ -187,12 +205,20 @@ PostToolUse checkpoints count as process signal (Let's Verify Step by Step: PRM 
 
 ## 7. The loops (four timescales)
 
-**T0 — inner execution (minutes).** One `claude -p` session per task, in a worktree, permission
-mode `acceptEdits` + explicit tool allowlist, no network (DGM/ALMA/SIA containment).
+**T0 — inner execution (minutes–hours).** One `claude -p` session per task, in a worktree,
+permission mode `acceptEdits` + explicit tool allowlist, no network (DGM/ALMA/SIA containment).
 Self-correction is bounded and externally driven: at most 3 internal retries, each citing the
 specific failing external signal (test output, checker diff, evidence-citing judge verdict).
 Retries without a new external signal are forbidden. On exhaustion: escalate to a stronger
 subagent or fail *with a distilled trace* — failures are fuel.
+
+For **complicated multi-day work**, a task is not one long session but a **milestone graph of
+small verified tasks** coordinated through durable plan artifacts (PLAN.md + status table) that
+every session reads and updates: sessions stay short while the project persists in files, and
+any fresh session resumes where the last stopped. This is the pattern proven by this
+repository's own enrichment campaign — 104/105 resource cards completed across waves by fresh
+sessions resuming from `ENRICHMENT.md`. Long-horizon capability comes from durable state plus
+verified decomposition, not from long-lived context.
 
 **T1 — consolidation (per wave).** Triggered by a wave barrier: all candidates in the wave have
 finished and been scored (RSIAgent: parallel exploration from a shared snapshot; consolidation
@@ -239,9 +265,26 @@ SICA's utility shape (score + cost + time jointly) means a 2-point gain at 3× c
 One MAP-Elites axis is tokens/task; the token-frugal elite within δ of the incumbent score is
 periodically promoted (SoL-Pi: efficiency is the most reliable win in the space).
 
-**Structural changes never auto-promote.** Hooks, permission profiles, model IDs, settings —
-the Gatekeeper opens a PR and a human merges (Hermes staging). Acceptance fast-forwards the
-incumbent ref and appends the decision, with all numbers, to the audit trail.
+**Tiered promotion autonomy.** Human-merging *every* promotion would cap evolution at human
+cadence — the single design choice most likely to break long-time running — so promotions are
+tiered instead:
+
+| Tier | Changes | Path |
+|---|---|---|
+| **C — content** | CLAUDE.md bullets, genes, memory deltas, skill text edits | Auto-promote when the accept rule passes and canaries are green; ≤k per day; auto-revert if the edit's falsifiable prediction fails |
+| **B — behavioral** | new skill scripts, subagent prompt rewrites, tool/MCP additions | Auto-promote after a **shadow period** (k quarantine tasks pass), flagged for next ratification |
+| **A — structural** | hooks, permissions, model IDs, settings, spine, supervisor | Human PR, always (Hermes staging) |
+
+Two campaign-scale brakes keep tiered autonomy honest: a **cumulative drift cap** — total
+accepted edit distance from the last human-ratified lineage, exceeding which forces
+ratification before any further auto-promotion (RRSI's annealed edit budget lifted from
+per-edit to campaign scale) — and **canary-triggered freeze**: any canary failure anywhere
+drops the system to incumbent-only mode and alerts the human. A weekly **ratification bundle
+PR** presents everything auto-promoted for audit, each item one `git revert` away from removal.
+Acceptance fast-forwards the incumbent ref and appends the decision, with all numbers, to the
+audit trail. This matches the literature's operating point: DGM's 80-generation campaign ran
+~2 weeks end-to-end; RRSI/ADAS/SkillOpt accept on held-out gains without per-edit human
+merges — containment comes from protected evaluation and rollback, not from merge latency.
 
 ## 9. Long-run operations
 
@@ -261,6 +304,11 @@ incumbent ref and appends the decision, with all numbers, to the audit trail.
   fixed that task" claims — hence delayed, outcome-based credit and per-file reverts.
 - **Rollback.** Any state is `git checkout <ref>` away. A global freeze flag runs the incumbent
   genome only — the context-space analog of Letta's `--no-mods` kill switch.
+- **Health & drift.** A `health` phase re-baselines the noise floor δ every G generations —
+  providers change underneath a long-running loop (model deprecations, default drift), so the
+  accept rule's constants cannot be set once — and alarms on incumbent held-out drift,
+  cost-trend anomalies, and continuous canary checks. Alerts land as issues in the audit repo,
+  alongside what the loop was doing when each fired.
 
 ## 10. Safety & containment
 
@@ -304,9 +352,9 @@ hacking first (§6 canaries).
 | 2. Distiller v0, human-applied | Traces → ExpeL insights + memory deltas; human applies by hand (ExpeL; ACE) | One curated insight measurably changes behavior on 10 held-out tasks |
 | 3. Genome + single-lineage climb | Genome repo, manifest with falsifiable predictions, per-edit keep-or-revert (AHE) | One edit accepted on held-out gain with its prediction resolved |
 | 4. Archive + niches + failure log | DGM archive, MAP-Elites grid, ancestor reversion, PACEvolve log | Archive beats greedy lineage over ≥5 generations; failure log blocks ≥1 rediscovery |
-| 5. Full Gatekeeper | Staged evals, δ-measured accept rule, critic screening, promotion-by-PR (RRSI; HyperAgents) | Zero benchmark-specific edits survive a deliberate red-team batch; held-out ≥ evolve − δ for 3 generations |
+| 5. Full Gatekeeper | Staged evals, δ-measured accept rule, critic screening, tiered promotion — auto for C/B, PR for structural (RRSI; HyperAgents; Hermes) | Zero benchmark-specific edits survive a deliberate red-team batch; held-out ≥ evolve − δ for 3 generations |
 | 6. Curriculum + canaries | POWERPLAY admission test; logging-presence, integrity, judge-grounding probes (RSIAgent; node-114 postmortem) | ≥1 self-generated task promoted into the bank; canaries green under adversarial probe |
-| 7. Unattended multi-week operation | Governor, scheduling, efficiency niche, dashboard (SoL-Pi; SICA) | 7 consecutive days within budget; every regression explained in the audit trail; tokens/task flat-or-down at flat score |
+| 7. Unattended multi-week operation | Supervisor + Governor, live tier-C/B auto-promotion, drift alarms, efficiency niche, dashboard (autoresearch; SoL-Pi; SICA) | ≥14 consecutive days unattended with tier-C/B promotion live; weekly ratification bundles processed; every regression explained in the audit trail; tokens/task flat-or-down at flat score |
 
 Steps 1–3 are runnable by one person with Claude Code itself in a couple of weekends; steps 4–7
 are where the loop becomes unattended.
@@ -330,14 +378,22 @@ are where the loop becomes unattended.
   tripwire, not a cure.
 - **Cost compounding** — multi-candidate × multi-generation × staged evals. Hard caps plus
   staged gates decide whether the loop runs at all.
+- **Auto-promotion exposure.** Tiered autonomy trades merge latency for reward-hacking
+  exposure. Bounded by canary-triggered freeze, the drift cap, shadow periods, and
+  ratification — but node-114-class exploits have historically been caught by auditing, not
+  automatically; ratification cadence is the dial.
+- **Supervisor fragility.** The loop driver is a single point of failure, so it is deliberately
+  boring (cron + idempotent phases) and spine-frozen; its own evolution happens at human cadence
+  through ordinary commits.
 
 ## 14. Deliberately not doing
 
 - **No weight training.** Harness-Zero's 23.3→44.3% via distillation and SEAL's self-edits are
   real but out of scope; the entire improvement surface is files a `git diff` can show.
 - **No runtime self-modification of live code.** Edits are commits between runs.
-- **No autonomous promotion.** Humans merge every structural change and periodically ratify
-  content changes.
+- **No autonomous structural promotion.** Content/behavioral changes auto-promote only under
+  the regularized gate with canaries green (§8); hooks, permissions, model IDs, the spine, and
+  the supervisor always require a human merge, and ratification bounds cumulative drift.
 - **No scope drift.** No credential use, no autonomous model switching, no self-granted tools.
 
 The honest thesis: Petri is not a slope toward superintelligence. It is a disciplined machine
@@ -380,6 +436,11 @@ while the Bank/Referee/Gatekeeper/Breeder and the genome itself are untouched:
 | Curriculum with frozen-first verifier + admission test | POWERPLAY (1112.5309), Agent0 (2511.16043), RSIAgent |
 | Judge isolation / quarantined evaluators | RSIAgent, Hyperagents, SOTOPIA-π (2403.08715) |
 | Docker-per-candidate containment | DGM, ALMA, SIA (repos) |
+| Deterministic supervisor; idempotent phases; fixed-duration ticks | autoresearch (repo) |
+| Tiered promotion autonomy; shadow periods; ratification bundles | Hermes, Letta Code (repos); DGM 80-generation campaign |
+| Durable plan artifacts for multi-session complicated work | this repo's enrichment campaign (`ENRICHMENT.md` waves) |
+| Standing objective / goal backlog; work-as-training-data | POET (1901.01753), POWERPLAY (1112.5309) |
+| Drift re-baselining; continuous canaries | 2601.14525 (frozen-after-exploit lesson, extended to campaign scale) |
 
 ## Appendix B — coverage note
 
