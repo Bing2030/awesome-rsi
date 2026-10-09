@@ -1,7 +1,8 @@
 # Petri: An Append-Only Testbed for Measuring Harness Self-Improvement in Coding Agents — and Seven Ways Naive Measurement Gets It Wrong
 
-<!-- Draft 0.1 (skeleton + abstract/intro). B+C framing: (B) instrumented testbed, (C) measurement-failure catalog.
-     Venue target: workshop paper (~8pp) → arXiv preprint. Companion artifacts:
+<!-- Draft 0.2 (skeleton + abstract/intro + CS catalog). B+C framing: (B) instrumented testbed, (C) measurement-failure catalog.
+     Venue target (see VENUES.md): Trust4RSI-Agent @ AAAI 2027 — due Nov 20, 2026 AoE (8pp full, double-blind,
+     AAAI-27 author kit); arXiv after submission/notification. Figures: see FIGURES.md. Companion artifacts:
        - numbers.md  (every figure, regenerated from records by collect-numbers.mjs — never hand-edit)
        - petri repo  (testbed + append-only spine; commit a77d9ba at time of drafting)
      TITLE ALTERNATIVES (pick at submission):
