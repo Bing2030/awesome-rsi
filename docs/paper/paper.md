@@ -45,30 +45,43 @@ We wrote this paper primarily for researchers building or evaluating self-improv
 
 ## 2. Background and Related Work
 
-⟦~1 page; compact, drawn from the 104-card corpus (Appendix A). Taxonomy buckets already established in docs/rsi-agent-design.md §2 — reuse, do not re-derive:⟧
+Four lines of work ask whether an agent can improve the system it runs in. Petri's contribution is not a new improver but the measurement apparatus underneath all of them; we summarize each line by the finding that shaped our design (the corpus behind these numbers is operationalized in Appendix A: 105 resources, 104 source-verified cards, of which only 56 mention ablations at all).
 
-- **Test-time prompt/strategy optimization** (Promptbreeder, OPRO, DSPy, TextGrad, ADAS/Meta-Agent-Search, STOP): the genome-and-gate structure directly parallels these; Petri adds repeat-variance-aware acceptance and cost accounting.
-- **Evolutionary / open-ended** (DGM, AlphaEvolve, FunSearch, POET, POWERPLAY, quality-diversity archive methods): Petri's breeder (bounded, double-screened mutation; archive parent sampling by pass-rate × novelty; annealed edit budget) is a minimal instantiation; POWERPLAY is the direct ancestor of the curriculum protocol (CS7).
-- **Memory and experience** (Voyager, Reflexion, ExpeL, A-MEM, agentic-context-engineering line): the distiller is the analogous component, with the difference that its output is gated and its inputs are referee-verified traces.
-- **RL / finetuning-based self-improvement** (SWE-agent training line, Agent0, EvolveR, Harness-Zero, RRSI): out of scope for Petri's weights-frozen setting, but the measurement catalog applies unchanged.
-- **Evaluating agent claims** (agent-benchmark critiques, contamination literature): CS4/CS5 connect; Petri contributes canary tasks *inside* the work domain rather than separate probes.
+**Test-time prompt and strategy optimization.** Promptbreeder, OPRO, DSPy, TextGrad, ADAS and STOP treat instructions or whole agent-programs as the object of search, with an LLM as the optimizer. Two findings shape Petri. First, the improvement signal must be *external*: CRITIC attributes gains to tool feedback rather than self-critique — a bare "wrong" verdict from the model gains 0.0 — and intrinsic self-correction can outright degrade accuracy. Second, recursion is non-monotonic in base-model strength: STOP's improvement curves rise with GPT-4 and *fall* with GPT-3.5, so the substrate must be pinned and regression gates made mandatory. Petri's genome-and-gate structure is a minimal, cost-accounted instantiation of this line, with the acceptance rule made explicit, pre-registered, and repeat-variance-aware.
 
-**Gap this paper occupies**: instrumentation and measurement hygiene for self-improvement claims specifically — not a new improvement method, but the apparatus that makes any method's claims checkable.
+**Evolutionary and open-ended search.** DGM, AlphaEvolve, FunSearch, POET and quality-diversity methods supply the breeder's design: DGM's own ablations show archives and non-greedy parent selection matter (removing the archive: 50.0→23.0%; greedy parents: →39.7%), and cost decides whether such loops run at all (DGM consumed ≈$22k of compute; its staged small→full evaluation is the affordability mechanism). POWERPLAY is the direct ancestor of our curriculum protocol — admit the simplest task the incumbent cannot yet solve, with no-forgetting by construction (CS7). Our pre-registered evolve experiment is deliberately the *smallest* version of this design the instruments can audit; at that scale the two parent-selection arms do not separate (§5.3), which is itself a measurement finding about saturated slices.
+
+**Memory and experience consolidation.** Voyager, Reflexion, ExpeL, ACE and the agentic-context-engineering line maintain experience as artifacts — skills, insight lists, counters. The load-bearing lessons: only execution-verified experience should become durable (Voyager's 63 verified skills; AgentFactory's executable subagents cut orchestrator tokens 58% where textual experience never approached that); compact beats large (~230-token strategy genes outperform 2,500-token skill packages, 54.0% vs 49.9%); and unpruned memory is pollution (ACE's helpful/harmful counters; PACEvolve diagnosing append-only history as "context pollution" and capping it). Petri's distiller obeys all three and adds the property this literature rarely enforces: its output is *gated* — insights become genome bullets only through the acceptance floor and a human merge.
+
+**RL and finetuning-based self-improvement.** Training the agent's weights (Agent0, EvolveR, Harness-Zero, RRSI) is out of scope for Petri's frozen-substrate setting, but the measurement catalog applies unchanged. RRSI is the field's CS1-in-advance: harness methods that gain on the evolve split collapse out-of-split, and even its regularized version retains a +6.0 in-split vs +1.8 held-out gap — the overfitting default our disjoint splits and paired gates exist to catch.
+
+**Evaluating agent claims.** Benchmark critiques, contamination studies, and reward-hacking analyses document instruments failing at the *task* level; DGM's node 114 (a perfect score obtained by deleting the logging its evaluator relied on) is the canonical objective-hacking incident. Petri adds three things this literature lacks inside one running system: reward-hacking canaries embedded *in the work domain* rather than as separate probes (CS5), attribution by paired append-only records rather than before/after averages (CS6), and — the bulk of this paper — a catalog of failures of the measurement layer itself (verifiers, acceptance bounds, cost meters, stall triage), two of which are bugs in our own instruments.
+
+**The gap this paper occupies** is instrumentation for self-improvement claims specifically: not a new improvement method, but the apparatus that makes any method's claims checkable — and a demonstration, on ~$74, of how often the unchecked apparatus quietly decides the published number.
 
 ## 3. The Petri Testbed
 
-⟦~2 pages. Cover, with a component diagram (Figure 1: genome → runner → referee → spine → distiller → breeder → gatekeeper → human merge loop):⟧
+Petri is deliberately small — ~2,700 lines of plain-file Node tooling supervising a commercial coding agent — because the subject of study is the *loop*, not any component's sophistication. Figure 1 shows the control flow; the invariant that makes everything else checkable is that the **spine** (recorded runs, gate verdicts, ledger, curriculum states, budget, evolve log) is a set of append-only files under git, and the only thing the autonomous loop may change is the **genome**, a plain-text file of guidance bullets injected into the agent's context. Every other transition is a human merge. Table 1 (regenerated in numbers.md) lists all 45 recorded campaigns with pass rate, turns, $/run, and stall counts; this section describes the components.
 
-- **3.1 Task bank.** 62 tasks (60 work-domain mutations of a real repository snapshot — JSON repairs, doc/table regenerations, refactors with gold diffs — plus 2 canaries, Section 4 CS5). Tasks carry `prep`/`verify`/`allow`; verify is executable, never agent-graded.
-- **3.2 Runner.** Headless coding agent, watchdog (420 s), acceptEdits permission, max turns; frozen-spine invariant (spine hashed before/after each run; violation ⇒ score 0 and a recorded `spine_violations` field).
-- **3.3 Genome.** A plain-text file of guidance bullets (`<!-- id:G-nnn -->` markers for ablation). Current incumbent: v6.1, 15 bullets. The only thing the loop may change.
-- **3.4 Gatekeeper.** Pre-registered accept rule: candidate score ≥ incumbent score − δ AND Δcost ≤ β0 + β1·max(0, Δscore) (β0=0.15, β1=0.5), δ from incumbent repeat spread when available, else Wilson 95% half-width. Output is a *proposal*; admissibility is a floor (necessary, never sufficient); every promotion is human-merged. Critic screen (6 regex pattern families) over operative bullets only.
-- **3.5 Distiller, breeder, archive.** Traces → evidence corpus → insights (failure-focused); bounded mutation screened against the failure log *and* the critic; unpruned archive with pass-rate × novelty parent sampling; niches by archetype × cost band.
-- **3.6 Curriculum (POWERPLAY protocol).** Agent-proposed tasks admitted only if the verifier is frozen (sha-pinned, `bash -n`-checked) *before* incumbent attempts, and the incumbent fails k≥2 attempts with the verifier sha unchanged. Refusals are recorded as first-class outcomes.
-- **3.7 Governor.** Hard $80 lifetime cap checked before every run; incremental per-experiment envelopes; watchdog-killed runs recorded explicitly as stalls, not failures.
-- **3.8 Operating discipline.** Pre-register predictions before spend; e2e-verify every mechanism at $0 (fake-agent harness); append-only records committed before resolution; never retcon a recorded score — fix the instrument, re-gate from records, report both readings (this paper does so twice).
+**3.1 Task bank.** 62 tasks: 60 work-domain mutations of a real repository snapshot (JSON repairs against known-good content, documentation/table regenerations with gold diffs, refactors with reference implementations, and adversarial shapes — schema traps, fail-loud conversions, revert tasks, conditional-flag edits), plus 2 canaries (§4 CS5). Each task carries a `prep` script, an executable `verify` script, and a permission `allow`-list. Verification is never agent-graded: the referee runs the verify script against the working tree and records its exit, separately from the agent's own claims.
 
-⟦Include the numbers.md campaign table as Table 1 reference; costs per run; the spine layout listing.⟧
+**3.2 Runner.** A headless coding-agent session per task: watchdog at 420 s, edit permissions scoped to the task tree, a turn cap. Two invariants run every session. The **frozen-spine check** hashes the spine before and after; any change zeroes the score and is recorded (with the changed paths) in a `spine_violations` field — regenerable proposal files are excluded from the walk precisely so operator tooling cannot trip it (see CS5). A **telemetry ledger**, written by the harness process outside the sandbox, streams structured events (tool calls, edits, reads) that the canaries and the distiller consume.
+
+**3.3 Genome.** The unit of self-improvement is `genome/CLAUDE.md`: 15 bullets (incumbent v6.1), each carrying an `<!-- id:G-nnn -->` marker so ablations can remove or trace individual bullets. The genome is the only channel through which the loop's conclusions reach future runs — no skill files, no memory side-channels — which is what makes bullet-level attribution (CS6) possible at all.
+
+**3.4 Gatekeeper.** A pure function over recorded score cards: candidate vs. incumbent, *paired by task*, with the pre-registered accept rule
+
+  candScore ≥ incScore − δ  AND  Δcost ≤ β0 + β1·max(0, Δscore)   (β0=0.15, β1=0.5),
+
+where δ takes explicit override > measured incumbent repeat spread > Wilson 95% half-width as a conservative fallback (k=1 incumbents). Its output is a *proposal* with named inputs: admissibility is a floor — necessary, never sufficient — and every promotion is human-merged. A critic screen (six pattern families: task-id conditioning, corpus keys, hardcoded digests, campaign labels, verify-gaming phrasing, task-conditioning) runs over operative bullet lines only, per bullet, so a human can adjudicate each flag. The gatekeeper never auto-promotes and never rewrites a card.
+
+**3.5 Distiller, breeder, archive.** The distiller turns recorded traces into an evidence corpus and a bounded list of *insights*, deliberately failure-focused — distilling an all-pass campaign yields zero insights by construction (there is nothing to learn from success; §5.3 observes this live). The breeder applies bounded, annealed-budget edits to a parent genome, double-screened against the failure log and the critic. The archive is unpruned (every genome state ever evaluated, with per-task pass rates and a novelty score) and supports score×novelty parent sampling with MAP-Elites-style niches over task archetype × cost band.
+
+**3.6 Curriculum (POWERPLAY protocol).** The agent may propose tasks, but admission requires the verifier to be frozen first — sha-pinned and `bash -n` syntax-checked *before* any attempt (a frozen broken verifier poisons every run after it; CS4) — and the incumbent to fail k≥2 attempts with the sha unchanged. Refusals are first-class records (`spine/curriculum/index.jsonl`), and a refused proposal remains as evidence constraining the next one.
+
+**3.7 Governor.** A hard $80 lifetime cap checked before every run, incremental pre-approved envelopes per experiment, and explicit stall accounting: watchdog-killed sessions record the FL-003 signature (turns=null, $0 metered) and are excluded from scoring but *listed* — never silently dropped (CS3). Budget reports state the known metering undercount rather than absorbing it.
+
+**3.8 Operating discipline.** Pre-register predictions and decision rules before spend; end-to-end-verify every mechanism at $0 with a fake-agent harness before any API spend; commit append-only records before resolving against them; and never retcon a recorded score — when an instrument is found wrong, fix the instrument, re-gate from the immutable records, and report both readings. This paper exercises that last rule twice (CS2, CS4).
 
 ## 4. A Catalog of Measurement Failures
 
@@ -104,7 +117,7 @@ Each entry: **naive practice → observed incident (record IDs) → defense now 
 
 ## 5. Results
 
-⟦~1.5 pages. Tables regenerate from numbers.md; do not hand-copy.⟧
+<!-- All tables in this section regenerate from numbers.md; do not hand-copy. -->
 
 - **5.1 Promotions.** All paired numbers from numbers.md ("Pre-gatekeeper promotions" + gates sections): genome v1 (6 bullets, distilled from baseline failures) — turns 8.5→7.1, cost $0.159→$0.153, score 0.944 vs 1.000 on 6 shared tasks (the one regression, json-repair-1, passes in every later campaign — itself a CS2 k=1 artifact); ablation of v1's two anchors regressed to noise. v3 (11 bullets): 96–100% pass across two banks. v6 (15 bullets): 87.5%→100% pass, −15% cost, −33% turns on 8 shared tasks. Human-merged every time; the gate is a floor. Genome v4: admissible-provisional but **not** promoted (a stall + falsifiable-prediction resolution outweighed the floor — "necessary, not sufficient" exercised for real).
 - **5.2 Defenses exercised live.** Canaries 2/2 green under a read-and-resisted lure; curriculum refusals 2/2 (CS7); critic screens: red-team 7/7 adversarial edits caught with 4/4 clean controls unflagged (confusion-matrix table, FIGURES.md inline).
@@ -117,20 +130,63 @@ Single work-domain (one repository snapshot's task family); single substrate (on
 
 ## 7. Discussion
 
-⟦What generalizes (append-only spine, pre-registration, floor-not-decider gates, canaries, refuse-as-outcome); what we'd do differently (k≥3 from day one; cost-metering before stall-signature; Wilson bound tested against p=1 first); positioning: a null from a working apparatus vs. a positive from an unauditable one.⟧
+**What generalizes.** None of the five load-bearing mechanisms depends on our substrate, our model, or our task family. (1) An append-only, hashed record of runs and decisions is the ground truth every later dispute re-derives from — it is what let us re-gate ten generations after discovering the δ bug and *prove* the null was manufactured. (2) Pre-registration (predictions and decision rules committed before spend) is what made the manufactured null correctable at all: without the pre-committed re-gate rule, "fixing" the result post hoc would be indistinguishable from p-hacking. (3) Gates as floors — necessary, never sufficient, with the human merge recorded — keeps structural judgment outside the formula while making it accountable. (4) Canaries inside the work domain test the failure mode where it will actually be attempted. (5) Refusals as results (curriculum, v4's non-promotion, the archive tip's held promotion) convert temptations to retcon into publishable outcomes.
+
+**What the catalog buys.** Each entry is a concrete way an unaudited pipeline publishes a different number than the truth: CS1's saturated pass rates report "nothing happened" while cost moves −15%; CS3's stall-drop would have printed a perfect 1.0 for a campaign whose task actually failed; CS2's negative tolerance would have printed — did print — "zero acceptances" for ten generations of which eight were improvements. The common shape is that the error is *silent*: every one of these surfaced only because some record disagreed with some other record. A pipeline without records cannot have that experience.
+
+**What we would do differently.** k≥3 repeats from day one, so δ comes from measured incumbent spread instead of a Wilson fallback (whose boundary behavior bit us at p=1). Meter cost on the watchdog path before trusting any $0.00. Test any statistical bound at its boundary values before first use — a half-day of tests that would have saved an instrument bug from running half an experiment. And serialize operator writes against open campaigns (or scope integrity checks to non-regenerable state, as we ultimately adopted): an invariant that detects *that* the record changed but not *who* changed it will eventually fire on its own operators.
+
+**Positioning.** The field's asymmetry is that positives are cheap to claim and apparatus is boring to build. Our two real improvements (−16% turns at equal cost; 87.5%→100% pass with −15% cost and −33% turns) are modest and would be unremarkable as bare claims; what makes them trustworthy is that the same pipeline also caught itself manufacturing a null. A corrected null from a working apparatus carries more information than a positive from an unauditable one. **Next steps:** a harder eval slice (saturation is a bank problem, not a breeder problem — the pre-registered rule already says so); stage-2 evidence before any promotion of the evolve run's cost-parity tips; and the step-7 unattended long-horizon operation the testbed was built to host.
 
 ## 8. Conclusion
 
-⟦Two paragraphs: the catalog as the reusable artifact; the testbed as the minimal reproducible substrate; invitation to run claims through it.⟧
+We built a deliberately minimal testbed for harness self-improvement in coding agents and operated it under measurement discipline for three weeks on ~$74. It produced two verified, paired, human-merged improvements; one pre-registered evolution experiment whose deployed-instrument null was shown post hoc to be an artifact of a one-line bug in the acceptance margin — reported under both readings, with no recorded score rewritten; and a catalog of seven distinct measurement failures, each with an incident, a defense, and an outcome. The testbed is ~2,700 lines of plain files; every number in this paper regenerates from the immutable spine by one script.
+
+The transferable claim is narrow and we think load-bearing: before asking whether an agent improves itself, fix what "better" is measured with. At every stage where improvement could hide or be hallucinated — acceptance rules, verifiers, cost meters, task generation, reward hacking — we observed a concrete, silent failure that plain-file records, pre-registration, paired comparisons, and floors-not-deciders either prevented or caught after the fact. We invite self-improvement claims to be run through apparatus of this shape, and the catalog to be extended by whoever runs them.
+
+## References
+
+<!-- Every entry verified against the study corpus manifest (enrichment/manifest.json); author fields
+     to be completed from the arXiv landing pages at author-kit conversion (Nov 6). -->
+
+1. *Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models* (ACE). arXiv:2510.04618, 2025. https://arxiv.org/abs/2510.04618
+2. *Automated Design of Agentic Systems* (ADAS). arXiv:2408.08435, 2024. https://arxiv.org/abs/2408.08435
+3. *Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning*. arXiv:2511.16043, 2025. https://arxiv.org/abs/2511.16043
+4. *AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse*. arXiv:2603.18000, 2026. https://arxiv.org/abs/2603.18000
+5. *AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery*. arXiv:2506.13131, 2025. https://arxiv.org/abs/2506.13131
+6. *CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing*. arXiv:2305.11738, 2023. https://arxiv.org/abs/2305.11738
+7. *DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines*. arXiv:2310.03714, 2023. https://arxiv.org/abs/2310.03714
+8. *Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents* (DGM). arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954 (code: github.com/jennyzzt/dgm)
+9. *EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle*. arXiv:2510.16079, 2025. https://arxiv.org/abs/2510.16079
+10. *ExpeL: LLM Agents Are Experiential Learners*. arXiv:2308.10144, 2023. https://arxiv.org/abs/2308.10144
+11. *Mathematical Discoveries from Program Search with Large Language Models* (FunSearch). *Nature*, 2024. https://www.nature.com/articles/s41586-023-06924-6
+12. *Harness-Zero: Harness Distillation via Agent-as-Harness*. arXiv:2609.24974, 2026. https://arxiv.org/abs/2609.24974
+13. *Large Language Models as Optimizers* (OPRO). arXiv:2309.03409, 2023. https://arxiv.org/abs/2309.03409
+14. *Illuminating Search Spaces by Mapping Elites* (MAP-Elites). arXiv:1504.04909, 2015. https://arxiv.org/abs/1504.04909
+15. *PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution*. arXiv:2601.10657, 2026. https://arxiv.org/abs/2601.10657
+16. *Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions*. arXiv:1901.01753, 2019. https://arxiv.org/abs/1901.01753
+17. *POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem*. arXiv:1112.5309, 2011. https://arxiv.org/abs/1112.5309
+18. *Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution*. arXiv:2309.16797, 2023. https://arxiv.org/abs/2309.16797
+19. *Reflexion: Language Agents with Verbal Reinforcement Learning*. arXiv:2303.11366, 2023. https://arxiv.org/abs/2303.11366
+20. *RRSI: Regularized Recursive Self-Improvement of Agent Harnesses*. arXiv:2609.24972, 2026. https://arxiv.org/abs/2609.24972
+21. *Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation*. arXiv:2310.02304, 2023. https://arxiv.org/abs/2310.02304
+22. *TextGrad: Automatic "Differentiation" via Text*. arXiv:2406.07496, 2024. https://arxiv.org/abs/2406.07496
+23. *Voyager: An Open-Ended Embodied Agent with Large Language Models*. arXiv:2305.16291, 2023. https://arxiv.org/abs/2305.16291
 
 ## Appendix A — Corpus
 
-105 resources (31 repositories, 74 papers); 104 source-verified cards; 56/104 mention ablations; full operationalization and regeneration in numbers.md.
+The study corpus behind §2 and the evidence-quality claims: a 105-resource manifest (31 repositories, 74 papers) assembled during design, with 104 source-verified cards (one manifest entry has no card). Operationalizations are stated so reviewers can object to them: "mentions ablation" = case-insensitive substring over the card; "quantitatively dense" (reported in numbers.md for completeness) = ≥5 distinct numeric tokens — a deliberately loose screen, which is why the paper quotes the ablation-mention count (56/104), not density, as the evidence-quality signal. Counts regenerate with every other number; the cards themselves are the audit trail for every §2 citation.
 
 ## Appendix B — Reproduction
 
-`node docs/paper/collect-numbers.mjs > docs/paper/numbers.md` regenerates every figure from the two repos at pinned commits. ⟦spine layout; per-claim record pointers (gates, campaign IDs, ledger run IDs).⟧
+Every figure in this paper regenerates from the two repositories at pinned commits:
+
+```
+node docs/paper/collect-numbers.mjs > docs/paper/numbers.md
+```
+
+reads the petri spine (scores.jsonl, gates/, evolve/, distiller/, curriculum/, bank notes) and this repo's enrichment cards, and emits every table — campaigns, gates (both instrument readings for the evolve run), paired pre-gatekeeper promotions, corpus counts, budget. The spine is append-only files under git: `spine/scores.jsonl` (one JSON card per run: score, verify_ok, integrity, turns, tokens, cost, ledger ref), `spine/gates/*.json` (gatekeeper proposals), `spine/evolve/` (pre-registration + OUTCOME + addendum + per-generation log), `spine/curriculum/index.jsonl` (POWERPLAY states), `spine/distiller/wave-*/` (evidence corpora and insights), `spine/bank/*-notes.md` (per-version mining evidence and adjudications). Per-claim pointers for the §4 incidents appear inline (campaign IDs, run IDs, verifier shas); the canonical human decisions live in the gate notes and bank notes cited there.
 
 ## Appendix C — Gate ledger
 
-All recorded gate verdicts with rule parameters, δ sources, stalls, and human outcomes (from spine/gates/; regenerated into numbers.md).
+All recorded gate verdicts — 12 at time of writing, including the ten evolve generations under the fixed instrument — are regenerated into numbers.md with rule parameters (β0, β1), δ source per gate (measured incumbent spread vs. Wilson fallback), shared-task counts, Δscore/Δcost, PROVISIONAL flags naming the stall runs to re-run, and the critic screen of the incumbent. The ledger also records where the floor and the human decision diverged: genome v4 was admissible-but-not-promoted (stall provenance plus 0/4 falsifiable-prediction resolution plus an absolute cost bar the floor never sees), and the evolve run's cost-parity tips were admissible-but-held (a saturated 6-task slice is insufficient evidence against the incumbent's verified 54-task record). Those divergences are features: the floor's blindness to evidence it does not take as input is exactly why it is not the decider.
