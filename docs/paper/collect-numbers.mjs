@@ -48,6 +48,23 @@ for (const e of evo) {
   m.gens++; if (e.accepted) m.accepts++; m.edits += (e.edits || []).length; m.cost += e.cost_usd || 0;
 }
 
+// Both-readings table (CS2 / fig3 source): in-flight verdicts (buggy negative-δ wilson, pre-
+// stall-sweep state) vs post-hoc re-gate over final cards with the FIXED half-width δ. Pure
+// function over records; accept rule = plan line "admissible AND (dScore>0 OR parity at lower cost)".
+const evoBoth = [];
+if (evo.length) {
+  const { admissible } = await import(path.join(PETRI, 'lib', 'gatekeeper.mjs'));
+  const pickEvolve = (camp) => cards.filter((c) => c.campaign === camp && !c.skipped && c.score !== undefined)
+    .filter((c) => !(c.turns == null && c.timed_out));
+  const incE = pickEvolve('evolve-inc-stage1');
+  for (const e of evo) {
+    const f = admissible(pickEvolve(e.eval_campaign), incE);
+    const buggyAccept = e.verdict === 'admissible' && (e.d_score > 0 || e.d_cost < 0);
+    const fixedAccept = f.ok && (f.dScore > 0 || (f.scoreOk && f.dCost < 0));
+    evoBoth.push(`${e.arm}-g${e.gen} parent=${e.parent}: in-flight δ=${e.delta} d$=${e.d_cost} ${e.verdict}${buggyAccept ? '+accept' : ''} | fixed δ=${f.delta} d$=${f.dCost} ${f.ok ? 'admissible' : 'INADMISSIBLE'}${fixedAccept ? '+accept' : ''}${buggyAccept !== fixedAccept ? ' ⟵FLIP' : ''}`);
+  }
+}
+
 // ---- budget + counts -------------------------------------------------------------------------
 const spent = cards.filter((c) => !c.skipped).reduce((s, c) => s + (c.cost_usd || 0), 0);
 const stalls = cards.filter((c) => !c.skipped && c.turns == null && c.timed_out).length;
@@ -103,5 +120,8 @@ ${PAIRED.map(([label, c, i]) => `- ${label}: ${paired(c, i)}`).join('\n')}
 
 ## Evolve run (spine/evolve/log.jsonl, ${evo.length} arm-generations recorded so far)
 ${Object.entries(evoArms).map(([a, m]) => `- ${a}: ${m.gens} gens, ${m.accepts} accepts, ${m.edits} edits applied, $${m.cost.toFixed(2)}`).join('\n') || '- not started'}
-- NOTE: in-flight verdicts used a buggy negative-Wilson delta (fixed ${'a77d9ba'}); final resolution re-gates all campaigns post hoc from cards.
+- both readings (in-flight buggy negative-δ, pre-stall-sweep | fixed half-width δ over final cards; resolution + addendum in spine/evolve/2026-10-09-plan.md):
+${evoBoth.map((l) => `  - ${l}`).join('\n') || '  - not started'}
+- spend: cards-only $${(cards.filter((c) => c.campaign && c.campaign.startsWith('evolve-') && c.campaign !== 'evolve-v1-2026-09-24' && !c.skipped).reduce((s, c) => s + (c.cost_usd || 0), 0)).toFixed(2)} (incumbent + 10 gens incl. stall re-runs); ~$13.4 incremental with distiller sessions, of the $16 envelope
+- NOTE: in-flight verdicts used a buggy negative-Wilson delta (fixed ${'a77d9ba'}); resolution re-gated all campaigns post hoc from cards — buggy 0/10 accepts vs fixed 8/10 (uniform cost-parity; the bug manufactured the null).
 `);

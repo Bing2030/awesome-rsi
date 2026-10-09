@@ -1,5 +1,5 @@
-# Paper numbers — generated 2026-10-09T03:21:17.662Z
-# sources: PETRI=/Users/xzhao/Documents/projects/petri @ a77d9ba (spine records), THIS REPO @ f5e7032 (enrichment cards).
+# Paper numbers — generated 2026-10-09T04:47:51.414Z
+# sources: PETRI=/Users/xzhao/Documents/projects/petri @ 65935e2 (spine records), THIS REPO @ bd82880 (enrichment cards).
 # Regenerate with: node docs/paper/collect-numbers.mjs > docs/paper/numbers.md — never hand-edit.
 
 ## Corpus evidence quality (from the verified resource cards)
@@ -8,7 +8,7 @@
 - quantitatively dense cards (>=5 numeric tokens): 102/104
 - cards with structured Key-advantages: 104/104
 
-## Campaigns (petri spine/scores.jsonl, 368 cards total; 16 infra-stall runs excluded from scoring but listed)
+## Campaigns (petri spine/scores.jsonl, 398 cards total; 18 infra-stall runs excluded from scoring but listed)
 - baseline-2026-09-23: 18 runs | 100% pass (of 17 scored) | 8.6 avg turns | $0.1531/run | +1 stall(s) excluded
 - holdout-2026-09-24: 30 runs | 89% pass (of 28 scored) | 9.1 avg turns | $0.1710/run | +2 stall(s) excluded
 - evolve-v1-2026-09-24: 18 runs | 94% pass (of 18 scored) | 7.1 avg turns | $0.1531/run | genome=v1
@@ -27,34 +27,54 @@
 - curriculum-self-quietdup-1: 2 runs | 0% pass (of 2 scored) | 4.0 avg turns | $0.0956/run
 - curriculum-self-quietdup-2: 2 runs | 100% pass (of 2 scored) | 4.5 avg turns | $0.0998/run
 - evolve-inc-stage1: 6 runs | 100% pass (of 6 scored) | 8.5 avg turns | $0.2052/run
-- evolve-archive-g1: 6 runs | 100% pass (of 5 scored) | 8.2 avg turns | $0.1755/run | +1 stall(s) excluded | genome=archive-g1
+- evolve-archive-g1: 7 runs | 100% pass (of 6 scored) | 7.8 avg turns | $0.1695/run | +1 stall(s) excluded | genome=archive-g1
 - evolve-archive-g2: 6 runs | 100% pass (of 6 scored) | 8.0 avg turns | $0.1698/run | genome=archive-g2
-- evolve-archive-g3: 6 runs | 100% pass (of 5 scored) | 6.6 avg turns | $0.1325/run | +1 stall(s) excluded | genome=archive-g3
-- evolve-greedy-g1: 6 runs | 100% pass (of 4 scored) | 7.8 avg turns | $0.1167/run | +2 stall(s) excluded | genome=greedy-g1
+- evolve-archive-g3: 7 runs | 100% pass (of 6 scored) | 7.5 avg turns | $0.1674/run | +1 stall(s) excluded | genome=archive-g3
+- evolve-archive-g4: 6 runs | 100% pass (of 6 scored) | 7.7 avg turns | $0.1795/run | genome=archive-g4
+- evolve-archive-g5: 8 runs | 100% pass (of 6 scored) | 8.2 avg turns | $0.1563/run | +2 stall(s) excluded | genome=archive-g5
+- evolve-greedy-g1: 8 runs | 100% pass (of 6 scored) | 7.7 avg turns | $0.1387/run | +2 stall(s) excluded | genome=greedy-g1
 - evolve-greedy-g2: 6 runs | 100% pass (of 6 scored) | 8.0 avg turns | $0.1786/run | genome=greedy-g2
 - evolve-greedy-g3: 6 runs | 83% pass (of 6 scored) | 7.0 avg turns | $0.1782/run | genome=greedy-g3
+- evolve-greedy-g4: 6 runs | 100% pass (of 6 scored) | 7.7 avg turns | $0.1722/run | genome=greedy-g4
+- evolve-greedy-g5: 6 runs | 100% pass (of 6 scored) | 8.0 avg turns | $0.1935/run | genome=greedy-g5
 
 ## Gates (spine/gates/*.json — accept-rule verdicts; all decisions human-merged)
 - ablate-no204-2026-10-08 vs gate-v6-v5-2026-10-08: ADMISSIBLE (2 shared, d=0, d$=0.1003, delta=0.194 [Wilson 95% fallback (no incumbent repeats)])
 - bankv3-v4-2026-10-08 vs bankv3-v3-2026-10-08: ADMISSIBLE (7 shared, d=0, d$=0.007, delta=0 [incumbent repeat spread (max per-task 0)]) PROVISIONAL
-- evolve-archive-g1 vs evolve-inc-stage1: INADMISSIBLE (5 shared, d=0, d$=-0.0086, delta=-0.121 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
-- evolve-archive-g2 vs evolve-inc-stage1: INADMISSIBLE (6 shared, d=0, d$=-0.0353, delta=-0.123 [Wilson 95% fallback (no incumbent repeats)])
-- evolve-archive-g3 vs evolve-inc-stage1: INADMISSIBLE (5 shared, d=0, d$=-0.0195, delta=-0.121 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
-- evolve-greedy-g1 vs evolve-inc-stage1: INADMISSIBLE (4 shared, d=0, d$=-0.0456, delta=-0.11 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
-- evolve-greedy-g2 vs evolve-inc-stage1: INADMISSIBLE (6 shared, d=0, d$=-0.0265, delta=-0.123 [Wilson 95% fallback (no incumbent repeats)])
-- evolve-greedy-g3 vs evolve-inc-stage1: INADMISSIBLE (6 shared, d=-0.167, d$=-0.027, delta=-0.086 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-archive-g1 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0075, delta=0.04 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
+- evolve-archive-g2 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0353, delta=0.04 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-archive-g3 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0099, delta=0.04 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
+- evolve-archive-g4 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0257, delta=0.04 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-archive-g5 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=0.0032, delta=0.04 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
+- evolve-greedy-g1 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0203, delta=0.04 [Wilson 95% fallback (no incumbent repeats)]) PROVISIONAL
+- evolve-greedy-g2 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0265, delta=0.04 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-greedy-g3 vs evolve-inc-stage1: INADMISSIBLE (6 shared, d=-0.167, d$=-0.027, delta=0.044 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-greedy-g4 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0329, delta=0.04 [Wilson 95% fallback (no incumbent repeats)])
+- evolve-greedy-g5 vs evolve-inc-stage1: ADMISSIBLE (6 shared, d=0, d$=-0.0117, delta=0.04 [Wilson 95% fallback (no incumbent repeats)])
 
 ## Pre-gatekeeper promotions (recomputed paired, gatekeeper convention, over recorded cards)
 - genome v1 (evolve-v1-2026-09-24) vs null baseline (baseline-2026-09-23): score 0.944 vs 1.000 | cost $0.1531 vs $0.1587 | turns 7.1 vs 8.5 | 6 shared
 - genome v6 (gate-v6-v5-2026-10-08) vs incumbent v3 (smoke-bankv5-2026-10-08): score 1.000 vs 0.875 | cost $0.3676 vs $0.4332 | turns 8.6 vs 12.9 | 8 shared
 
 ## Budget
-- testbed size: 2677 total (supervisor + lib, excluding tasks/spine data)
-- recorded spend: $63.88 of $80 governor cap (watchdog-killed sessions record $0; est. +$0.3-0.6 undercount)
-- distiller waves: 11 (8, 6, 6, 6, 0, 6, 0, 4, 5, 5, ? insights)
+- testbed size: 2682 total (supervisor + lib, excluding tasks/spine data)
+- recorded spend: $69.32 of $80 governor cap (watchdog-killed sessions record $0; est. +$0.3-0.6 undercount)
+- distiller waves: 14 (8, 6, 6, 6, 0, 6, 0, 4, 5, 5, 4, 0, 5, 5 insights)
 
-## Evolve run (spine/evolve/log.jsonl, 6 arm-generations recorded so far)
-- greedy: 3 gens, 0 accepts, 2 edits applied, $2.84
-- archive: 3 gens, 0 accepts, 6 edits applied, $2.87
-- NOTE: in-flight verdicts used a buggy negative-Wilson delta (fixed a77d9ba); final resolution re-gates all campaigns post hoc from cards.
+## Evolve run (spine/evolve/log.jsonl, 10 arm-generations recorded so far)
+- greedy: 5 gens, 0 accepts, 3 edits applied, $5.04
+- archive: 5 gens, 0 accepts, 7 edits applied, $5.10
+- both readings (in-flight buggy negative-δ, pre-stall-sweep | fixed half-width δ over final cards; resolution + addendum in spine/evolve/2026-10-09-plan.md):
+  - greedy-g1 parent=CLAUDE: in-flight δ=-0.11 d$=-0.0456 inadmissible | fixed δ=0.04 d$=-0.0203 admissible+accept ⟵FLIP
+  - archive-g1 parent=v2: in-flight δ=-0.121 d$=-0.0086 inadmissible | fixed δ=0.04 d$=-0.0075 admissible+accept ⟵FLIP
+  - greedy-g2 parent=CLAUDE: in-flight δ=-0.123 d$=-0.0265 inadmissible | fixed δ=0.04 d$=-0.0265 admissible+accept ⟵FLIP
+  - archive-g2 parent=v2: in-flight δ=-0.123 d$=-0.0353 inadmissible | fixed δ=0.04 d$=-0.0353 admissible+accept ⟵FLIP
+  - greedy-g3 parent=CLAUDE: in-flight δ=-0.086 d$=-0.027 inadmissible | fixed δ=0.044 d$=-0.027 INADMISSIBLE
+  - archive-g3 parent=v1-minus-G002-G008: in-flight δ=-0.121 d$=-0.0195 inadmissible | fixed δ=0.04 d$=-0.0099 admissible+accept ⟵FLIP
+  - greedy-g4 parent=CLAUDE: in-flight δ=-0.123 d$=-0.0329 inadmissible | fixed δ=0.04 d$=-0.0329 admissible+accept ⟵FLIP
+  - archive-g4 parent=v2: in-flight δ=-0.123 d$=-0.0257 inadmissible | fixed δ=0.04 d$=-0.0257 admissible+accept ⟵FLIP
+  - greedy-g5 parent=CLAUDE: in-flight δ=-0.123 d$=-0.0117 inadmissible | fixed δ=0.04 d$=-0.0117 admissible+accept ⟵FLIP
+  - archive-g5 parent=v3: in-flight δ=-0.121 d$=0.0024 inadmissible | fixed δ=0.04 d$=0.0032 admissible
+- spend: cards-only $12.38 (incumbent + 10 gens incl. stall re-runs); ~$13.4 incremental with distiller sessions, of the $16 envelope
+- NOTE: in-flight verdicts used a buggy negative-Wilson delta (fixed a77d9ba); resolution re-gated all campaigns post hoc from cards — buggy 0/10 accepts vs fixed 8/10 (uniform cost-parity; the bug manufactured the null).
 
