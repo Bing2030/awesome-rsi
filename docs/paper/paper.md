@@ -146,32 +146,32 @@ The transferable claim is narrow and we think load-bearing: before asking whethe
 
 ## References
 
-<!-- Every entry verified against the study corpus manifest (enrichment/manifest.json); author fields
-     to be completed from the arXiv landing pages at author-kit conversion (Nov 6). -->
+<!-- Titles+URLs verified against enrichment/manifest.json; authors verified from the arXiv API
+     (export.arxiv.org) and, for FunSearch, the Nature article metadata (dc.creator). -->
 
-1. *Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models* (ACE). arXiv:2510.04618, 2025. https://arxiv.org/abs/2510.04618
-2. *Automated Design of Agentic Systems* (ADAS). arXiv:2408.08435, 2024. https://arxiv.org/abs/2408.08435
-3. *Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning*. arXiv:2511.16043, 2025. https://arxiv.org/abs/2511.16043
-4. *AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse*. arXiv:2603.18000, 2026. https://arxiv.org/abs/2603.18000
-5. *AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery*. arXiv:2506.13131, 2025. https://arxiv.org/abs/2506.13131
-6. *CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing*. arXiv:2305.11738, 2023. https://arxiv.org/abs/2305.11738
-7. *DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines*. arXiv:2310.03714, 2023. https://arxiv.org/abs/2310.03714
-8. *Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents* (DGM). arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954 (code: github.com/jennyzzt/dgm)
-9. *EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle*. arXiv:2510.16079, 2025. https://arxiv.org/abs/2510.16079
-10. *ExpeL: LLM Agents Are Experiential Learners*. arXiv:2308.10144, 2023. https://arxiv.org/abs/2308.10144
-11. *Mathematical Discoveries from Program Search with Large Language Models* (FunSearch). *Nature*, 2024. https://www.nature.com/articles/s41586-023-06924-6
-12. *Harness-Zero: Harness Distillation via Agent-as-Harness*. arXiv:2609.24974, 2026. https://arxiv.org/abs/2609.24974
-13. *Large Language Models as Optimizers* (OPRO). arXiv:2309.03409, 2023. https://arxiv.org/abs/2309.03409
-14. *Illuminating Search Spaces by Mapping Elites* (MAP-Elites). arXiv:1504.04909, 2015. https://arxiv.org/abs/1504.04909
-15. *PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution*. arXiv:2601.10657, 2026. https://arxiv.org/abs/2601.10657
-16. *Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions*. arXiv:1901.01753, 2019. https://arxiv.org/abs/1901.01753
-17. *POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem*. arXiv:1112.5309, 2011. https://arxiv.org/abs/1112.5309
-18. *Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution*. arXiv:2309.16797, 2023. https://arxiv.org/abs/2309.16797
-19. *Reflexion: Language Agents with Verbal Reinforcement Learning*. arXiv:2303.11366, 2023. https://arxiv.org/abs/2303.11366
-20. *RRSI: Regularized Recursive Self-Improvement of Agent Harnesses*. arXiv:2609.24972, 2026. https://arxiv.org/abs/2609.24972
-21. *Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation*. arXiv:2310.02304, 2023. https://arxiv.org/abs/2310.02304
-22. *TextGrad: Automatic "Differentiation" via Text*. arXiv:2406.07496, 2024. https://arxiv.org/abs/2406.07496
-23. *Voyager: An Open-Ended Embodied Agent with Large Language Models*. arXiv:2305.16291, 2023. https://arxiv.org/abs/2305.16291
+1. Qizheng Zhang et al. *Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models* (ACE). arXiv:2510.04618, 2025. https://arxiv.org/abs/2510.04618
+2. Shengran Hu, Cong Lu, and Jeff Clune. *Automated Design of Agentic Systems* (ADAS). arXiv:2408.08435, 2024. https://arxiv.org/abs/2408.08435
+3. Peng Xia et al. *Agent0: Unleashing Self-Evolving Agents from Zero Data via Tool-Integrated Reasoning*. arXiv:2511.16043, 2025. https://arxiv.org/abs/2511.16043
+4. Zhang Zhang, Shuqi Lu, Hongjin Qian, Di He, and Zheng Liu. *AgentFactory: A Self-Evolving Framework Through Executable Subagent Accumulation and Reuse*. arXiv:2603.18000, 2026. https://arxiv.org/abs/2603.18000
+5. Alexander Novikov et al. *AlphaEvolve: A Coding Agent for Scientific and Algorithmic Discovery*. arXiv:2506.13131, 2025. https://arxiv.org/abs/2506.13131
+6. Zhibin Gou et al. *CRITIC: Large Language Models Can Self-Correct with Tool-Interactive Critiquing*. arXiv:2305.11738, 2023. https://arxiv.org/abs/2305.11738
+7. Omar Khattab et al. *DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines*. arXiv:2310.03714, 2023. https://arxiv.org/abs/2310.03714
+8. Jenny Zhang, Shengran Hu, Cong Lu, Robert Lange, and Jeff Clune. *Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents* (DGM). arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954 (code: github.com/jennyzzt/dgm)
+9. Rong Wu et al. *EvolveR: Self-Evolving LLM Agents through an Experience-Driven Lifecycle*. arXiv:2510.16079, 2025. https://arxiv.org/abs/2510.16079
+10. Andrew Zhao, Daniel Huang, Quentin Xu, Matthieu Lin, Yong-Jin Liu, and Gao Huang. *ExpeL: LLM Agents Are Experiential Learners*. arXiv:2308.10144, 2023. https://arxiv.org/abs/2308.10144
+11. Bernardino Romera-Paredes et al. *Mathematical Discoveries from Program Search with Large Language Models* (FunSearch). *Nature* 625, 2024. https://www.nature.com/articles/s41586-023-06924-6
+12. Haoran Ye, Yuxing Lu, Haonan Dong, Zhaochen Su, and Guojie Song. *Harness-Zero: Harness Distillation via Agent-as-Harness*. arXiv:2609.24974, 2026. https://arxiv.org/abs/2609.24974
+13. Chengrun Yang et al. *Large Language Models as Optimizers* (OPRO). arXiv:2309.03409, 2023. https://arxiv.org/abs/2309.03409
+14. Jean-Baptiste Mouret and Jeff Clune. *Illuminating Search Spaces by Mapping Elites* (MAP-Elites). arXiv:1504.04909, 2015. https://arxiv.org/abs/1504.04909
+15. Minghao Yan et al. *PACEvolve: Enabling Long-Horizon Progress-Aware Consistent Evolution*. arXiv:2601.10657, 2026. https://arxiv.org/abs/2601.10657
+16. Rui Wang, Joel Lehman, Jeff Clune, and Kenneth O. Stanley. *Paired Open-Ended Trailblazer (POET): Endlessly Generating Increasingly Complex and Diverse Learning Environments and Their Solutions*. arXiv:1901.01753, 2019. https://arxiv.org/abs/1901.01753
+17. Jürgen Schmidhuber. *POWERPLAY: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem*. arXiv:1112.5309, 2011. https://arxiv.org/abs/1112.5309
+18. Chrisantha Fernando, Dylan Banarse, Henryk Michalewski, Simon Osindero, and Tim Rocktäschel. *Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution*. arXiv:2309.16797, 2023. https://arxiv.org/abs/2309.16797
+19. Noah Shinn, Federico Cassano, Edward Berman, Ashwin Gopinath, Karthik Narasimhan, and Shunyu Yao. *Reflexion: Language Agents with Verbal Reinforcement Learning*. arXiv:2303.11366, 2023. https://arxiv.org/abs/2303.11366
+20. Peng Xia et al. *RRSI: Regularized Recursive Self-Improvement of Agent Harnesses*. arXiv:2609.24972, 2026. https://arxiv.org/abs/2609.24972
+21. Eric Zelikman, Eliana Lorch, Lester Mackey, and Adam Tauman Kalai. *Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation*. arXiv:2310.02304, 2023. https://arxiv.org/abs/2310.02304
+22. Mert Yuksekgonul et al. *TextGrad: Automatic "Differentiation" via Text*. arXiv:2406.07496, 2024. https://arxiv.org/abs/2406.07496
+23. Guanzhi Wang et al. *Voyager: An Open-Ended Embodied Agent with Large Language Models*. arXiv:2305.16291, 2023. https://arxiv.org/abs/2305.16291
 
 ## Appendix A — Corpus
 

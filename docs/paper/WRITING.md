@@ -20,8 +20,11 @@ $74 lifetime; 18/398 stalls; 12 gates; both-readings table).
 
 ## Remaining to submission (see VENUES.md timeline)
 
-- [ ] Figures F1 (loop diagram), F2 (lineage timeline) — F3 data already in numbers.md
-- [ ] Author fields for the 23 references (arXiv landing pages)
+- [x] F1 source written (`fig1-loop.mmd`, mermaid; render at author-kit time)
+- [x] F2 data emitted (numbers.md "Figure 2 data" block; render at author-kit time)
+- [x] F3 data (both-readings table) in numbers.md
+- [x] Author fields for all 23 references (verified: 22 via arXiv API, FunSearch via Nature dc.creator)
+- [ ] Render F1/F2 as final art (LaTeX-compatible)
 - [ ] Anonymization pass (double-blind): authors, repo links, fork/worktree paths
 - [ ] AAAI-27 author kit (LaTeX) conversion — target Nov 6
 - [ ] Final read-aloud pass + abstract re-check; submit by Nov 20 AoE

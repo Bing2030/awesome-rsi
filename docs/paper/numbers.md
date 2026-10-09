@@ -1,5 +1,5 @@
-# Paper numbers — generated 2026-10-09T04:47:51.414Z
-# sources: PETRI=/Users/xzhao/Documents/projects/petri @ 65935e2 (spine records), THIS REPO @ bd82880 (enrichment cards).
+# Paper numbers — generated 2026-10-09T05:12:11.117Z
+# sources: PETRI=/Users/xzhao/Documents/projects/petri @ 65935e2 (spine records), THIS REPO @ 3a63409 (enrichment cards).
 # Regenerate with: node docs/paper/collect-numbers.mjs > docs/paper/numbers.md — never hand-edit.
 
 ## Corpus evidence quality (from the verified resource cards)
@@ -55,6 +55,103 @@
 ## Pre-gatekeeper promotions (recomputed paired, gatekeeper convention, over recorded cards)
 - genome v1 (evolve-v1-2026-09-24) vs null baseline (baseline-2026-09-23): score 0.944 vs 1.000 | cost $0.1531 vs $0.1587 | turns 7.1 vs 8.5 | 6 shared
 - genome v6 (gate-v6-v5-2026-10-08) vs incumbent v3 (smoke-bankv5-2026-10-08): score 1.000 vs 0.875 | cost $0.3676 vs $0.4332 | turns 8.6 vs 12.9 | 8 shared
+
+## Figure 2 data — genome lineage timeline (FIGURES.md; all numeric labels from this file's computations)
+{
+ "nodes": [
+  {
+   "id": "baseline",
+   "date": "2026-09-23",
+   "label": "no genome"
+  },
+  {
+   "id": "v1",
+   "date": "2026-09-24",
+   "label": "v1 — 6 bullets"
+  },
+  {
+   "id": "v2",
+   "date": "2026-10-07",
+   "label": "v2"
+  },
+  {
+   "id": "v3",
+   "date": "2026-10-07",
+   "label": "v3 — 11 bullets"
+  },
+  {
+   "id": "v4",
+   "date": "2026-10-08",
+   "label": "v4 — admissible, NOT promoted"
+  },
+  {
+   "id": "v6",
+   "date": "2026-10-08",
+   "label": "v6 — 15 bullets"
+  },
+  {
+   "id": "v6.1",
+   "date": "2026-10-09",
+   "label": "v6.1 incumbent (G-204 reverted)"
+  }
+ ],
+ "edges": [
+  {
+   "from": "baseline",
+   "to": "v1",
+   "kind": "promotion",
+   "label": "score 0.944 vs 1.000 | cost $0.1531 vs $0.1587 | turns 7.1 vs 8.5 | 6 shared"
+  },
+  {
+   "from": "v1",
+   "to": "v2",
+   "kind": "promotion",
+   "label": "bankv2 96% pass (Table 1)"
+  },
+  {
+   "from": "v2",
+   "to": "v3",
+   "kind": "promotion",
+   "label": "bankv2-v3 100% + holdout-v3 100%"
+  },
+  {
+   "from": "v3",
+   "to": "v4",
+   "kind": "rejected",
+   "label": "ADMISSIBLE d$0.007 PROVISIONAL"
+  },
+  {
+   "from": "v3",
+   "to": "v6",
+   "kind": "promotion",
+   "label": "score 1.000 vs 0.875 | cost $0.3676 vs $0.4332 | turns 8.6 vs 12.9 | 8 shared"
+  },
+  {
+   "from": "v6",
+   "to": "v6.1",
+   "kind": "ablation-revert",
+   "label": "ADMISSIBLE d$0.1003"
+  }
+ ],
+ "stubs": [
+  {
+   "id": "ablate1",
+   "label": "v1-anchor ablation: 100% pass, 6.2 turns — inside noise floor, genome unchanged"
+  },
+  {
+   "id": "canary-v7",
+   "label": "canaries: 100% pass (2/2 green, lure read and resisted)"
+  },
+  {
+   "id": "curriculum",
+   "label": "curriculum: 0/2 admitted (verifier defect CS4; incumbent solves — POWERPLAY refusal)"
+  },
+  {
+   "id": "evolve",
+   "label": "evolve run: buggy 0/10 vs fixed 8/10 accepts (both readings in §Evolve)"
+  }
+ ]
+}
 
 ## Budget
 - testbed size: 2682 total (supervisor + lib, excluding tasks/spine data)

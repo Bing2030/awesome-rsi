@@ -93,6 +93,41 @@ const PAIRED = [
   ['genome v6 (gate-v6-v5-2026-10-08) vs incumbent v3 (smoke-bankv5-2026-10-08)', 'gate-v6-v5-2026-10-08', 'smoke-bankv5-2026-10-08'],
 ];
 
+// ---- fig2 data: genome lineage timeline (FIGURES.md spec) ---------------------------------------
+// Structure (nodes/dates/stubs) is fixed prose like fig1; every numeric label below comes from
+// the computations in this script (paired() / camp / gates), so the figure cannot contain a
+// number numbers.md lacks.
+const pct = (k) => camp[k] && camp[k].scored ? (100 * camp[k].pass / camp[k].scored).toFixed(0) : '?';
+const gateLine = (cand) => {
+  const g = gates.find((x) => x.candidate === cand);
+  return g ? `${g.verdict.ok ? 'ADMISSIBLE' : 'INADMISSIBLE'} d$${g.verdict.dCost}${g.verdict.provisional ? ' PROVISIONAL' : ''}` : 'no gate record';
+};
+const fig2 = {
+  nodes: [
+    { id: 'baseline', date: '2026-09-23', label: 'no genome' },
+    { id: 'v1', date: '2026-09-24', label: 'v1 — 6 bullets' },
+    { id: 'v2', date: '2026-10-07', label: 'v2' },
+    { id: 'v3', date: '2026-10-07', label: 'v3 — 11 bullets' },
+    { id: 'v4', date: '2026-10-08', label: 'v4 — admissible, NOT promoted' },
+    { id: 'v6', date: '2026-10-08', label: 'v6 — 15 bullets' },
+    { id: 'v6.1', date: '2026-10-09', label: 'v6.1 incumbent (G-204 reverted)' },
+  ],
+  edges: [
+    { from: 'baseline', to: 'v1', kind: 'promotion', label: paired('evolve-v1-2026-09-24', 'baseline-2026-09-23') },
+    { from: 'v1', to: 'v2', kind: 'promotion', label: `bankv2 ${pct('bankv2-v2-2026-10-07')}% pass (Table 1)` },
+    { from: 'v2', to: 'v3', kind: 'promotion', label: `bankv2-v3 ${pct('bankv2-v3-2026-10-07')}% + holdout-v3 ${pct('holdout-v3-2026-10-07')}%` },
+    { from: 'v3', to: 'v4', kind: 'rejected', label: gateLine('bankv3-v4-2026-10-08') },
+    { from: 'v3', to: 'v6', kind: 'promotion', label: paired('gate-v6-v5-2026-10-08', 'smoke-bankv5-2026-10-08') },
+    { from: 'v6', to: 'v6.1', kind: 'ablation-revert', label: gateLine('ablate-no204-2026-10-08') },
+  ],
+  stubs: [
+    { id: 'ablate1', label: `v1-anchor ablation: ${pct('ablate1-2026-09-24')}% pass, ${(camp['ablate1-2026-09-24']?.turns / camp['ablate1-2026-09-24']?.scored).toFixed(1)} turns — inside noise floor, genome unchanged` },
+    { id: 'canary-v7', label: `canaries: ${pct('canary-v7-2026-10-09')}% pass (2/2 green, lure read and resisted)` },
+    { id: 'curriculum', label: 'curriculum: 0/2 admitted (verifier defect CS4; incumbent solves — POWERPLAY refusal)' },
+    { id: 'evolve', label: 'evolve run: buggy 0/10 vs fixed 8/10 accepts (both readings in §Evolve)' },
+  ],
+};
+
 console.log(`# Paper numbers — generated ${new Date().toISOString()}
 # sources: PETRI=${PETRI} @ ${rev(PETRI)} (spine records), THIS REPO @ ${rev(HERE)} (enrichment cards).
 # Regenerate with: node docs/paper/collect-numbers.mjs > docs/paper/numbers.md — never hand-edit.
@@ -112,6 +147,9 @@ ${gates.map((g) => `- ${g.candidate} vs ${g.incumbent}: ${g.verdict.ok ? 'ADMISS
 
 ## Pre-gatekeeper promotions (recomputed paired, gatekeeper convention, over recorded cards)
 ${PAIRED.map(([label, c, i]) => `- ${label}: ${paired(c, i)}`).join('\n')}
+
+## Figure 2 data — genome lineage timeline (FIGURES.md; all numeric labels from this file's computations)
+${JSON.stringify(fig2, null, 1)}
 
 ## Budget
 - testbed size: ${execFileSync('bash', ['-c', `wc -l ${PETRI}/petri.mjs ${PETRI}/lib/*.mjs | tail -1`], { encoding: 'utf8' }).trim().replace(/^ */, '')} (supervisor + lib, excluding tasks/spine data)

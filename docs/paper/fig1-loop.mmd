@@ -1,0 +1,34 @@
+%% Figure 1 — Petri control loop (hand-written; reviewed like prose).
+%% Render: any mermaid renderer; final art at author-kit conversion.
+%% CHECK (reviewed 2026-10-09): every arrow is a real petri.mjs command path;
+%% the ONLY edges into genome are "author edit" and "human merge" — no auto-promote.
+flowchart LR
+  subgraph SPINE["SPINE (append-only, git)"]
+    scores["scores.jsonl\n(one card per run)"]
+    gates["gates/*.json\n(proposals)"]
+    ledger["ledger/\n(harness-written events)"]
+    curr["curriculum/index.jsonl"]
+    evo["evolve/\n(pre-reg + OUTCOME + log)"]
+  end
+  genome["genome/CLAUDE.md\n15 bullets — the only\nloop-writable channel"]
+  runner["RUNNER\nheadless agent · 420s watchdog\nfrozen-spine hash CS3/CS5"]
+  referee["REFEREE\nexecutable verify\nbash -n at freeze (CS4)"]
+  distiller["DISTILLER\nfailure-focused\ntraces → insights"]
+  breeder["BREEDER\nbounded edits ·\nfaillog + critic screens (CS5)"]
+  gatekeeper["GATEKEEPER\npure function over cards\ncand ≥ inc − δ AND Δcost ≤ β (CS1/CS2)"]
+  human["HUMAN MERGE\nnecessary, never sufficient\n(CS6 attribution, CS7 refusals)"]
+
+  genome -->|"inject"| runner
+  runner -->|"work tree"| referee
+  referee -->|"score card + verify_ok"| scores
+  runner -->|"events"| ledger
+  ledger -->|"traces"| distiller
+  scores -->|"failure cards"| distiller
+  distiller -->|"insights"| breeder
+  breeder -->|"candidate genome"| runner
+  scores -->|"paired by task"| gatekeeper
+  gatekeeper -->|"proposal + floor"| gates
+  gates -->|"proposal"| human
+  human -->|"merge (only path)"| genome
+  curr -.->|"admit-or-refuse\nfrozen-first"| scores
+  evo -.->|"pre-registered\nplans + outcomes"| gatekeeper
