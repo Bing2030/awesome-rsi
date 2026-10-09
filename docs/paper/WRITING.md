@@ -24,7 +24,16 @@ $74 lifetime; 18/398 stalls; 12 gates; both-readings table).
 - [x] F2 data emitted (numbers.md "Figure 2 data" block; render at author-kit time)
 - [x] F3 data (both-readings table) in numbers.md
 - [x] Author fields for all 23 references (verified: 22 via arXiv API, FunSearch via Nature dc.creator)
-- [ ] Render F1/F2 as final art (LaTeX-compatible)
-- [ ] Anonymization pass (double-blind): authors, repo links, fork/worktree paths
+- [x] Render F1/F2 as art (`figures/fig1-loop.png` 1904×440, `figures/fig2-lineage.png` 1400×224 via
+      mermaid.ink; F2 generated from numbers.md by `fig2-render.mjs` — no hand-typed numbers; both
+      visually verified; re-render if the kit needs different sizes) — commit f006578
+- [x] Anonymization pass (2026-10-09): no author identity, no own-repo URLs (only third-party
+      github.com/jennyzzt/dgm citation), "this repo" → "the study repository"; HTML comments to strip
+      at LaTeX conversion (they name the companion repo/commit — fine in source, gone in PDF)
+- [x] Phase-5 final pass (2026-10-09): abstract re-enumerated to match CS1–CS7 one-to-one (was 7 items
+      that split CS2 and omitted CS6); "[survey pointer]" placeholder resolved to §2+App A pointer;
+      7-dimension re-score with figures+authors done: argument 8, literature 8, clarity 8, originality 9,
+      rigor 9, structure 8, platform 7 (markdown→AAAI kit pending) = **57/70 ≥ 56 threshold**; the sole
+      below-8 dimension is the known LaTeX conversion step
 - [ ] AAAI-27 author kit (LaTeX) conversion — target Nov 6
 - [ ] Final read-aloud pass + abstract re-check; submit by Nov 20 AoE
